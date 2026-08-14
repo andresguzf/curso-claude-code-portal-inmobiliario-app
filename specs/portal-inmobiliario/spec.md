@@ -68,7 +68,6 @@ Cada propiedad debe soportar como mínimo:
 - tipo de operación;
 - tipo de propiedad;
 - precio;
-- moneda;
 - metros cuadrados útiles;
 - metros cuadrados totales;
 - número de dormitorios;
@@ -104,11 +103,7 @@ Valores iniciales:
 
 ### Moneda
 
-Debe soportar al menos:
-
-- `CLP`
-- `UF`
-- `USD`
+Debe soportar `USD`
 
 Algunos campos podrán ser opcionales cuando no correspondan al tipo de propiedad.
 
@@ -427,7 +422,6 @@ Formulario:
 - operación;
 - tipo;
 - precio;
-- moneda;
 - superficie útil;
 - superficie total;
 - dormitorios;

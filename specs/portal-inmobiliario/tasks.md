@@ -162,7 +162,7 @@
 - [ ] **Paso 25 — Formulario de propiedad**
   - Título y descripción.
   - Operación y tipo.
-  - Precio y moneda.
+  - Precio.
   - Superficie útil/total.
   - Dormitorios, baños y estacionamientos.
   - Antigüedad.
