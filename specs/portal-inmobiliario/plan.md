@@ -49,25 +49,60 @@ Web3Forms   → contacto
 - No exigir latitud/longitud en el formulario ADMIN.
 - No implementar funcionalidades especulativas fuera de `spec.md`.
 
-## 4. Estructura sugerida
+## 4. Estructura
+
+El proyecto es un monorepo con **npm workspaces**. Frontend y backend son
+aplicaciones Next.js independientes, y comparten un paquete de contratos.
 
 ```text
-src/
-├── app/
-│   ├── api/
-│   ├── admin/
-│   ├── account/
-│   ├── properties/
-│   └── ...
-├── components/
-├── services/
-├── repositories/
-├── lib/
-├── types/
-└── ...
+portal-inmobiliario/
+├── apps/
+│   ├── web/                    # Frontend Next.js — puerto 3000
+│   │   └── src/
+│   │       ├── app/            # Páginas: /, /properties, /account, /admin
+│   │       ├── components/
+│   │       ├── hooks/
+│   │       ├── stores/
+│   │       ├── schemas/
+│   │       └── lib/            # Cliente REST, formateo, utilidades
+│   │
+│   └── api/                    # Backend Next.js — puerto 3001
+│       ├── prisma/             # Esquema, migraciones y seed
+│       └── src/
+│           ├── app/api/        # Route Handlers REST
+│           ├── services/       # Reglas de negocio
+│           ├── repositories/   # Acceso a PostgreSQL
+│           └── lib/            # Cliente Prisma, respuestas HTTP
+│
+└── packages/
+    └── contracts/              # @portal/contracts — DTOs y enumeraciones
 ```
 
-Adaptar cuando las convenciones actuales de Next.js lo justifiquen sin romper la separación de responsabilidades.
+### Frontera entre aplicaciones
+
+`@portal/contracts` es la única dependencia compartida. Contiene los DTOs de
+la API y el vocabulario del dominio, declarados como TypeScript plano.
+
+El frontend **no** depende de Prisma ni del cliente generado. El backend
+verifica en tiempo de compilación que las enumeraciones del contrato
+coincidan con `schema.prisma`, de modo que una divergencia rompa el build en
+lugar de llegar al navegador.
+
+### Comunicación
+
+El navegador conoce un solo origen. El frontend reescribe `/api/*` hacia el
+backend mediante `rewrites` de Next.js:
+
+```text
+Navegador → :3000/api/*  ──rewrite──→  :3001/api/*
+Servidor  → API_INTERNAL_URL (directo al backend)
+```
+
+Con esto no hace falta CORS, y las cookies de sesión funcionan como
+same-origin sin requerir `SameSite=None`.
+
+Adaptar cuando las convenciones actuales de Next.js lo justifiquen sin romper
+la separación de responsabilidades.
 
 ## 5. Modelo de datos
 
@@ -304,7 +339,10 @@ No exponer stack traces internos.
 
 ## 15. Variables de entorno
 
-Utilizar variables de entorno para:
+Cada aplicación tiene su propio `.env`, porque Next.js solo lee variables
+desde el directorio de la aplicación.
+
+`apps/api/.env` — ninguna de estas variables llega al navegador:
 
 - conexión PostgreSQL;
 - secretos de autenticación;
@@ -312,7 +350,12 @@ Utilizar variables de entorno para:
 - configuración Google Maps;
 - clave Web3Forms.
 
-Crear `.env.example` sin secretos reales.
+`apps/web/.env`:
+
+- `NEXT_PUBLIC_SITE_URL` (metadata y Open Graph);
+- `API_INTERNAL_URL` (destino del proxy hacia el backend).
+
+Crear un `.env.example` por aplicación, sin secretos reales.
 
 ## 16. Validación
 

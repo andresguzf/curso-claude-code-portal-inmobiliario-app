@@ -1,0 +1,28 @@
+{
+  "name": "portal-inmobiliario",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently --names api,web --prefix-colors magenta,cyan \"npm run dev -w @portal/api\" \"npm run dev -w @portal/web\"",
+    "dev:web": "npm run dev -w @portal/web",
+    "dev:api": "npm run dev -w @portal/api",
+    "build": "npm run build -w @portal/api && npm run build -w @portal/web",
+    "start": "concurrently --names api,web --prefix-colors magenta,cyan \"npm run start -w @portal/api\" \"npm run start -w @portal/web\"",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "db:migrate": "npm run db:migrate -w @portal/api",
+    "db:migrate:status": "npm run db:migrate:status -w @portal/api",
+    "db:seed": "npm run db:seed -w @portal/api",
+    "db:studio": "npm run db:studio -w @portal/api",
+    "db:check": "npm run db:check -w @portal/api",
+    "db:generate": "npm run db:generate -w @portal/api"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

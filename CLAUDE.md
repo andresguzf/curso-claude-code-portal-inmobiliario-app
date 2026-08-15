@@ -64,11 +64,30 @@ Una tarea solo está terminada cuando:
 2. No escribas código sin un plan aprobado en `specs/portal-inmobiliario/plan.md`.
 3. Sigue tu progreso línea por línea en `specs/portal-inmobiliario/tasks.md`. Marca las tareas como [x] solo después de que las pruebas (tests) hayan pasado con éxito.
 
+## Estructura del proyecto
+
+Monorepo con npm workspaces:
+
+- `apps/web` — frontend Next.js (puerto 3000)
+- `apps/api` — backend Next.js con los Route Handlers y Prisma (puerto 3001)
+- `packages/contracts` — DTOs y enumeraciones compartidas (`@portal/contracts`)
+
+El frontend no depende de Prisma. La comunicación entre ambos pasa por
+`/api/*`, que el frontend reescribe hacia el backend.
+
 ## Comandos de Construcción y Pruebas
+
+Desde la raíz, aplican a todos los workspaces:
+
 - Instalar dependencias: `npm install`
 - Ejecutar pruebas: `npm test`
 - Ejecutar linter: `npm run lint`
-- Servidor de desarrollo: `npm run dev`
+- Verificar tipos: `npm run typecheck`
+- Servidor de desarrollo (ambas apps): `npm run dev`
+- Solo frontend / solo backend: `npm run dev:web` / `npm run dev:api`
+- Base de datos: `npm run db:migrate`, `npm run db:seed`, `npm run db:studio`
+
+Para un workspace concreto: `npm run <script> -w @portal/web`.
 
 ## Estilo de Código y Arquitectura
 - Seguir los principios de Arquitectura Limpia (Clean Architecture).

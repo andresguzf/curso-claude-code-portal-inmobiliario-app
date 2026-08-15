@@ -1,0 +1,14 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "Postgres local (Docker)",
+      "Group": "Servidores",
+      "Host": "host.docker.internal",
+      "Port": 5432,
+      "MaintenanceDB": "portal_inmobiliario",
+      "Username": "postgres",
+      "SSLMode": "prefer",
+      "Comment": "Contenedor `postgres` del host. La contraseña se solicita al conectar."
+    }
+  }
+}

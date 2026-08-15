@@ -1,35 +1,45 @@
 # Dependencias
 node_modules/
+.pnp
+.pnp.*
 
-# Build
-dist/
-dist-ssr/
+# Next.js
+.next/
+out/
+next-env.d.ts
 
-# Vite
-*.local
-.vite/
+# Producción
+build/
+
+# Testing
+coverage/
 
 # Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+.pnpm-debug.log*
 
 # Editor
 .vscode/*
 !.vscode/settings.json
 .idea/
 
-# OS
+# Sistema operativo
 .DS_Store
 Thumbs.db
 *.pem
 
-# next.js
-/.next/
-/out/
-
-# vercel
+# Vercel
 .vercel
 
-# env files (can opt-in for committing if needed)
-.env*
+# Typescript
+*.tsbuildinfo
+
+# Variables de entorno (nunca versionar secretos reales)
+.env
+.env.*
+!.env.example
+
+# Cliente de Prisma generado
+apps/api/src/generated/
