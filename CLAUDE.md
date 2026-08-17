@@ -1,5 +1,35 @@
 # CLAUDE.md
 
+## Sobre la aplicación
+
+Portal inmobiliario full stack orientado al mercado chileno. Los visitantes
+descubren propiedades en venta y arriendo, las buscan, filtran y ordenan, y
+consultan su detalle con fotografías, características y ubicación en el mapa.
+Los usuarios registrados guardan favoritas y revisan sus consultas; los
+administradores gestionan propiedades, imágenes, usuarios y solicitudes desde
+un área privada.
+
+Precios en USD. Tres roles: visitante, `USER` y `ADMIN`.
+
+### Cómo está construido
+
+- **Monorepo** con npm workspaces: `apps/web` (frontend), `apps/api`
+  (backend) y `packages/contracts` (DTOs compartidos).
+- **PostgreSQL** como única base de datos, con Prisma.
+- **API REST** mediante Route Handlers. Sin Server Actions.
+- El frontend **nunca** consulta la base de datos: siempre pasa por `/api/*`.
+- El navegador ve un solo origen; el frontend reescribe `/api/*` al backend.
+- Búsqueda, filtros y ordenamiento se resuelven **en PostgreSQL**, no en
+  memoria, y su estado vive en la URL para que sea compartible.
+- La autorización se aplica en el backend: el catálogo público solo expone
+  propiedades publicadas, y ningún filtro permite alcanzar un borrador.
+
+### Integraciones externas
+
+Cloudinary para imágenes, Google Maps para ubicación y Web3Forms para el
+formulario de contacto. Todas sus credenciales viven en `apps/api` y nunca
+llegan al navegador.
+
 ## Instrucciones del proyecto
 
 Este proyecto utiliza **Spec-Driven Development (SDD)**.
