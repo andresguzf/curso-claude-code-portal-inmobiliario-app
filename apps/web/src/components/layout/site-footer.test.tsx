@@ -10,8 +10,23 @@ describe("SiteFooter", () => {
     const navigation = screen.getByRole("navigation", { name: "Navegación" });
 
     for (const label of ["Inicio", "Propiedades", "Comprar", "Arrendar"]) {
-      expect(within(navigation).getByRole("link", { name: label })).toBeVisible();
+      expect(
+        within(navigation).getByRole("link", { name: label }),
+      ).toBeVisible();
     }
+  });
+
+  it("muestra el logo junto al nombre, sin duplicar la marca", () => {
+    const { container } = render(<SiteFooter />);
+
+    const logo = container.querySelector("svg");
+
+    expect(logo).toBeInTheDocument();
+    expect(logo).toHaveAttribute("aria-hidden", "true");
+    expect(screen.getByText("Portal Inmobiliario")).toHaveAttribute(
+      "translate",
+      "no",
+    );
   });
 
   it("muestra el aviso de derechos con el año actual", () => {

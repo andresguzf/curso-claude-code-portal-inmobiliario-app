@@ -1,6 +1,12 @@
 import "server-only";
 
+import type { PropertyListQuery } from "@portal/contracts";
+
 import { prisma } from "@/lib/prisma";
+import {
+  buildPropertyOrderBy,
+  buildPropertyWhere,
+} from "@/services/property-query";
 
 /**
  * Acceso a la tabla `properties`.
@@ -9,7 +15,7 @@ import { prisma } from "@/lib/prisma";
  * esa regla vive en la capa de servicios (plan.md, sección 8).
  */
 
-export type PropertyQueryFilter = {
+export type PropertyScope = {
   readonly isPublished?: boolean;
 };
 
@@ -27,17 +33,55 @@ const detailSelection = {
   features: true,
 } as const;
 
-export function findProperties(filter: PropertyQueryFilter) {
+export function findProperties(query: PropertyListQuery, scope: PropertyScope) {
   return prisma.property.findMany({
-    where: filter,
-    orderBy: { createdAt: "desc" },
+    where: buildPropertyWhere(query, scope),
+    // El ordenamiento se resuelve en PostgreSQL (plan.md, sección 9).
+    orderBy: [...buildPropertyOrderBy(query.sort)],
     include: summarySelection,
   });
 }
 
-export function findPropertyById(id: string, filter: PropertyQueryFilter) {
+export function findPropertyById(id: string, scope: PropertyScope) {
   return prisma.property.findFirst({
-    where: { id, ...filter },
+    where: { id, ...buildPropertyWhere({}, scope) },
     include: detailSelection,
   });
+}
+
+/**
+ * Valores distintos de ubicación, para poblar los filtros.
+ *
+ * Se resuelve con tres `DISTINCT` en PostgreSQL en lugar de traer el
+ * catálogo completo y deduplicar en memoria (plan.md, sección 9).
+ */
+export async function findLocationValues(scope: PropertyScope) {
+  const where = buildPropertyWhere({}, scope);
+
+  const [communes, cities, regions] = await Promise.all([
+    prisma.property.findMany({
+      where,
+      distinct: ["commune"],
+      select: { commune: true },
+      orderBy: { commune: "asc" },
+    }),
+    prisma.property.findMany({
+      where,
+      distinct: ["city"],
+      select: { city: true },
+      orderBy: { city: "asc" },
+    }),
+    prisma.property.findMany({
+      where,
+      distinct: ["region"],
+      select: { region: true },
+      orderBy: { region: "asc" },
+    }),
+  ]);
+
+  return {
+    communes: communes.map((row) => row.commune),
+    cities: cities.map((row) => row.city),
+    regions: regions.map((row) => row.region),
+  };
 }

@@ -28,18 +28,60 @@ export function formatPropertyPrice(
   return operationType === "RENT" ? `${formattedPrice}/mes` : formattedPrice;
 }
 
-/** Superficie en metros cuadrados, o `null` si la propiedad no la declara. */
+/**
+ * Superficie en metros cuadrados, o `null` si la propiedad no la declara.
+ *
+ * El espacio antes de la unidad es indivisible: «180 m²» no debe partirse
+ * entre dos líneas dejando «m²» huérfano.
+ */
 export function formatArea(squareMeters: number | null): string | null {
   if (squareMeters === null) {
     return null;
   }
 
-  return `${new Intl.NumberFormat(LOCALE).format(squareMeters)} m²`;
+  return `${new Intl.NumberFormat(LOCALE).format(squareMeters)} m²`;
 }
 
 /** Ubicación resumida para las tarjetas del catálogo. */
 export function formatShortLocation(commune: string, city: string): string {
   return commune === city ? commune : `${commune}, ${city}`;
+}
+
+/**
+ * Ubicación completa para el detalle (spec.md, sección 12).
+ *
+ * Se omiten los tramos repetidos: en «Puerto Varas, Puerto Varas, Región de
+ * Los Lagos» la ciudad no aporta nada.
+ */
+export function formatFullLocation(location: {
+  readonly address: string;
+  readonly commune: string;
+  readonly city: string;
+  readonly region: string;
+}): string {
+  const { address, commune, city, region } = location;
+  const parts = [address, commune, city, region];
+
+  return parts
+    .filter((part, index) => part !== "" && parts.indexOf(part) === index)
+    .join(", ");
+}
+
+/**
+ * Antigüedad de la propiedad.
+ *
+ * Cero años significa que está por estrenar, no «0 años».
+ */
+export function formatAge(ageYears: number | null): string | null {
+  if (ageYears === null) {
+    return null;
+  }
+
+  if (ageYears === 0) {
+    return "Nueva";
+  }
+
+  return ageYears === 1 ? "1 año" : `${ageYears} años`;
 }
 
 const OPERATION_LABELS: Record<OperationTypeValue, string> = {

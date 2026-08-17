@@ -3,6 +3,9 @@
  *
  * Es un formulario GET nativo: envía a `/properties` y la búsqueda queda
  * representada en los parámetros de la URL, sin JavaScript ni Server Actions.
+ *
+ * Va sobre una tarjeta clara dentro del hero oscuro, para que destaque como
+ * la acción principal de la portada.
  */
 export function PropertySearchForm() {
   return (
@@ -10,7 +13,7 @@ export function PropertySearchForm() {
       action="/properties"
       method="get"
       role="search"
-      className="flex w-full flex-col gap-3 rounded-xl border border-black/10 bg-background/80 p-4 shadow-sm backdrop-blur-sm sm:flex-row sm:items-end dark:border-white/15"
+      className="flex w-full flex-col gap-3 rounded-xl bg-card p-4 text-ink shadow-xl sm:flex-row sm:items-end"
     >
       <div className="flex-1">
         <label
@@ -23,8 +26,10 @@ export function PropertySearchForm() {
           id="buscador-texto"
           type="search"
           name="search"
-          placeholder="Comuna, ciudad o palabra clave"
-          className="w-full rounded-md border border-black/15 bg-transparent px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current dark:border-white/20"
+          placeholder="Comuna, ciudad o palabra clave…"
+          autoComplete="off"
+          spellCheck={false}
+          className="w-full rounded-md border border-line bg-card px-3 py-2 text-sm text-ink"
         />
       </div>
 
@@ -39,7 +44,7 @@ export function PropertySearchForm() {
           id="buscador-operacion"
           name="operation"
           defaultValue=""
-          className="w-full rounded-md border border-black/15 bg-transparent px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current dark:border-white/20"
+          className="w-full rounded-md border border-line bg-card px-3 py-2 text-sm text-ink"
         >
           <option value="">Todas</option>
           <option value="SALE">Comprar</option>
@@ -49,7 +54,7 @@ export function PropertySearchForm() {
 
       <button
         type="submit"
-        className="rounded-md bg-foreground px-5 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
+        className="rounded-md bg-accent px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-strong"
       >
         Buscar
       </button>

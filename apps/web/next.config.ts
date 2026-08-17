@@ -15,6 +15,8 @@ const nextConfig: NextConfig = {
       // Imágenes de marcador de posición del seed de desarrollo.
       // Cloudinary se incorpora en el Paso 26.
       { protocol: "https", hostname: "picsum.photos" },
+      // Fotografía de fondo del hero.
+      { protocol: "https", hostname: "images.unsplash.com" },
     ],
   },
 

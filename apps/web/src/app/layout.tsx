@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
 import { SiteFooter } from "@/components/layout/site-footer";
@@ -25,6 +25,14 @@ export const metadata: Metadata = {
     "Encuentra propiedades en venta y arriendo: casas, departamentos, terrenos y oficinas.",
 };
 
+/**
+ * Tiñe la interfaz del navegador con el color del header, de modo que la
+ * barra de estado en móvil no corte visualmente la página.
+ */
+export const viewport: Viewport = {
+  themeColor: "#2f3a45",
+};
+
 const MAIN_CONTENT_ID = "contenido-principal";
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -36,7 +44,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="flex min-h-full flex-col">
         <a
           href={`#${MAIN_CONTENT_ID}`}
-          className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-100 focus:rounded-md focus:bg-foreground focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-background"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-100 focus:rounded-md focus:bg-accent focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-white"
         >
           Saltar al contenido principal
         </a>

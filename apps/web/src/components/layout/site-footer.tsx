@@ -2,20 +2,24 @@ import Link from "next/link";
 
 import { PUBLIC_NAVIGATION_ITEMS } from "@/lib/navigation";
 
+import { SiteLogo } from "./site-logo";
+
 const linkClasses =
-  "rounded-md text-sm opacity-75 transition-opacity hover:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current";
+  "rounded-md text-sm text-on-dark-muted transition-colors hover:text-on-dark";
 
 export function SiteFooter() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="border-t border-black/10 dark:border-white/15">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-10 sm:px-6 lg:flex-row lg:items-start lg:justify-between lg:px-8">
+    <footer className="mt-16 bg-footer text-on-dark">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-12 sm:px-6 lg:flex-row lg:items-start lg:justify-between lg:px-8">
         <div className="max-w-sm">
-          <p className="text-base font-semibold tracking-tight">
-            Portal Inmobiliario
+          <p className="flex items-center gap-2.5 text-base font-semibold tracking-tight">
+            <SiteLogo className="size-7" />
+            {/* El nombre de marca no debe traducirse automáticamente. */}
+            <span translate="no">Portal Inmobiliario</span>
           </p>
-          <p className="mt-2 text-sm opacity-75">
+          <p className="mt-2 text-sm text-on-dark-muted">
             Propiedades en venta y arriendo: casas, departamentos, terrenos y
             oficinas.
           </p>
@@ -40,10 +44,12 @@ export function SiteFooter() {
         </nav>
       </div>
 
-      <div className="mx-auto w-full max-w-7xl border-t border-black/10 px-4 py-6 sm:px-6 lg:px-8 dark:border-white/15">
-        <p className="text-sm opacity-60">
-          © {currentYear} Portal Inmobiliario. Todos los derechos reservados.
-        </p>
+      <div className="border-t border-white/10">
+        <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+          <p className="text-sm text-on-dark-muted">
+            © {currentYear} Portal Inmobiliario. Todos los derechos reservados.
+          </p>
+        </div>
       </div>
     </footer>
   );

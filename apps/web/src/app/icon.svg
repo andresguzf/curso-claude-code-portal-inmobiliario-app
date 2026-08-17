@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Portal Inmobiliario">
+  <rect width="32" height="32" rx="8" fill="#9c5b34"/>
+  <!--
+    Trazo más grueso que en el logo de la interfaz: a 16 px, el tamaño real
+    de una pestaña, un trazo de 2 px se difumina hasta desaparecer.
+  -->
+  <g fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M7 16 16 8.5 25 16"/>
+    <path d="M10 15.5V24h12v-8.5"/>
+    <path d="M14 24v-5h4v5"/>
+  </g>
+</svg>

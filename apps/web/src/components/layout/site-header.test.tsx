@@ -19,6 +19,39 @@ afterEach(() => {
   mocks.searchParams = new URLSearchParams();
 });
 
+describe("SiteHeader — marca", () => {
+  it("muestra el logo junto al nombre, en un solo enlace al inicio", () => {
+    const { container } = render(<SiteHeader />);
+
+    const brand = screen.getByRole("link", { name: "Portal Inmobiliario" });
+
+    expect(brand).toHaveAttribute("href", "/");
+    expect(container.querySelector("header svg")).toBeInTheDocument();
+  });
+
+  it("oculta el logo a las tecnologías de asistencia, que ya leen el nombre", () => {
+    const { container } = render(<SiteHeader />);
+
+    // El primer svg del header es el logo; el segundo, el ícono del menú.
+    const logo = container.querySelector("header a svg");
+
+    expect(logo).toHaveAttribute("aria-hidden", "true");
+    // El nombre accesible del enlace viene solo del texto, sin duplicarse.
+    expect(
+      screen.getByRole("link", { name: "Portal Inmobiliario" }),
+    ).toBeInTheDocument();
+  });
+
+  it("evita que la traducción automática altere el nombre de marca", () => {
+    render(<SiteHeader />);
+
+    expect(screen.getByText("Portal Inmobiliario")).toHaveAttribute(
+      "translate",
+      "no",
+    );
+  });
+});
+
 describe("SiteHeader", () => {
   it("muestra la navegación pública completa", () => {
     render(<SiteHeader />);
@@ -32,7 +65,9 @@ describe("SiteHeader", () => {
       "Arrendar",
       "Ingresar",
     ]) {
-      expect(within(navigation).getByRole("link", { name: label })).toBeVisible();
+      expect(
+        within(navigation).getByRole("link", { name: label }),
+      ).toBeVisible();
     }
   });
 
@@ -44,13 +79,12 @@ describe("SiteHeader", () => {
 
     const navigation = screen.getByRole("navigation", { name: "Principal" });
 
-    expect(within(navigation).getByRole("link", { name: "Arrendar" })).toHaveAttribute(
-      "aria-current",
-      "page",
-    );
-    expect(within(navigation).getByRole("link", { name: "Comprar" })).not.toHaveAttribute(
-      "aria-current",
-    );
+    expect(
+      within(navigation).getByRole("link", { name: "Arrendar" }),
+    ).toHaveAttribute("aria-current", "page");
+    expect(
+      within(navigation).getByRole("link", { name: "Comprar" }),
+    ).not.toHaveAttribute("aria-current");
   });
 
   it("abre y cierra el menú móvil desde el botón", async () => {

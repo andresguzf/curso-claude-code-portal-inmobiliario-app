@@ -16,7 +16,7 @@ type SiteNavigationLinksProps = {
 };
 
 const baseLinkClasses =
-  "rounded-md px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current";
+  "rounded-md px-3 py-2 text-sm font-medium transition-colors";
 
 export function SiteNavigationLinks({
   variant,
@@ -50,8 +50,8 @@ export function SiteNavigationLinks({
                 baseLinkClasses,
                 isMobile && "block",
                 isActive
-                  ? "bg-black/5 font-semibold dark:bg-white/10"
-                  : "opacity-75 hover:bg-black/5 hover:opacity-100 dark:hover:bg-white/10",
+                  ? "bg-header-hover font-semibold text-on-dark"
+                  : "text-on-dark-muted hover:bg-header-hover hover:text-on-dark",
               )}
             >
               {item.label}
@@ -66,7 +66,7 @@ export function SiteNavigationLinks({
           onClick={onNavigate}
           className={cn(
             baseLinkClasses,
-            "block bg-foreground text-center text-background hover:opacity-90",
+            "block bg-accent text-center text-white hover:bg-accent-strong",
           )}
         >
           {LOGIN_NAVIGATION_ITEM.label}
