@@ -1,26 +1,108 @@
 @import "tailwindcss";
 
+/**
+ * Paleta del portal.
+ *
+ * Tres planos: un header y un pie oscuros que enmarcan, un cuerpo claro y
+ * cálido donde vive el contenido, y un acento terracota para los elementos
+ * que deben llamar la atención (precio, acciones, propiedades destacadas).
+ *
+ * Los colores se declaran una sola vez aquí y se consumen como utilidades de
+ * Tailwind (`bg-card`, `text-ink-muted`, `border-line`), de modo que ajustar
+ * la paleta no obliga a recorrer los componentes.
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Los controles de formulario deben dibujarse en claro. */
+  color-scheme: light;
+
+  /* Superficies del cuerpo */
+  --page: #f5f2ed;
+  --card: #ffffff;
+  --muted: #ebe5dc;
+
+  /* Superficies oscuras que enmarcan */
+  --header: #2f3a45;
+  --header-hover: #3d4a57;
+  --footer: #3a3733;
+
+  /* Acento terracota */
+  --accent: #9c5b34;
+  --accent-strong: #82492a;
+  --accent-soft: #f2e5da;
+
+  /* Texto */
+  --ink: #2b2724;
+  --ink-muted: #6b635c;
+  --on-dark: #f5f2ed;
+  --on-dark-muted: #b9b2aa;
+
+  /* Bordes */
+  --line: #ded6cb;
+  --line-strong: #c3b8aa;
+  --line-on-dark: #4b5765;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-page: var(--page);
+  --color-card: var(--card);
+  --color-muted: var(--muted);
+
+  --color-header: var(--header);
+  --color-header-hover: var(--header-hover);
+  --color-footer: var(--footer);
+
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-soft: var(--accent-soft);
+
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-on-dark: var(--on-dark);
+  --color-on-dark-muted: var(--on-dark-muted);
+
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-line-on-dark: var(--line-on-dark);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+body {
+  background: var(--page);
+  color: var(--ink);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  /* Evita el retardo de 300 ms por doble toque en móvil. */
+  touch-action: manipulation;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+/* Anillo de foco uniforme y visible sobre cualquier superficie. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/**
+ * El header es fijo, así que un destino de ancla quedaría oculto detrás.
+ * Se reserva su altura al desplazarse hacia cualquier elemento con `id`.
+ */
+[id] {
+  scroll-margin-top: 5rem;
+}
+
+/**
+ * Respeta la preferencia de movimiento reducido.
+ *
+ * Quien la activa suele hacerlo por mareo o sensibilidad vestibular: las
+ * animaciones se anulan en lugar de acortarse.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

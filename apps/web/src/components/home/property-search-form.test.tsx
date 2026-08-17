@@ -29,14 +29,15 @@ describe("PropertySearchForm", () => {
   it("ofrece filtrar por venta o arriendo, con ambas por omisión", () => {
     render(<PropertySearchForm />);
 
-    const operationSelect = screen.getByLabelText<HTMLSelectElement>(
-      "Operación",
-    );
+    const operationSelect =
+      screen.getByLabelText<HTMLSelectElement>("Operación");
 
     expect(operationSelect.value).toBe("");
-    expect(
-      [...operationSelect.options].map((option) => option.value),
-    ).toEqual(["", "SALE", "RENT"]);
+    expect([...operationSelect.options].map((option) => option.value)).toEqual([
+      "",
+      "SALE",
+      "RENT",
+    ]);
   });
 
   it("expone un botón de envío accesible", () => {

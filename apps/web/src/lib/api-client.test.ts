@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { buildApiUrl, resolveApiBaseUrl } from "./api-client";
+import { QUERY_PARAM_NAMES } from "@portal/contracts";
+
+import {
+  buildApiUrl,
+  buildPropertyQueryString,
+  resolveApiBaseUrl,
+} from "./api-client";
 
 const IN_BROWSER = true;
 const ON_SERVER = false;
@@ -51,6 +57,89 @@ describe("buildApiUrl", () => {
   it("no duplica la barra cuando la base termina en una", () => {
     expect(buildApiUrl("/api/properties", "http://localhost:3001/")).toBe(
       "http://localhost:3001/api/properties",
+    );
+  });
+});
+
+describe("buildPropertyQueryString", () => {
+  it("no añade nada cuando no hay parámetros", () => {
+    expect(buildPropertyQueryString({})).toBe("");
+  });
+
+  it("omite una búsqueda vacía en lugar de dejar ?search=", () => {
+    expect(buildPropertyQueryString({ search: "" })).toBe("");
+    expect(buildPropertyQueryString({ search: "   " })).toBe("");
+    expect(buildPropertyQueryString({ search: undefined })).toBe("");
+  });
+
+  it("serializa la búsqueda", () => {
+    expect(buildPropertyQueryString({ search: "providencia" })).toBe(
+      "?search=providencia",
+    );
+  });
+
+  it("recorta los espacios de los extremos", () => {
+    expect(buildPropertyQueryString({ search: "  las condes  " })).toBe(
+      "?search=las+condes",
+    );
+  });
+
+  it("serializa el criterio de ordenamiento", () => {
+    expect(buildPropertyQueryString({ sort: "price-asc" })).toBe(
+      "?sort=price-asc",
+    );
+  });
+
+  it("serializa los filtros múltiples repitiendo el parámetro", () => {
+    const queryString = buildPropertyQueryString({
+      communes: ["Las Condes", "Providencia"],
+      types: ["HOUSE", "APARTMENT"],
+      operations: ["SALE"],
+    });
+    const params = new URLSearchParams(queryString);
+
+    expect(params.getAll("commune")).toEqual(["Las Condes", "Providencia"]);
+    expect(params.getAll("type")).toEqual(["HOUSE", "APARTMENT"]);
+    expect(params.getAll("operation")).toEqual(["SALE"]);
+  });
+
+  it("omite las listas vacías", () => {
+    expect(buildPropertyQueryString({ communes: [], types: [] })).toBe("");
+  });
+
+  /**
+   * Sin esta prueba un parámetro nuevo del contrato podía quedar sin
+   * serializar y la interfaz mostraría resultados que no corresponden a lo
+   * pedido, sin error visible.
+   */
+  it("serializa todos los parámetros que declara el contrato", () => {
+    const queryString = buildPropertyQueryString({
+      search: "parque",
+      operations: ["SALE"],
+      types: ["HOUSE"],
+      minPrice: 100,
+      maxPrice: 900,
+      bedrooms: 2,
+      bathrooms: 1,
+      minUsableArea: 50,
+      communes: ["Ñuñoa"],
+      city: "Santiago",
+      region: "Región Metropolitana",
+      sort: "price-desc",
+    });
+    const params = new URLSearchParams(queryString);
+
+    for (const paramName of Object.values(QUERY_PARAM_NAMES)) {
+      expect(params.has(paramName), `falta «${paramName}»`).toBe(true);
+    }
+  });
+
+  it("codifica acentos y caracteres especiales", () => {
+    expect(buildPropertyQueryString({ search: "Ñuñoa" })).toBe(
+      "?search=%C3%91u%C3%B1oa",
+    );
+    expect(buildPropertyQueryString({ search: "a&b=c" })).toBe(
+      "?search=a%26b%3Dc",
     );
   });
 });

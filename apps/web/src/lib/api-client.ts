@@ -1,4 +1,10 @@
-import type { PropertyListDto } from "@portal/contracts";
+import {
+  QUERY_PARAM_NAMES,
+  type PropertyDetailDto,
+  type PropertyFilterOptionsDto,
+  type PropertyListDto,
+  type PropertyListQuery,
+} from "@portal/contracts";
 
 /**
  * Cliente de la API REST.
@@ -50,9 +56,52 @@ export function buildApiUrl(
   return `${removeTrailingSlashes(baseUrl)}${normalizedPath}`;
 }
 
+/**
+ * Serializa los parámetros de consulta del catálogo.
+ *
+ * Se recorre `QUERY_PARAM_NAMES` en lugar de una lista propia: ese mapa está
+ * tipado como `Record<keyof PropertyListQuery, string>`, así que agregar un
+ * parámetro al contrato obliga a declararlo ahí y queda serializado sin
+ * tocar esta función. Una lista aparte podía quedarse corta en silencio.
+ *
+ * Los valores vacíos se omiten para que la URL no acumule parámetros inertes
+ * como `?search=&operation=`. Los filtros múltiples se expresan repitiendo el
+ * parámetro (`?commune=Las+Condes&commune=Providencia`), que es la convención
+ * de HTML y lo que espera el backend.
+ */
+export function buildPropertyQueryString(query: PropertyListQuery): string {
+  const searchParams = new URLSearchParams();
+
+  for (const [key, paramName] of Object.entries(QUERY_PARAM_NAMES) as [
+    keyof PropertyListQuery,
+    string,
+  ][]) {
+    const value = query[key];
+
+    if (value === undefined || value === null) {
+      continue;
+    }
+
+    for (const item of Array.isArray(value) ? value : [value]) {
+      const serialized = typeof item === "string" ? item.trim() : String(item);
+
+      if (serialized !== "") {
+        searchParams.append(paramName, serialized);
+      }
+    }
+  }
+
+  const queryString = searchParams.toString();
+
+  return queryString ? `?${queryString}` : "";
+}
+
 /** Propiedades publicadas. Lanza si la API no responde correctamente. */
-export async function fetchPublicProperties(): Promise<PropertyListDto> {
-  const response = await fetch(buildApiUrl("/api/properties"), {
+export async function fetchPublicProperties(
+  query: PropertyListQuery = {},
+): Promise<PropertyListDto> {
+  const path = `/api/properties${buildPropertyQueryString(query)}`;
+  const response = await fetch(buildApiUrl(path), {
     // El catálogo cambia cuando ADMIN publica o despublica una propiedad.
     cache: "no-store",
   });
@@ -64,4 +113,48 @@ export async function fetchPublicProperties(): Promise<PropertyListDto> {
   }
 
   return (await response.json()) as PropertyListDto;
+}
+
+/**
+ * Detalle de una propiedad publicada.
+ *
+ * Devuelve `null` cuando la API responde 404 y lanza ante cualquier otro
+ * fallo. La distinción es importante: un 404 significa que la propiedad no
+ * existe o no está publicada, mientras que un backend caído no dice nada
+ * sobre la propiedad y no debe presentarse como «no encontrada».
+ */
+export async function fetchPublicPropertyById(
+  id: string,
+): Promise<PropertyDetailDto | null> {
+  const response = await fetch(
+    buildApiUrl(`/api/properties/${encodeURIComponent(id)}`),
+    { cache: "no-store" },
+  );
+
+  if (response.status === 404) {
+    return null;
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      `La API respondió ${response.status} al obtener la propiedad.`,
+    );
+  }
+
+  return (await response.json()) as PropertyDetailDto;
+}
+
+/** Ubicaciones disponibles para los filtros del catálogo. */
+export async function fetchFilterOptions(): Promise<PropertyFilterOptionsDto> {
+  const response = await fetch(buildApiUrl("/api/properties/filter-options"), {
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `La API respondió ${response.status} al obtener los filtros.`,
+    );
+  }
+
+  return (await response.json()) as PropertyFilterOptionsDto;
 }

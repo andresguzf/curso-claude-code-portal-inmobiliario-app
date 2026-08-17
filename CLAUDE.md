@@ -89,6 +89,46 @@ Desde la raíz, aplican a todos los workspaces:
 
 Para un workspace concreto: `npm run <script> -w @portal/web`.
 
+Formato de código: `npx prettier --write "apps/web/src/**/*.{ts,tsx,css}"`.
+
+## Sistema de diseño
+
+La paleta vive en `apps/web/src/app/globals.css` como variables CSS expuestas
+a Tailwind mediante `@theme inline`. Los componentes usan las utilidades
+resultantes y nunca colores literales.
+
+| Token | Uso |
+|---|---|
+| `header`, `header-hover` | Barra superior y hero (azul grisáceo) |
+| `footer` | Pie de página (gris pardo) |
+| `page` | Fondo del cuerpo (arena cálida) |
+| `card` | Tarjetas y paneles |
+| `muted` | Superficies secundarias y marcadores de carga |
+| `accent`, `accent-strong`, `accent-soft` | Precios, acciones y destacados (terracota) |
+| `ink`, `ink-muted` | Texto sobre fondo claro |
+| `on-dark`, `on-dark-muted` | Texto sobre fondo oscuro |
+| `line`, `line-strong`, `line-on-dark` | Bordes |
+
+La interfaz es de tema claro único: `globals.css` fija `color-scheme: light`.
+Cambiar la paleta no debe requerir tocar componentes.
+
+## Estado del proyecto
+
+Fases 1 y 2 completas (pasos 1 a 13 de `tasks.md`). En funcionamiento:
+portada, catálogo con búsqueda, filtros combinados, ordenamiento, estados de
+carga/vacío/error y detalle de propiedad.
+
+Pendiente desde el paso 14: galería, Google Maps, contacto con Web3Forms,
+autenticación, favoritos y área de administración.
+
+### Limitaciones conocidas
+
+- La búsqueda y los filtros de ubicación distinguen acentos: `nunoa` no
+  encuentra `Ñuñoa`. Resolverlo requiere la extensión `unaccent` de
+  PostgreSQL (previsto para el paso 32).
+- Las imágenes del seed son de `picsum.photos`. Cloudinary se integra en el
+  paso 26.
+
 ## Estilo de Código y Arquitectura
 - Seguir los principios de Arquitectura Limpia (Clean Architecture).
 - Usar nombres de variables explícitos. No usar abreviaturas.
@@ -99,6 +139,8 @@ Para un workspace concreto: `npm run <script> -w @portal/web`.
 | Skill | Path | Description |
 |---|---|---|
 | `react-rules` | `.claude/skills/react-rules/SKILL.md` | Estándares de desarrollo y reglas de arquitectura para proyectos y componentes de React con TypeScript, Tailwind CSS, Zustand, Zod, React Hook Form y React Query / SWR. |
+| `web-design-guidelines` | `.claude/skills/web-design-guidelines/SKILL.md` | Revisa el código de interfaz contra las Web Interface Guidelines de Vercel: accesibilidad, estados de foco, formularios, animación, tipografía, imágenes, rendimiento, navegación, áreas seguras, tematización e i18n. |
+| `vercel-react-best-practices` | `.claude/skills/vercel-react-best-practices/SKILL.md` | Pautas de rendimiento de React y Next.js de Vercel Engineering: componentes, obtención de datos, tamaño de bundle y optimización. |
 
 ---
 
@@ -114,3 +156,20 @@ Para un workspace concreto: `npm run <script> -w @portal/web`.
   - Implementar formularios utilizando React Hook Form con resolver de Zod.
   - Implementar lógica de UI o fetching de APIs utilizando TanStack Query (React Query) o SWR.
   - Refactorizar código React para cumplir con principios de inmutabilidad, pureza y correcto uso de `useEffect`.
+
+### `web-design-guidelines`
+- **Activación**: Activar esta habilidad cuando el usuario pida:
+  - Cambiar el look and feel, la paleta de colores, el diseño visual o el tema.
+  - Revisar o auditar la interfaz, la accesibilidad, la usabilidad o la experiencia de uso.
+  - Crear o modificar formularios, estados de foco, animaciones o estados de carga.
+  - Trabajar en comportamiento responsive, modo oscuro o áreas seguras.
+  - Implementar los pasos 33 (responsive y accesibilidad) y 35 (QA integral) de `tasks.md`.
+- **Nota**: la habilidad descarga las reglas vigentes desde su URL de origen en cada
+  ejecución. Requiere acceso de red.
+
+### `vercel-react-best-practices`
+- **Activación**: Activar esta habilidad cuando el usuario pida:
+  - Optimizar el rendimiento de React o Next.js.
+  - Revisar obtención de datos, Server Components, `Suspense`, streaming o caché.
+  - Reducir el tamaño del bundle o eliminar renderizados innecesarios.
+  - Implementar el paso 32 (optimización) de `tasks.md`.

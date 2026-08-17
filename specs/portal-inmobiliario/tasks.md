@@ -51,22 +51,22 @@
   - Secciones comprar y arrendar.
   - Llamadas a la acción.
 
-- [ ] **Paso 8 — PropertyCard y grid responsive**
+- [x] **Paso 8 — PropertyCard y grid responsive**
   - Crear componente reutilizable.
   - Imagen, título, precio, operación, ubicación, dormitorios, baños y superficie.
   - Crear grid responsive.
 
-- [ ] **Paso 9 — Catálogo**
+- [x] **Paso 9 — Catálogo**
   - Crear `/properties`.
   - Consumir API REST.
   - Mostrar propiedades publicadas.
 
-- [ ] **Paso 10 — Búsqueda**
+- [x] **Paso 10 — Búsqueda**
   - Búsqueda textual.
   - Título, comuna, ciudad, región y descripción.
   - Reflejar búsqueda en query parameters.
 
-- [ ] **Paso 11 — Filtros**
+- [x] **Paso 11 — Filtros**
   - Venta/arriendo.
   - Tipo.
   - Rango de precio.
@@ -76,14 +76,14 @@
   - Comuna/ciudad/región.
   - Permitir filtros combinados.
 
-- [ ] **Paso 12 — Ordenamiento y estados**
+- [x] **Paso 12 — Ordenamiento y estados**
   - Más recientes.
   - Precio ascendente/descendente.
   - Superficie ascendente/descendente.
   - Loading, vacío y error.
   - Skeletons cuando aporten valor.
 
-- [ ] **Paso 13 — Detalle de propiedad**
+- [x] **Paso 13 — Detalle de propiedad**
   - Crear `/properties/{id}`.
   - Mostrar información completa.
   - Consumir exclusivamente API REST.

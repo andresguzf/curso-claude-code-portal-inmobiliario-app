@@ -38,3 +38,24 @@ export const UserRole = {
 } as const;
 
 export type UserRoleValue = (typeof UserRole)[keyof typeof UserRole];
+
+/**
+ * Validadores del vocabulario.
+ *
+ * Viven en el contrato para que backend y frontend apliquen exactamente el
+ * mismo criterio sobre los valores que viajan por la URL.
+ */
+
+export function isOperationType(value: unknown): value is OperationTypeValue {
+  return (
+    typeof value === "string" &&
+    Object.values<string>(OperationType).includes(value)
+  );
+}
+
+export function isPropertyType(value: unknown): value is PropertyTypeValue {
+  return (
+    typeof value === "string" &&
+    Object.values<string>(PropertyType).includes(value)
+  );
+}

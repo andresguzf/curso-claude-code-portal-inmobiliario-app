@@ -33,6 +33,7 @@ export default async function HomePage() {
         properties={featured}
         linkHref="/properties"
         linkLabel="Ver todo el catálogo"
+        prioritizeImages
       />
 
       <PropertyShowcase
@@ -78,9 +79,9 @@ async function loadProperties(): Promise<readonly PropertySummaryDto[]> {
 
 function EmptyCatalogNotice() {
   return (
-    <section className="border-b border-black/10 dark:border-white/15">
+    <section className="border-b border-line">
       <div className="mx-auto w-full max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <p className="text-sm opacity-75">
+        <p className="text-sm text-ink-muted">
           Por ahora no hay propiedades publicadas. Vuelve a intentarlo en unos
           minutos.
         </p>
