@@ -9,7 +9,7 @@ favoritas, y los administradores gestionar el portal desde un área privada.
 
 ## Estado
 
-Pasos 1 a 15 de `specs/portal-inmobiliario/tasks.md` completos.
+Pasos 1 a 16 de `specs/portal-inmobiliario/tasks.md` completos.
 
 | Funcionalidad | Estado |
 |---|---|
@@ -21,7 +21,7 @@ Pasos 1 a 15 de `specs/portal-inmobiliario/tasks.md` completos.
 | Detalle de propiedad | ✅ |
 | Galería de imágenes | ✅ |
 | Ubicación en Google Maps | ✅ |
-| Contacto con Web3Forms | Paso 16 |
+| Formulario de contacto con Web3Forms | ✅ |
 | Autenticación y favoritos | Pasos 17-21 |
 | Área de administración | Pasos 22-30 |
 
@@ -173,6 +173,11 @@ en precios y acciones. La interfaz es de tema claro único.
   PostgreSQL, previsto para el paso 32.
 - Las imágenes del seed provienen de `picsum.photos`. Cloudinary se integra
   en el paso 26.
+- El formulario de contacto necesita `NEXT_PUBLIC_WEB3FORMS_ACCESS_KEY` en
+  `apps/web/.env`, que se obtiene gratis en web3forms.com. Vive en el
+  frontend porque el plan gratuito de Web3Forms solo acepta envíos desde el
+  navegador. Una consulta enviada todavía no se guarda en PostgreSQL: la
+  persistencia llega en el paso 21.
 - El mapa del detalle necesita dos claves de Google Maps: una de
   geocodificación en `apps/api/.env` (`GOOGLE_MAPS_API_KEY`) y otra para el
   mapa del navegador en `apps/web/.env`

@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import type { PropertyDetailDto } from "@portal/contracts";
 
 import { CatalogStatus } from "@/components/property/catalog-status";
+import { PropertyContactForm } from "@/components/property/property-contact-form";
 import { PropertyFeatures } from "@/components/property/property-features";
 import { PropertyGallery } from "@/components/property/property-gallery";
 import { PropertyLocation } from "@/components/property/property-location";
@@ -27,8 +28,7 @@ export const dynamic = "force-dynamic";
  * visible, y una propiedad despublicada responde 404 igual que una
  * inexistente.
  *
- * El formulario de contacto llega en el paso 16 y la metadata dinámica en el
- * paso 31.
+ * La metadata dinámica llega en el paso 31.
  */
 export default async function PropertyDetailPage({
   params,
@@ -122,6 +122,11 @@ function PropertyDetail({
         <PropertyLocation
           location={property}
           coordinates={property.coordinates}
+        />
+
+        <PropertyContactForm
+          propertyId={property.id}
+          propertyTitle={property.title}
         />
       </div>
     </article>

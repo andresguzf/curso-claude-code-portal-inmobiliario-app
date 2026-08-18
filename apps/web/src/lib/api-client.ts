@@ -1,5 +1,8 @@
 import {
   QUERY_PARAM_NAMES,
+  type ApiErrorDto,
+  type InquiryCreatedDto,
+  type InquiryRequestDto,
   type PropertyDetailDto,
   type PropertyFilterOptionsDto,
   type PropertyListDto,
@@ -157,4 +160,36 @@ export async function fetchFilterOptions(): Promise<PropertyFilterOptionsDto> {
   }
 
   return (await response.json()) as PropertyFilterOptionsDto;
+}
+
+/**
+ * Envía una consulta sobre una propiedad.
+ *
+ * Se ejecuta en el navegador, así que la ruta es relativa y la clave de
+ * Web3Forms se queda en el backend.
+ *
+ * Los errores del servidor traen un mensaje pensado para leerse, y es ese el
+ * que se propaga: quien escribió el formulario necesita saber si debe
+ * corregir un campo o reintentar más tarde.
+ */
+export async function submitInquiry(
+  inquiry: InquiryRequestDto,
+): Promise<InquiryCreatedDto> {
+  const response = await fetch(buildApiUrl("/api/inquiries"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(inquiry),
+  });
+
+  const body: unknown = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    const message = (body as ApiErrorDto | null)?.message;
+
+    throw new Error(
+      message ?? "No pudimos enviar tu consulta. Vuelve a intentarlo.",
+    );
+  }
+
+  return body as InquiryCreatedDto;
 }
