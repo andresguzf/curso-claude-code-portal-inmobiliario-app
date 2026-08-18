@@ -54,8 +54,11 @@ function buildProperty(
   };
 }
 
-/** El mapa se resuelve fuera del mapeador: aquí solo se comprueba que pasa. */
-const MAP_CONTEXT = { mapImageUrl: "/api/properties/property-1/map" } as const;
+/** Las coordenadas se resuelven fuera del mapeador: aquí solo se comprueba
+ *  que las traslada al DTO. */
+const MAP_CONTEXT = {
+  coordinates: { latitude: -33.4094935, longitude: -70.5847201 },
+} as const;
 
 describe("selectPrimaryImage", () => {
   it("devuelve null cuando la propiedad no tiene imágenes", () => {
@@ -189,12 +192,13 @@ describe("toPropertyDetail", () => {
     });
   });
 
-  it("traslada la ruta del mapa recibida en el contexto", () => {
-    expect(toPropertyDetail(buildProperty(), MAP_CONTEXT).mapImageUrl).toBe(
-      "/api/properties/property-1/map",
-    );
+  it("traslada las coordenadas recibidas en el contexto", () => {
+    expect(toPropertyDetail(buildProperty(), MAP_CONTEXT).coordinates).toEqual({
+      latitude: -33.4094935,
+      longitude: -70.5847201,
+    });
     expect(
-      toPropertyDetail(buildProperty(), { mapImageUrl: null }).mapImageUrl,
+      toPropertyDetail(buildProperty(), { coordinates: null }).coordinates,
     ).toBeNull();
   });
 

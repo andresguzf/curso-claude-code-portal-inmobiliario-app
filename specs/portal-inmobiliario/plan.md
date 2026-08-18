@@ -302,6 +302,25 @@ No solicitar coordenadas manuales.
 
 Si posteriormente se requiere geocodificación interna, debe ser transparente para ADMIN y no modificar los campos obligatorios del formulario.
 
+### Reparto entre servidor y navegador
+
+La integración se resuelve en dos tramos, cada uno con su clave:
+
+```text
+Backend   → Geocoding API  → latitud/longitud a partir de la dirección
+Navegador → Maps JavaScript API → mapa interactivo en esas coordenadas
+```
+
+La geocodificación ocurre en el servidor porque su clave es un secreto y
+porque así ADMIN nunca ve ni escribe coordenadas. El resultado se guarda en
+memoria mientras la dirección no cambie, para no repetir la consulta —y el
+consumo de cuota— en cada visita a la ficha.
+
+El mapa se dibuja en el navegador, que es donde vive el Maps JavaScript API.
+Su clave es distinta de la del servidor y pública por diseño: viaja en el
+HTML, y su protección no es el secreto sino la restricción por *referrer*
+configurada en Google Cloud.
+
 ## 13. Web3Forms
 
 Flujo:
@@ -347,13 +366,20 @@ desde el directorio de la aplicación.
 - conexión PostgreSQL;
 - secretos de autenticación;
 - credenciales Cloudinary;
-- configuración Google Maps;
+- clave de geocodificación de Google Maps;
 - clave Web3Forms.
 
 `apps/web/.env`:
 
 - `NEXT_PUBLIC_SITE_URL` (metadata y Open Graph);
-- `API_INTERNAL_URL` (destino del proxy hacia el backend).
+- `API_INTERNAL_URL` (destino del proxy hacia el backend);
+- `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` (mapa del detalle).
+
+La clave del mapa es la única credencial que llega al navegador, y lo hace
+porque el Maps JavaScript API se ejecuta allí: no existe forma de dibujar el
+mapa sin ella. Se protege restringiéndola por *referrer* y por API en Google
+Cloud, no ocultándola. El prefijo `NEXT_PUBLIC_` deja constancia explícita de
+que es pública; el resto de credenciales sigue sin salir de `apps/api`.
 
 Crear un `.env.example` por aplicación, sin secretos reales.
 

@@ -173,6 +173,12 @@ en precios y acciones. La interfaz es de tema claro único.
   PostgreSQL, previsto para el paso 32.
 - Las imágenes del seed provienen de `picsum.photos`. Cloudinary se integra
   en el paso 26.
+- El mapa del detalle necesita dos claves de Google Maps: una de
+  geocodificación en `apps/api/.env` (`GOOGLE_MAPS_API_KEY`) y otra para el
+  mapa del navegador en `apps/web/.env`
+  (`NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`). La segunda es pública por diseño y se
+  protege restringiéndola por *referrer*. Sin ellas la ficha muestra la
+  dirección y el enlace a Google Maps, pero no el mapa.
 
 ## Flujo de desarrollo
 

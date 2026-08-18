@@ -1,10 +1,9 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
-  buildPropertyMapImageUrl,
-  buildPropertyMapPath,
-  buildStaticMapUrl,
+  clearCoordinatesCache,
   readGoogleMapsApiKey,
+  resolvePropertyCoordinates,
 } from "./property-map";
 
 const LAS_CONDES = {
@@ -14,8 +13,31 @@ const LAS_CONDES = {
   region: "Región Metropolitana",
 };
 
+const GOOGLE_RESPONSE = {
+  results: [{ location: { latitude: -33.4094935, longitude: -70.5847201 } }],
+};
+
+function stubFetch(payload: unknown, ok = true) {
+  const fetchMock = vi.fn(async () => ({
+    ok,
+    status: ok ? 200 : 403,
+    json: async () => payload,
+  }));
+
+  vi.stubGlobal("fetch", fetchMock);
+
+  return fetchMock;
+}
+
+beforeEach(() => {
+  clearCoordinatesCache();
+  vi.stubEnv("GOOGLE_MAPS_API_KEY", "clave-de-prueba");
+});
+
 afterEach(() => {
   vi.unstubAllEnvs();
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 describe("readGoogleMapsApiKey", () => {
@@ -26,74 +48,71 @@ describe("readGoogleMapsApiKey", () => {
   it("trata una clave vacía o en blanco como ausente", () => {
     expect(readGoogleMapsApiKey("")).toBeNull();
     expect(readGoogleMapsApiKey("   ")).toBeNull();
-    expect(readGoogleMapsApiKey(undefined)).toBeNull();
   });
 
   it("lee la variable de entorno cuando no recibe argumento", () => {
-    vi.stubEnv("GOOGLE_MAPS_API_KEY", "clave-de-entorno");
+    expect(readGoogleMapsApiKey()).toBe("clave-de-prueba");
 
-    expect(readGoogleMapsApiKey()).toBe("clave-de-entorno");
-  });
-});
-
-describe("buildPropertyMapImageUrl", () => {
-  it("devuelve la ruta del mapa cuando hay clave", () => {
-    vi.stubEnv("GOOGLE_MAPS_API_KEY", "clave-real");
-
-    expect(buildPropertyMapImageUrl("seed-property-01")).toBe(
-      "/api/properties/seed-property-01/map",
-    );
-  });
-
-  it("devuelve null cuando la integración no está configurada", () => {
     vi.stubEnv("GOOGLE_MAPS_API_KEY", "");
 
-    expect(buildPropertyMapImageUrl("seed-property-01")).toBeNull();
+    expect(readGoogleMapsApiKey()).toBeNull();
   });
 });
 
-describe("buildPropertyMapPath", () => {
-  it("codifica el identificador para que no rompa la ruta", () => {
-    expect(buildPropertyMapPath("casa/las condes")).toBe(
-      "/api/properties/casa%2Flas%20condes/map",
-    );
-  });
-});
+describe("resolvePropertyCoordinates", () => {
+  it("devuelve las coordenadas que resuelve Google", async () => {
+    stubFetch(GOOGLE_RESPONSE);
 
-describe("buildStaticMapUrl", () => {
-  const mapUrl = new URL(buildStaticMapUrl(LAS_CONDES, "clave-secreta"));
-
-  it("apunta a la Maps Static API de Google", () => {
-    expect(mapUrl.origin + mapUrl.pathname).toBe(
-      "https://maps.googleapis.com/maps/api/staticmap",
-    );
+    expect(await resolvePropertyCoordinates(LAS_CONDES)).toEqual({
+      latitude: -33.4094935,
+      longitude: -70.5847201,
+    });
   });
 
-  it("centra el mapa en la dirección textual, con país", () => {
-    expect(mapUrl.searchParams.get("center")).toBe(
-      "Avenida Presidente Riesco 4520, Las Condes, Santiago, Región Metropolitana, Chile",
-    );
+  it("no consulta a Google si no hay clave configurada", async () => {
+    vi.stubEnv("GOOGLE_MAPS_API_KEY", "");
+    const fetchMock = stubFetch(GOOGLE_RESPONSE);
+
+    expect(await resolvePropertyCoordinates(LAS_CONDES)).toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("sitúa el marcador en esa misma dirección", () => {
-    expect(mapUrl.searchParams.get("markers")).toBe(
-      "color:0x9c5b34|Avenida Presidente Riesco 4520, Las Condes, Santiago, Región Metropolitana, Chile",
-    );
+  it("geocodifica una misma dirección una sola vez", async () => {
+    const fetchMock = stubFetch(GOOGLE_RESPONSE);
+
+    await resolvePropertyCoordinates(LAS_CONDES);
+    await resolvePropertyCoordinates(LAS_CONDES);
+    await resolvePropertyCoordinates({ ...LAS_CONDES });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  it("no envía coordenadas: la geocodificación la hace Google", () => {
-    expect(mapUrl.searchParams.has("lat")).toBe(false);
-    expect(mapUrl.searchParams.has("lng")).toBe(false);
+  it("distingue direcciones distintas", async () => {
+    const fetchMock = stubFetch(GOOGLE_RESPONSE);
+
+    await resolvePropertyCoordinates(LAS_CONDES);
+    await resolvePropertyCoordinates({
+      ...LAS_CONDES,
+      address: "Avenida Apoquindo 3000",
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
-  it("incluye la clave, que por eso nunca debe llegar al navegador", () => {
-    expect(mapUrl.searchParams.get("key")).toBe("clave-secreta");
+  it("no cachea los fallos: un corte de Google no deja la ficha sin mapa", async () => {
+    const failingFetch = stubFetch({}, false);
+
+    expect(await resolvePropertyCoordinates(LAS_CONDES)).toBeNull();
+    expect(failingFetch).toHaveBeenCalledTimes(1);
+
+    stubFetch(GOOGLE_RESPONSE);
+
+    expect(await resolvePropertyCoordinates(LAS_CONDES)).not.toBeNull();
   });
 
-  it("pide el mapa en español y con encuadre de alta resolución", () => {
-    expect(mapUrl.searchParams.get("language")).toBe("es");
-    expect(mapUrl.searchParams.get("region")).toBe("CL");
-    expect(mapUrl.searchParams.get("size")).toBe("640x360");
-    expect(mapUrl.searchParams.get("scale")).toBe("2");
+  it("devuelve null cuando Google no reconoce la dirección", async () => {
+    stubFetch({});
+
+    expect(await resolvePropertyCoordinates(LAS_CONDES)).toBeNull();
   });
 });
