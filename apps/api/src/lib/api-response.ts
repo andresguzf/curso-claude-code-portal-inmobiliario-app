@@ -21,6 +21,10 @@ export const HTTP_STATUS = {
   NOT_FOUND: 404,
   CONFLICT: 409,
   INTERNAL_SERVER_ERROR: 500,
+  /** Un servicio externo respondió mal (Google Maps, Cloudinary, Web3Forms). */
+  BAD_GATEWAY: 502,
+  /** Una integración externa no está configurada en este entorno. */
+  SERVICE_UNAVAILABLE: 503,
 } as const;
 
 export function jsonOk<TBody>(

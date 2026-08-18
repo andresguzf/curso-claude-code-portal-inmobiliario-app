@@ -55,6 +55,14 @@ export type PropertyDetailDto = PropertySummaryDto & {
   readonly ageYears: number | null;
   readonly features: readonly PropertyFeatureDto[];
   readonly images: readonly PropertyImageDto[];
+  /**
+   * Ruta de la imagen del mapa de la propiedad, relativa al origen del sitio.
+   *
+   * Es `null` cuando la integración con Google Maps no está configurada. La
+   * clave de la API vive únicamente en el backend, de modo que el navegador
+   * pide el mapa a la propia aplicación y nunca a Google (spec.md, sección 13).
+   */
+  readonly mapImageUrl: string | null;
   readonly updatedAt: string;
 };
 

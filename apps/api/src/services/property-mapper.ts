@@ -126,7 +126,21 @@ export function toPropertySummary(
   };
 }
 
-export function toPropertyDetail(property: PropertyRecord): PropertyDetailDto {
+/**
+ * Datos del detalle que no provienen de la fila de PostgreSQL.
+ *
+ * El mapa depende de la configuración del servidor, no de la propiedad, y
+ * este módulo debe seguir siendo puro: se recibe ya resuelto en lugar de
+ * consultarlo aquí.
+ */
+export type PropertyDetailContext = {
+  readonly mapImageUrl: string | null;
+};
+
+export function toPropertyDetail(
+  property: PropertyRecord,
+  context: PropertyDetailContext,
+): PropertyDetailDto {
   const images = [...property.images].sort(
     (first, second) => first.position - second.position,
   );
@@ -143,6 +157,7 @@ export function toPropertyDetail(property: PropertyRecord): PropertyDetailDto {
     ageYears: property.ageYears,
     features: features.map(toFeatureDto),
     images: images.map(toImageDto),
+    mapImageUrl: context.mapImageUrl,
     updatedAt: property.updatedAt.toISOString(),
   };
 }

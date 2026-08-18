@@ -1,4 +1,9 @@
-import type { CurrencyValue, OperationTypeValue } from "@portal/contracts";
+import {
+  buildFullAddress,
+  type CurrencyValue,
+  type OperationTypeValue,
+  type PropertyLocation,
+} from "@portal/contracts";
 
 /**
  * Formato de valores para la interfaz, en convención chilena: punto como
@@ -50,21 +55,11 @@ export function formatShortLocation(commune: string, city: string): string {
 /**
  * Ubicación completa para el detalle (spec.md, sección 12).
  *
- * Se omiten los tramos repetidos: en «Puerto Varas, Puerto Varas, Región de
- * Los Lagos» la ciudad no aporta nada.
+ * Delega en el contrato compartido para que el texto que se muestra y el que
+ * se le entrega a Google Maps describan exactamente el mismo lugar.
  */
-export function formatFullLocation(location: {
-  readonly address: string;
-  readonly commune: string;
-  readonly city: string;
-  readonly region: string;
-}): string {
-  const { address, commune, city, region } = location;
-  const parts = [address, commune, city, region];
-
-  return parts
-    .filter((part, index) => part !== "" && parts.indexOf(part) === index)
-    .join(", ");
+export function formatFullLocation(location: PropertyLocation): string {
+  return buildFullAddress(location);
 }
 
 /**

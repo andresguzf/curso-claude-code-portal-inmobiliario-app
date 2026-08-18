@@ -9,7 +9,7 @@ favoritas, y los administradores gestionar el portal desde un área privada.
 
 ## Estado
 
-Fases 1 y 2 completas (pasos 1 a 13 de `specs/portal-inmobiliario/tasks.md`).
+Pasos 1 a 15 de `specs/portal-inmobiliario/tasks.md` completos.
 
 | Funcionalidad | Estado |
 |---|---|
@@ -19,8 +19,8 @@ Fases 1 y 2 completas (pasos 1 a 13 de `specs/portal-inmobiliario/tasks.md`).
 | Ordenamiento por fecha, precio y superficie | ✅ |
 | Estados de carga, vacío y error | ✅ |
 | Detalle de propiedad | ✅ |
-| Galería de imágenes | Paso 14 |
-| Google Maps | Paso 15 |
+| Galería de imágenes | ✅ |
+| Ubicación en Google Maps | ✅ |
 | Contacto con Web3Forms | Paso 16 |
 | Autenticación y favoritos | Pasos 17-21 |
 | Área de administración | Pasos 22-30 |

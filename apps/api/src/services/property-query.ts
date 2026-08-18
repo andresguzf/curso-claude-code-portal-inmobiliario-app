@@ -34,11 +34,7 @@ type NumericLimits = {
 };
 
 type NumericFilterName =
-  | "minPrice"
-  | "maxPrice"
-  | "bedrooms"
-  | "bathrooms"
-  | "minUsableArea";
+  "minPrice" | "maxPrice" | "bedrooms" | "bathrooms" | "minUsableArea";
 
 const NUMERIC_FILTERS: Record<NumericFilterName, NumericLimits> = {
   minPrice: { max: FILTER_LIMITS.maxPrice },
@@ -304,11 +300,9 @@ function anyOfInsensitive(
   values: readonly string[],
 ): WhereCondition {
   return {
-    OR: values.map(
-      (value): Record<string, InsensitiveEquals> => ({
-        [field]: { equals: value, mode: "insensitive" },
-      }),
-    ),
+    OR: values.map((value): Record<string, InsensitiveEquals> => ({
+      [field]: { equals: value, mode: "insensitive" },
+    })),
   };
 }
 
@@ -364,9 +358,7 @@ export function buildPropertyWhere(
     ...(operations && operations.length > 0
       ? { operationType: { in: [...operations] } }
       : {}),
-    ...(types && types.length > 0
-      ? { propertyType: { in: [...types] } }
-      : {}),
+    ...(types && types.length > 0 ? { propertyType: { in: [...types] } } : {}),
     ...(Object.keys(priceRange).length === 0 ? {} : { price: priceRange }),
     ...(bedrooms === undefined ? {} : { bedrooms: { gte: bedrooms } }),
     ...(bathrooms === undefined ? {} : { bathrooms: { gte: bathrooms } }),
