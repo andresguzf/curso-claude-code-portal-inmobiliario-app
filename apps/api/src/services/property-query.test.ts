@@ -345,9 +345,9 @@ describe("buildPropertyWhere", () => {
   });
 
   it("ignora las listas vacías", () => {
-    expect(buildPropertyWhere({ operations: [], types: [], communes: [] })).toEqual(
-      {},
-    );
+    expect(
+      buildPropertyWhere({ operations: [], types: [], communes: [] }),
+    ).toEqual({});
   });
 
   it("construye el rango de precio con los extremos presentes", () => {
@@ -431,9 +431,7 @@ describe("buildPropertyWhere", () => {
       usableAreaSquareMeters: { gte: 70 },
       city: { equals: "Santiago", mode: "insensitive" },
       region: { equals: "Región Metropolitana", mode: "insensitive" },
-      AND: [
-        { OR: [{ commune: { equals: "Vitacura", mode: "insensitive" } }] },
-      ],
+      AND: [{ OR: [{ commune: { equals: "Vitacura", mode: "insensitive" } }] }],
     });
   });
 });

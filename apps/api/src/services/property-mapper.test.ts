@@ -25,7 +25,9 @@ function buildImage(
   };
 }
 
-function buildProperty(overrides: Partial<PropertyRecord> = {}): PropertyRecord {
+function buildProperty(
+  overrides: Partial<PropertyRecord> = {},
+): PropertyRecord {
   return {
     id: "property-1",
     title: "Casa en Las Condes",
@@ -51,6 +53,9 @@ function buildProperty(overrides: Partial<PropertyRecord> = {}): PropertyRecord 
     ...overrides,
   };
 }
+
+/** El mapa se resuelve fuera del mapeador: aquí solo se comprueba que pasa. */
+const MAP_CONTEXT = { mapImageUrl: "/api/properties/property-1/map" } as const;
 
 describe("selectPrimaryImage", () => {
   it("devuelve null cuando la propiedad no tiene imágenes", () => {
@@ -143,6 +148,7 @@ describe("toPropertyDetail", () => {
           buildImage({ id: "b", position: 1 }),
         ],
       }),
+      MAP_CONTEXT,
     );
 
     expect(detail.images.map((image) => image.id)).toEqual(["a", "b", "c"]);
@@ -157,6 +163,7 @@ describe("toPropertyDetail", () => {
           { id: "2", name: "Jardín", slug: "jardin" },
         ],
       }),
+      MAP_CONTEXT,
     );
 
     expect(detail.features.map((feature) => feature.name)).toEqual([
@@ -167,11 +174,11 @@ describe("toPropertyDetail", () => {
   });
 
   it("devuelve una lista vacía cuando no hay características", () => {
-    expect(toPropertyDetail(buildProperty()).features).toEqual([]);
+    expect(toPropertyDetail(buildProperty(), MAP_CONTEXT).features).toEqual([]);
   });
 
   it("expone los campos del detalle exigidos por la especificación", () => {
-    const detail = toPropertyDetail(buildProperty());
+    const detail = toPropertyDetail(buildProperty(), MAP_CONTEXT);
 
     expect(detail).toMatchObject({
       description: "Casa amplia con jardín.",
@@ -182,9 +189,19 @@ describe("toPropertyDetail", () => {
     });
   });
 
+  it("traslada la ruta del mapa recibida en el contexto", () => {
+    expect(toPropertyDetail(buildProperty(), MAP_CONTEXT).mapImageUrl).toBe(
+      "/api/properties/property-1/map",
+    );
+    expect(
+      toPropertyDetail(buildProperty(), { mapImageUrl: null }).mapImageUrl,
+    ).toBeNull();
+  });
+
   it("produce un objeto serializable a JSON sin pérdidas", () => {
     const detail = toPropertyDetail(
       buildProperty({ images: [buildImage({ id: "a", isPrimary: true })] }),
+      MAP_CONTEXT,
     );
 
     expect(JSON.parse(JSON.stringify(detail))).toEqual(detail);

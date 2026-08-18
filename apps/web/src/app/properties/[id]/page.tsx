@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -6,6 +5,8 @@ import type { PropertyDetailDto } from "@portal/contracts";
 
 import { CatalogStatus } from "@/components/property/catalog-status";
 import { PropertyFeatures } from "@/components/property/property-features";
+import { PropertyGallery } from "@/components/property/property-gallery";
+import { PropertyLocation } from "@/components/property/property-location";
 import { PropertySpecifications } from "@/components/property/property-specifications";
 import { fetchPublicPropertyById } from "@/lib/api-client";
 import {
@@ -26,8 +27,8 @@ export const dynamic = "force-dynamic";
  * visible, y una propiedad despublicada responde 404 igual que una
  * inexistente.
  *
- * La galería llega en el paso 14, Google Maps en el 15, el formulario de
- * contacto en el 16 y la metadata dinámica en el 31.
+ * El formulario de contacto llega en el paso 16 y la metadata dinámica en el
+ * paso 31.
  */
 export default async function PropertyDetailPage({
   params,
@@ -96,19 +97,10 @@ function PropertyDetail({
         </p>
       </header>
 
-      {/* Imagen principal. El paso 14 la reemplaza por la galería completa. */}
-      {property.primaryImage ? (
-        <div className="relative mt-8 aspect-[16/9] overflow-hidden rounded-xl bg-muted">
-          <Image
-            src={property.primaryImage.url}
-            alt={`Fotografía de ${property.title}`}
-            fill
-            sizes="(min-width: 1024px) 64rem, 100vw"
-            priority
-            className="object-cover"
-          />
-        </div>
-      ) : null}
+      <PropertyGallery
+        images={property.images}
+        propertyTitle={property.title}
+      />
 
       <div className="mt-10 flex flex-col gap-10">
         <section aria-labelledby="titulo-descripcion">
@@ -127,17 +119,10 @@ function PropertyDetail({
 
         <PropertyFeatures features={property.features} />
 
-        <section aria-labelledby="titulo-ubicacion">
-          <h2
-            id="titulo-ubicacion"
-            className="text-xl font-semibold tracking-tight"
-          >
-            Ubicación
-          </h2>
-          <address className="mt-4 text-base not-italic text-ink">
-            {formatFullLocation(property)}
-          </address>
-        </section>
+        <PropertyLocation
+          location={property}
+          mapImageUrl={property.mapImageUrl}
+        />
       </div>
     </article>
   );

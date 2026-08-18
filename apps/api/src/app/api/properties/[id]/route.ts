@@ -1,4 +1,9 @@
-import { HTTP_STATUS, jsonError, jsonInternalError, jsonOk } from "@/lib/api-response";
+import {
+  HTTP_STATUS,
+  jsonError,
+  jsonInternalError,
+  jsonOk,
+} from "@/lib/api-response";
 import { getPublicPropertyById } from "@/services/property-service";
 
 /** Los datos provienen de PostgreSQL en cada solicitud. */

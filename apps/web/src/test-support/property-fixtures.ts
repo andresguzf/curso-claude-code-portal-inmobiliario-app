@@ -58,6 +58,7 @@ export function buildPropertyDetail(
         isPrimary: true,
       },
     ],
+    mapImageUrl: "/api/properties/property-1/map",
     updatedAt: "2026-02-01T08:00:00.000Z",
     ...overrides,
   };

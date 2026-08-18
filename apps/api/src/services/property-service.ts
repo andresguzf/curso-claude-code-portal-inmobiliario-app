@@ -12,6 +12,7 @@ import {
   findProperties,
   findPropertyById,
 } from "@/repositories/property-repository";
+import { buildPropertyMapImageUrl } from "@/services/property-map";
 import {
   toPropertyDetail,
   toPropertySummary,
@@ -41,7 +42,13 @@ export async function getPublicPropertyById(
 ): Promise<PropertyDetailDto | null> {
   const property = await findPropertyById(id, PUBLIC_SCOPE);
 
-  return property ? toPropertyDetail(property) : null;
+  if (!property) {
+    return null;
+  }
+
+  return toPropertyDetail(property, {
+    mapImageUrl: buildPropertyMapImageUrl(property.id),
+  });
 }
 
 /**

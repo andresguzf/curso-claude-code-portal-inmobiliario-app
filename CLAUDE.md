@@ -144,12 +144,12 @@ Cambiar la paleta no debe requerir tocar componentes.
 
 ## Estado del proyecto
 
-Fases 1 y 2 completas (pasos 1 a 13 de `tasks.md`). En funcionamiento:
-portada, catálogo con búsqueda, filtros combinados, ordenamiento, estados de
-carga/vacío/error y detalle de propiedad.
+Pasos 1 a 15 de `tasks.md` completos. En funcionamiento: portada, catálogo
+con búsqueda, filtros combinados, ordenamiento, estados de carga/vacío/error,
+detalle de propiedad, galería y mapa de ubicación.
 
-Pendiente desde el paso 14: galería, Google Maps, contacto con Web3Forms,
-autenticación, favoritos y área de administración.
+Pendiente desde el paso 16: contacto con Web3Forms, autenticación, favoritos
+y área de administración.
 
 ### Limitaciones conocidas
 
@@ -158,6 +158,9 @@ autenticación, favoritos y área de administración.
   PostgreSQL (previsto para el paso 32).
 - Las imágenes del seed son de `picsum.photos`. Cloudinary se integra en el
   paso 26.
+- El mapa del detalle necesita `GOOGLE_MAPS_API_KEY` en `apps/api/.env`. Sin
+  clave, el detalle muestra la dirección y el enlace a Google Maps, pero no el
+  mapa incrustado: la clave es del servidor y el navegador nunca la recibe.
 
 ## Estilo de Código y Arquitectura
 - Seguir los principios de Arquitectura Limpia (Clean Architecture).

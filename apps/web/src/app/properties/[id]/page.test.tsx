@@ -101,13 +101,15 @@ describe("PropertyDetailPage — información completa", () => {
     ).toBeVisible();
   });
 
-  it("describe la imagen con texto alternativo", async () => {
+  it("muestra la galería, con la fotografía situada en el conjunto", async () => {
     fetchPublicPropertyById.mockResolvedValue(buildPropertyDetail());
 
     await renderPage();
 
     expect(
-      screen.getByRole("img", { name: "Fotografía de Casa en Las Condes" }),
+      screen.getByRole("img", {
+        name: "Fotografía 1 de 1 de Casa en Las Condes",
+      }),
     ).toBeVisible();
   });
 
@@ -164,14 +166,20 @@ describe("PropertyDetailPage — datos ausentes", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("funciona sin fotografía", async () => {
+  it("avisa cuando la propiedad no tiene fotografías, sin dejar un hueco", async () => {
     fetchPublicPropertyById.mockResolvedValue(
-      buildPropertyDetail({ primaryImage: null }),
+      buildPropertyDetail({ primaryImage: null, images: [] }),
     );
 
     await renderPage();
 
-    expect(screen.queryByRole("img")).not.toBeInTheDocument();
+    // El mapa sigue presente: lo que falta son las fotografías.
+    expect(
+      screen.queryByRole("img", { name: /^Fotografía/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByText("Esta propiedad todavía no tiene fotografías"),
+    ).toBeVisible();
     expect(
       screen.getByRole("heading", { level: 1, name: "Casa en Las Condes" }),
     ).toBeVisible();
