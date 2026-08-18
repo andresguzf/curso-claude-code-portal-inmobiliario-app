@@ -28,10 +28,12 @@ Precios en USD. Tres roles: visitante, `USER` y `ADMIN`.
 
 Cloudinary para imágenes, Google Maps para ubicación y Web3Forms para el
 formulario de contacto. Sus credenciales viven en `apps/api` y no llegan al
-navegador, con una excepción deliberada: la clave del Maps JavaScript API,
-que se ejecuta en el navegador y por tanto es pública por diseño. Se protege
-restringiéndola por *referrer*, no ocultándola, y vive aparte en
-`apps/web/.env` con el prefijo `NEXT_PUBLIC_` (plan.md, sección 15).
+navegador, con dos excepciones deliberadas: la clave del Maps JavaScript API
+y la de Web3Forms. Ambas son públicas por diseño, porque esos servicios se
+ejecutan en el navegador —Web3Forms rechaza los envíos desde el servidor en
+su plan gratuito—. Se protegen restringiéndolas por *referrer* y por dominio,
+no ocultándolas, y viven en `apps/web/.env` con el prefijo `NEXT_PUBLIC_`
+(plan.md, sección 15).
 
 ## Instrucciones del proyecto
 
@@ -147,12 +149,12 @@ Cambiar la paleta no debe requerir tocar componentes.
 
 ## Estado del proyecto
 
-Pasos 1 a 15 de `tasks.md` completos. En funcionamiento: portada, catálogo
+Pasos 1 a 16 de `tasks.md` completos. En funcionamiento: portada, catálogo
 con búsqueda, filtros combinados, ordenamiento, estados de carga/vacío/error,
-detalle de propiedad, galería y mapa de ubicación.
+detalle de propiedad, galería, mapa de ubicación y formulario de contacto.
 
-Pendiente desde el paso 16: contacto con Web3Forms, autenticación, favoritos
-y área de administración.
+Pendiente desde el paso 17: autenticación, favoritos, persistencia de las
+consultas en PostgreSQL (paso 21) y área de administración.
 
 ### Limitaciones conocidas
 
@@ -161,6 +163,13 @@ y área de administración.
   PostgreSQL (previsto para el paso 32).
 - Las imágenes del seed son de `picsum.photos`. Cloudinary se integra en el
   paso 26.
+- El formulario de contacto necesita `NEXT_PUBLIC_WEB3FORMS_ACCESS_KEY` en
+  `apps/web/.env`. Sin ella el formulario lo dice, en vez de dar por enviada
+  una consulta que no salió. La clave está en el frontend porque el plan
+  gratuito de Web3Forms solo acepta envíos desde el navegador: uno desde el
+  servidor responde 403 con «Use our API in client side».
+- Una consulta enviada todavía no se guarda en PostgreSQL: solo se envía por
+  correo. La persistencia y la asociación con el usuario llegan en el paso 21.
 - El mapa del detalle necesita dos claves: `GOOGLE_MAPS_API_KEY` en
   `apps/api/.env` (Geocoding v4, deduce las coordenadas) y
   `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` en `apps/web/.env` (Maps JavaScript API,

@@ -334,6 +334,24 @@ Flujo:
 
 Definir un comportamiento claro ante fallos para evitar perder silenciosamente una consulta.
 
+### Reparto entre servidor y navegador
+
+Web3Forms solo acepta envíos desde el navegador en su plan gratuito: una
+petición desde el servidor responde `403` con «Use our API in client side».
+El flujo se reparte en consecuencia:
+
+```text
+Navegador → POST /api/inquiries → validación y persistencia
+Navegador → api.web3forms.com   → correo a la inmobiliaria
+```
+
+La API se consulta primero, porque la validación del servidor es la que
+manda y no debe salir un correo por una consulta que el backend rechaza.
+
+Su clave de acceso es pública por diseño —Web3Forms la publica en el HTML de
+cada formulario que la usa— y por eso vive en `apps/web/.env`. No da acceso a
+ninguna cuenta: solo permite enviar al correo configurado.
+
 ## 14. Errores
 
 Utilizar códigos HTTP apropiados:
@@ -366,20 +384,21 @@ desde el directorio de la aplicación.
 - conexión PostgreSQL;
 - secretos de autenticación;
 - credenciales Cloudinary;
-- clave de geocodificación de Google Maps;
-- clave Web3Forms.
+- clave de geocodificación de Google Maps.
 
 `apps/web/.env`:
 
 - `NEXT_PUBLIC_SITE_URL` (metadata y Open Graph);
 - `API_INTERNAL_URL` (destino del proxy hacia el backend);
-- `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` (mapa del detalle).
+- `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` (mapa del detalle);
+- `NEXT_PUBLIC_WEB3FORMS_ACCESS_KEY` (formulario de contacto).
 
-La clave del mapa es la única credencial que llega al navegador, y lo hace
-porque el Maps JavaScript API se ejecuta allí: no existe forma de dibujar el
-mapa sin ella. Se protege restringiéndola por *referrer* y por API en Google
-Cloud, no ocultándola. El prefijo `NEXT_PUBLIC_` deja constancia explícita de
-que es pública; el resto de credenciales sigue sin salir de `apps/api`.
+Ambas llegan al navegador porque los servicios que las usan se ejecutan allí:
+el Maps JavaScript API dibuja el mapa y Web3Forms rechaza los envíos desde el
+servidor. Se protegen restringiéndolas —por *referrer* y por API en Google
+Cloud, por dominio en Web3Forms—, no ocultándolas. El prefijo `NEXT_PUBLIC_`
+deja constancia explícita de que son públicas; el resto de credenciales sigue
+sin salir de `apps/api`.
 
 Crear un `.env.example` por aplicación, sin secretos reales.
 

@@ -99,7 +99,7 @@
   - Integrar Google Maps.
   - No solicitar latitud/longitud manual.
 
-- [ ] **Paso 16 — Contacto con Web3Forms**
+- [x] **Paso 16 — Contacto con Web3Forms**
   - Formulario de contacto.
   - Incluir ID/título de propiedad.
   - Estados enviando/éxito/error.
