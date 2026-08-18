@@ -46,6 +46,12 @@ export type PropertySummaryDto = {
   readonly createdAt: string;
 };
 
+/** Punto en el mapa, en grados decimales. */
+export type GeoCoordinatesDto = {
+  readonly latitude: number;
+  readonly longitude: number;
+};
+
 /** Datos del detalle de una propiedad (spec.md, sección 12). */
 export type PropertyDetailDto = PropertySummaryDto & {
   readonly description: string;
@@ -56,13 +62,13 @@ export type PropertyDetailDto = PropertySummaryDto & {
   readonly features: readonly PropertyFeatureDto[];
   readonly images: readonly PropertyImageDto[];
   /**
-   * Ruta de la imagen del mapa de la propiedad, relativa al origen del sitio.
+   * Coordenadas derivadas de la dirección por geocodificación.
    *
-   * Es `null` cuando la integración con Google Maps no está configurada. La
-   * clave de la API vive únicamente en el backend, de modo que el navegador
-   * pide el mapa a la propia aplicación y nunca a Google (spec.md, sección 13).
+   * Es `null` cuando la geocodificación no está configurada o Google no
+   * reconoce la dirección. ADMIN nunca las escribe ni las ve: las deduce el
+   * servidor a partir de la dirección textual (spec.md, sección 6).
    */
-  readonly mapImageUrl: string | null;
+  readonly coordinates: GeoCoordinatesDto | null;
   readonly updatedAt: string;
 };
 

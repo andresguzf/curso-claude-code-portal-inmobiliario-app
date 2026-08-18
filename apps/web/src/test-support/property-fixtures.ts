@@ -58,7 +58,7 @@ export function buildPropertyDetail(
         isPrimary: true,
       },
     ],
-    mapImageUrl: "/api/properties/property-1/map",
+    coordinates: { latitude: -33.4094935, longitude: -70.5847201 },
     updatedAt: "2026-02-01T08:00:00.000Z",
     ...overrides,
   };

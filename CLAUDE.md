@@ -27,8 +27,11 @@ Precios en USD. Tres roles: visitante, `USER` y `ADMIN`.
 ### Integraciones externas
 
 Cloudinary para imágenes, Google Maps para ubicación y Web3Forms para el
-formulario de contacto. Todas sus credenciales viven en `apps/api` y nunca
-llegan al navegador.
+formulario de contacto. Sus credenciales viven en `apps/api` y no llegan al
+navegador, con una excepción deliberada: la clave del Maps JavaScript API,
+que se ejecuta en el navegador y por tanto es pública por diseño. Se protege
+restringiéndola por *referrer*, no ocultándola, y vive aparte en
+`apps/web/.env` con el prefijo `NEXT_PUBLIC_` (plan.md, sección 15).
 
 ## Instrucciones del proyecto
 
@@ -158,9 +161,12 @@ y área de administración.
   PostgreSQL (previsto para el paso 32).
 - Las imágenes del seed son de `picsum.photos`. Cloudinary se integra en el
   paso 26.
-- El mapa del detalle necesita `GOOGLE_MAPS_API_KEY` en `apps/api/.env`. Sin
-  clave, el detalle muestra la dirección y el enlace a Google Maps, pero no el
-  mapa incrustado: la clave es del servidor y el navegador nunca la recibe.
+- El mapa del detalle necesita dos claves: `GOOGLE_MAPS_API_KEY` en
+  `apps/api/.env` (Geocoding v4, deduce las coordenadas) y
+  `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` en `apps/web/.env` (Maps JavaScript API,
+  dibuja el mapa). Sin ellas el detalle muestra la dirección y el enlace a
+  Google Maps, pero no el mapa. La clave de demostración de Google Maps
+  Platform sirve para ambas; no cubre Maps Static ni Maps Embed.
 
 ## Estilo de Código y Arquitectura
 - Seguir los principios de Arquitectura Limpia (Clean Architecture).

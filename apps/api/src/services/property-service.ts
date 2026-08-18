@@ -12,7 +12,7 @@ import {
   findProperties,
   findPropertyById,
 } from "@/repositories/property-repository";
-import { buildPropertyMapImageUrl } from "@/services/property-map";
+import { resolvePropertyCoordinates } from "@/services/property-map";
 import {
   toPropertyDetail,
   toPropertySummary,
@@ -47,7 +47,7 @@ export async function getPublicPropertyById(
   }
 
   return toPropertyDetail(property, {
-    mapImageUrl: buildPropertyMapImageUrl(property.id),
+    coordinates: await resolvePropertyCoordinates(property),
   });
 }
 

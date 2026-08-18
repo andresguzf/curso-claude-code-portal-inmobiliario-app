@@ -35,7 +35,9 @@ export function buildFullAddress(location: PropertyLocation): string {
     .map((part) => part.trim())
     .filter((part) => part !== "");
 
-  return parts.filter((part, index) => parts.indexOf(part) === index).join(", ");
+  return parts
+    .filter((part, index) => parts.indexOf(part) === index)
+    .join(", ");
 }
 
 /**

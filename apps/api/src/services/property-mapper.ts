@@ -1,5 +1,6 @@
 import type {
   CurrencyValue,
+  GeoCoordinatesDto,
   OperationTypeValue,
   PropertyDetailDto,
   PropertyFeatureDto,
@@ -129,12 +130,12 @@ export function toPropertySummary(
 /**
  * Datos del detalle que no provienen de la fila de PostgreSQL.
  *
- * El mapa depende de la configuración del servidor, no de la propiedad, y
- * este módulo debe seguir siendo puro: se recibe ya resuelto en lugar de
- * consultarlo aquí.
+ * Las coordenadas dependen de una consulta a Google, no de la fila de la
+ * base de datos, y este módulo debe seguir siendo puro: se reciben ya
+ * resueltas en lugar de pedirlas aquí.
  */
 export type PropertyDetailContext = {
-  readonly mapImageUrl: string | null;
+  readonly coordinates: GeoCoordinatesDto | null;
 };
 
 export function toPropertyDetail(
@@ -157,7 +158,7 @@ export function toPropertyDetail(
     ageYears: property.ageYears,
     features: features.map(toFeatureDto),
     images: images.map(toImageDto),
-    mapImageUrl: context.mapImageUrl,
+    coordinates: context.coordinates,
     updatedAt: property.updatedAt.toISOString(),
   };
 }

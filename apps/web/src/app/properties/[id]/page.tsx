@@ -121,7 +121,7 @@ function PropertyDetail({
 
         <PropertyLocation
           location={property}
-          mapImageUrl={property.mapImageUrl}
+          coordinates={property.coordinates}
         />
       </div>
     </article>
