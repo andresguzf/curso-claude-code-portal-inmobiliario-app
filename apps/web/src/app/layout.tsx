@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
+import { getCurrentUser } from "@/lib/current-user";
 
 import "./globals.css";
 
@@ -35,7 +36,11 @@ export const viewport: Viewport = {
 
 const MAIN_CONTENT_ID = "contenido-principal";
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  // La sesión se resuelve antes de pintar, para que el header no muestre
+  // «Ingresar» un instante a quien ya inició sesión.
+  const currentUser = await getCurrentUser();
+
   return (
     <html
       lang="es"
@@ -49,7 +54,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           Saltar al contenido principal
         </a>
 
-        <SiteHeader />
+        <SiteHeader currentUser={currentUser} />
 
         <main id={MAIN_CONTENT_ID} className="flex-1">
           {children}

@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("next/navigation", () => ({
   usePathname: () => mocks.pathname,
   useSearchParams: () => mocks.searchParams,
+  useRouter: () => ({ refresh: vi.fn(), replace: vi.fn(), push: vi.fn() }),
 }));
 
 afterEach(() => {
@@ -21,7 +22,7 @@ afterEach(() => {
 
 describe("SiteHeader — marca", () => {
   it("muestra el logo junto al nombre, en un solo enlace al inicio", () => {
-    const { container } = render(<SiteHeader />);
+    const { container } = render(<SiteHeader currentUser={null} />);
 
     const brand = screen.getByRole("link", { name: "Portal Inmobiliario" });
 
@@ -30,7 +31,7 @@ describe("SiteHeader — marca", () => {
   });
 
   it("oculta el logo a las tecnologías de asistencia, que ya leen el nombre", () => {
-    const { container } = render(<SiteHeader />);
+    const { container } = render(<SiteHeader currentUser={null} />);
 
     // El primer svg del header es el logo; el segundo, el ícono del menú.
     const logo = container.querySelector("header a svg");
@@ -43,7 +44,7 @@ describe("SiteHeader — marca", () => {
   });
 
   it("evita que la traducción automática altere el nombre de marca", () => {
-    render(<SiteHeader />);
+    render(<SiteHeader currentUser={null} />);
 
     expect(screen.getByText("Portal Inmobiliario")).toHaveAttribute(
       "translate",
@@ -54,7 +55,7 @@ describe("SiteHeader — marca", () => {
 
 describe("SiteHeader", () => {
   it("muestra la navegación pública completa", () => {
-    render(<SiteHeader />);
+    render(<SiteHeader currentUser={null} />);
 
     const navigation = screen.getByRole("navigation", { name: "Principal" });
 
@@ -75,7 +76,7 @@ describe("SiteHeader", () => {
     mocks.pathname = "/properties";
     mocks.searchParams = new URLSearchParams("operation=RENT");
 
-    render(<SiteHeader />);
+    render(<SiteHeader currentUser={null} />);
 
     const navigation = screen.getByRole("navigation", { name: "Principal" });
 
@@ -89,7 +90,7 @@ describe("SiteHeader", () => {
 
   it("abre y cierra el menú móvil desde el botón", async () => {
     const user = userEvent.setup();
-    render(<SiteHeader />);
+    render(<SiteHeader currentUser={null} />);
 
     const toggleButton = screen.getByRole("button", { name: "Abrir menú" });
     expect(toggleButton).toHaveAttribute("aria-expanded", "false");
@@ -110,7 +111,7 @@ describe("SiteHeader", () => {
 
   it("cierra el menú móvil al navegar a un enlace", async () => {
     const user = userEvent.setup();
-    render(<SiteHeader />);
+    render(<SiteHeader currentUser={null} />);
 
     await user.click(screen.getByRole("button", { name: "Abrir menú" }));
 

@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { Suspense, useEffect, useState } from "react";
 
+import type { AuthenticatedUserDto } from "@portal/contracts";
+
 import { cn } from "@/lib/utils";
 
 import { SiteLogo } from "./site-logo";
@@ -13,7 +15,11 @@ const MOBILE_MENU_ID = "menu-navegacion-movil";
 /** A partir de este desplazamiento el header se vuelve semitransparente. */
 const SCROLL_THRESHOLD = 8;
 
-export function SiteHeader() {
+export function SiteHeader({
+  currentUser,
+}: {
+  readonly currentUser: AuthenticatedUserDto | null;
+}) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -65,7 +71,7 @@ export function SiteHeader() {
 
         <nav aria-label="Principal" className="hidden md:block">
           <Suspense fallback={null}>
-            <SiteNavigationLinks variant="desktop" />
+            <SiteNavigationLinks variant="desktop" currentUser={currentUser} />
           </Suspense>
         </nav>
 
@@ -92,6 +98,7 @@ export function SiteHeader() {
           <Suspense fallback={null}>
             <SiteNavigationLinks
               variant="mobile"
+              currentUser={currentUser}
               onNavigate={closeMobileMenu}
             />
           </Suspense>
