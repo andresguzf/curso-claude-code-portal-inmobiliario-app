@@ -139,12 +139,18 @@
   - Evitar duplicados.
   - Integrar en interfaz.
 
-- [ ] **Paso 21 — Persistir consultas**
+- [x] **Paso 21 — Persistir consultas**
   - Crear consulta mediante REST.
   - Persistir en PostgreSQL.
   - Asociar propiedad.
   - Asociar usuario cuando exista.
   - Integrar envío Web3Forms.
+
+- [x] **Paso 21b — Historial de solicitudes**
+  - Mostrar las solicitudes propias como registros, con mensaje y fecha.
+  - Buscar por título de propiedad y por texto del mensaje.
+  - Paginar de a seis.
+  - Eliminar del historial propio conservando la solicitud para ADMIN.
 
 ## Fase 4 — Administración
 

@@ -4,13 +4,17 @@ import { notFound } from "next/navigation";
 import type { PropertyDetailDto } from "@portal/contracts";
 
 import { CatalogStatus } from "@/components/property/catalog-status";
-import { PropertyContactForm } from "@/components/property/property-contact-form";
+import {
+  PropertyContactForm,
+  type ContactDefaults,
+} from "@/components/property/property-contact-form";
 import { FavoriteButton } from "@/components/property/favorite-button";
 import { PropertyFeatures } from "@/components/property/property-features";
 import { PropertyGallery } from "@/components/property/property-gallery";
 import { PropertyLocation } from "@/components/property/property-location";
 import { PropertySpecifications } from "@/components/property/property-specifications";
 import { fetchPublicPropertyById } from "@/lib/api-client";
+import { getCurrentUser } from "@/lib/current-user";
 import { getFavoritePropertyIds } from "@/lib/favorites";
 import {
   formatFullLocation,
@@ -36,9 +40,10 @@ export default async function PropertyDetailPage({
   params,
 }: PageProps<"/properties/[id]">) {
   const { id } = await params;
-  const [result, favoritePropertyIds] = await Promise.all([
+  const [result, favoritePropertyIds, currentUser] = await Promise.all([
     loadProperty(id),
     getFavoritePropertyIds(),
+    getCurrentUser(),
   ]);
 
   if (result.status === "error") {
@@ -63,6 +68,11 @@ export default async function PropertyDetailPage({
     <PropertyDetail
       property={result.property}
       isFavorite={favoritePropertyIds?.has(result.property.id)}
+      contact={
+        currentUser
+          ? { name: currentUser.name, email: currentUser.email }
+          : undefined
+      }
     />
   );
 }
@@ -70,10 +80,12 @@ export default async function PropertyDetailPage({
 function PropertyDetail({
   property,
   isFavorite,
+  contact,
 }: {
   readonly property: PropertyDetailDto;
   /** `undefined` cuando no hay sesión: sin ella no se ofrece guardar. */
   readonly isFavorite?: boolean | undefined;
+  readonly contact?: ContactDefaults | undefined;
 }) {
   return (
     <article className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
@@ -150,6 +162,7 @@ function PropertyDetail({
         <PropertyContactForm
           propertyId={property.id}
           propertyTitle={property.title}
+          contact={contact}
         />
       </div>
     </article>

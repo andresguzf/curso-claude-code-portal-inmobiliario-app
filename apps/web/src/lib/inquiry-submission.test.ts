@@ -53,31 +53,34 @@ describe("sendInquiry", () => {
   });
 
   it("devuelve el mensaje de la API cuando todo sale bien", async () => {
-    submitInquiry.mockResolvedValue({ message: "Consulta enviada." });
+    submitInquiry.mockResolvedValue({ id: "c1", message: "Consulta enviada." });
     deliverInquiry.mockResolvedValue({ status: "delivered" });
 
     expect(await sendInquiry(INQUIRY, "Casa")).toEqual({
       message: "Consulta enviada.",
+      isEmailDelivered: true,
     });
   });
 
-  it("avisa cuando falta la clave de Web3Forms", async () => {
-    submitInquiry.mockResolvedValue({ message: "Consulta enviada." });
-    deliverInquiry.mockResolvedValue({ status: "not-configured" });
-
-    await expect(sendInquiry(INQUIRY, "Casa")).rejects.toThrow(
-      "El envío de consultas no está disponible en este momento.",
-    );
-  });
-
-  it("no da por enviada una consulta que Web3Forms rechazó", async () => {
+  it("si el correo falla, la consulta ya está guardada y así se dice", async () => {
+    // Reintentar la guardaría dos veces, así que el mensaje no lo sugiere.
     vi.spyOn(console, "error").mockImplementation(() => {});
-    submitInquiry.mockResolvedValue({ message: "Consulta enviada." });
+    submitInquiry.mockResolvedValue({ id: "c1", message: "Consulta enviada." });
     deliverInquiry.mockResolvedValue({ status: "failed", reason: "HTTP 403" });
 
-    await expect(sendInquiry(INQUIRY, "Casa")).rejects.toThrow(
-      "No pudimos enviar tu consulta.",
-    );
+    const result = await sendInquiry(INQUIRY, "Casa");
+
+    expect(result.isEmailDelivered).toBe(false);
+    expect(result.message).toContain("quedó registrada");
+    expect(result.message).not.toMatch(/vuelve a intentarlo/i);
+  });
+
+  it("dice lo mismo cuando falta la clave de Web3Forms", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    submitInquiry.mockResolvedValue({ id: "c1", message: "Consulta enviada." });
+    deliverInquiry.mockResolvedValue({ status: "not-configured" });
+
+    expect((await sendInquiry(INQUIRY, "Casa")).isEmailDelivered).toBe(false);
   });
 
   it("pasa a Web3Forms el título que resolvió la API", async () => {

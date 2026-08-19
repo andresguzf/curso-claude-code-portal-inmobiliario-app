@@ -41,7 +41,8 @@ Puede realizar todas las acciones públicas y además:
 - guardar propiedades como favoritas o interesadas;
 - eliminar propiedades guardadas;
 - consultar sus propiedades interesadas;
-- consultar propiedades por las cuales ha realizado solicitudes.
+- consultar propiedades por las cuales ha realizado solicitudes;
+- buscar entre sus solicitudes y eliminarlas de su historial.
 
 ### ADMIN
 
@@ -386,6 +387,21 @@ El área privada debe mostrar:
 - información básica;
 - propiedades interesadas;
 - propiedades consultadas.
+
+### Historial de solicitudes
+
+Las solicitudes propias se muestran como registros, no como fichas de
+propiedad: de cada una se ve la propiedad, el mensaje enviado y la fecha.
+
+USER puede:
+
+- buscar por título de la propiedad o por el texto de su mensaje;
+- recorrer el historial paginado;
+- eliminar una solicitud de su historial.
+
+Eliminar es una acción sobre el historial propio, no sobre la solicitud: la
+solicitud se conserva para ADMIN (sección 22), porque es el contacto que la
+inmobiliaria debe responder y quien escribió no puede hacerlo desaparecer.
 
 ### Edición de la cuenta
 
