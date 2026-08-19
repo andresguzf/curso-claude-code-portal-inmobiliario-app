@@ -132,7 +132,7 @@
   - Rechazar un email ya registrado.
   - No permitir cambiar rol ni estado.
 
-- [ ] **Paso 20 — Favoritos**
+- [x] **Paso 20 — Favoritos**
   - Listar.
   - Agregar.
   - Eliminar.

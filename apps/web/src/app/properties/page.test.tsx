@@ -33,6 +33,12 @@ vi.mock("@/lib/api-client", async () => {
 // Los componentes de filtros y orden son de cliente: fuera de Next no hay router.
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
+// El catálogo pide los favoritos junto con las propiedades; sin sesión
+// no hay ninguno y las tarjetas no ofrecen el botón.
+vi.mock("@/lib/favorites", () => ({
+  getFavoritePropertyIds: async () => undefined,
+}));
+
 const OPTIONS: PropertyFilterOptionsDto = {
   communes: ["Las Condes", "Providencia", "Ñuñoa"],
   cities: ["Santiago"],

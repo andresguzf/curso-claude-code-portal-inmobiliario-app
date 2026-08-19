@@ -2,6 +2,7 @@ import { CallToActionSection } from "@/components/home/call-to-action-section";
 import { HeroSection } from "@/components/home/hero-section";
 import { PropertyShowcase } from "@/components/home/property-showcase";
 import { fetchPublicProperties } from "@/lib/api-client";
+import { getFavoritePropertyIds } from "@/lib/favorites";
 import type { PropertySummaryDto } from "@portal/contracts";
 
 /** La portada muestra el catálogo vigente en cada visita. */
@@ -10,7 +11,10 @@ export const dynamic = "force-dynamic";
 const PROPERTIES_PER_SECTION = 3;
 
 export default async function HomePage() {
-  const properties = await loadProperties();
+  const [properties, favoritePropertyIds] = await Promise.all([
+    loadProperties(),
+    getFavoritePropertyIds(),
+  ]);
 
   const featured = properties
     .filter((property) => property.isFeatured)
@@ -31,6 +35,7 @@ export default async function HomePage() {
         title="Propiedades destacadas"
         description="Nuestra selección de propiedades recomendadas."
         properties={featured}
+        favoritePropertyIds={favoritePropertyIds}
         linkHref="/properties"
         linkLabel="Ver todo el catálogo"
         prioritizeImages
@@ -41,6 +46,7 @@ export default async function HomePage() {
         title="Propiedades en venta"
         description="Casas, departamentos, terrenos y oficinas disponibles para comprar."
         properties={forSale}
+        favoritePropertyIds={favoritePropertyIds}
         linkHref="/properties?operation=SALE"
         linkLabel="Ver todas en venta"
       />
@@ -50,6 +56,7 @@ export default async function HomePage() {
         title="Propiedades en arriendo"
         description="Alternativas de arriendo en distintas comunas."
         properties={forRent}
+        favoritePropertyIds={favoritePropertyIds}
         linkHref="/properties?operation=RENT"
         linkLabel="Ver todas en arriendo"
       />

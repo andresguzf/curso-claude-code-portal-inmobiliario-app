@@ -21,10 +21,12 @@ import { cn } from "@/lib/utils";
  */
 export function SessionMenu({
   currentUser,
+  favoriteCount,
   isMobile,
   onNavigate,
 }: {
   readonly currentUser: AuthenticatedUserDto | null;
+  readonly favoriteCount: number;
   readonly isMobile: boolean;
   readonly onNavigate?: () => void;
 }) {
@@ -76,6 +78,8 @@ export function SessionMenu({
         isMobile && "flex-col items-stretch",
       )}
     >
+      <FavoriteCount count={favoriteCount} onNavigate={onNavigate} />
+
       {/* El nombre es la puerta a la cuenta: es donde se busca. */}
       <Link
         href="/account"
@@ -101,5 +105,62 @@ export function SessionMenu({
         {isLeaving ? "Saliendo…" : "Salir"}
       </button>
     </div>
+  );
+}
+
+/**
+ * Cuántas propiedades hay guardadas, y el camino para verlas.
+ *
+ * Se muestra también en cero: es un elemento fijo de la barra, y ocultarlo
+ * haría saltar la navegación al guardar la primera. El cero además cuenta
+ * dónde vivirán las que se guarden.
+ *
+ * El número por sí solo no dice nada a quien no ve la pantalla, así que el
+ * nombre accesible lo explica entero.
+ */
+function FavoriteCount({
+  count,
+  onNavigate,
+}: {
+  readonly count: number;
+  readonly onNavigate?: () => void;
+}) {
+  const label =
+    count === 1 ? "1 propiedad guardada" : `${count} propiedades guardadas`;
+
+  return (
+    <Link
+      href="/account#propiedades-interesadas"
+      onClick={onNavigate}
+      aria-label={label}
+      title={label}
+      className="inline-flex min-h-11 items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-on-dark-muted transition-colors hover:bg-header-hover hover:text-on-dark"
+    >
+      <svg
+        aria-hidden="true"
+        focusable="false"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.75}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="size-5"
+      >
+        <path d="M12 20.5 4.8 13.6a4.6 4.6 0 0 1 0-6.6 4.8 4.8 0 0 1 6.7 0l.5.5.5-.5a4.8 4.8 0 0 1 6.7 0 4.6 4.6 0 0 1 0 6.6Z" />
+      </svg>
+
+      <span
+        aria-hidden="true"
+        className={cn(
+          "min-w-6 rounded-full px-1.5 py-0.5 text-center text-xs font-semibold",
+          count > 0
+            ? "bg-accent text-white"
+            : "bg-header-hover text-on-dark-muted",
+        )}
+      >
+        {count}
+      </span>
+    </Link>
   );
 }

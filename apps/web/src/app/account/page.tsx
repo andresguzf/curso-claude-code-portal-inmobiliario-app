@@ -1,7 +1,10 @@
+import { cookies } from "next/headers";
 import Link from "next/link";
 
-import type { AuthenticatedUserDto } from "@portal/contracts";
+import type { AuthenticatedUserDto, PropertyListDto } from "@portal/contracts";
 
+import { PropertyGrid } from "@/components/property/property-grid";
+import { fetchFavorites } from "@/lib/api-client";
 import { formatUserRole } from "@/lib/format";
 import { requireCurrentUser } from "@/lib/require-user";
 
@@ -28,6 +31,7 @@ const ACCOUNT_PATH = "/account";
  */
 export default async function AccountPage() {
   const user = await requireCurrentUser(ACCOUNT_PATH);
+  const favorites = await loadFavorites();
 
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
@@ -45,11 +49,30 @@ export default async function AccountPage() {
       <div className="mt-8 flex flex-col gap-8">
         <AccountDetails user={user} />
 
-        <EmptySection
-          id="propiedades-interesadas"
-          title="Propiedades interesadas"
-          description="Todavía no has guardado ninguna propiedad. Guarda las que te interesen para volver a ellas sin buscarlas de nuevo."
-        />
+        {favorites && favorites.total > 0 ? (
+          <section aria-labelledby="propiedades-interesadas">
+            <h2
+              id="propiedades-interesadas"
+              className="text-xl font-semibold tracking-tight"
+            >
+              Propiedades interesadas
+            </h2>
+
+            <PropertyGrid
+              properties={favorites.data}
+              favoritePropertyIds={
+                new Set(favorites.data.map((property) => property.id))
+              }
+              className="mt-4 sm:grid-cols-2 lg:grid-cols-2"
+            />
+          </section>
+        ) : (
+          <EmptySection
+            id="propiedades-interesadas"
+            title="Propiedades interesadas"
+            description="Todavía no has guardado ninguna propiedad. Guarda las que te interesen para volver a ellas sin buscarlas de nuevo."
+          />
+        )}
 
         <EmptySection
           id="propiedades-consultadas"
@@ -131,4 +154,20 @@ function EmptySection({
       </div>
     </section>
   );
+}
+
+/**
+ * Propiedades guardadas.
+ *
+ * Un fallo al consultarlas no debe tumbar la cuenta entera: se devuelve
+ * `null` y la sección muestra su estado vacío.
+ */
+async function loadFavorites(): Promise<PropertyListDto | null> {
+  try {
+    return await fetchFavorites((await cookies()).toString());
+  } catch (error) {
+    console.error("[cuenta] No fue posible cargar las guardadas", error);
+
+    return null;
+  }
 }

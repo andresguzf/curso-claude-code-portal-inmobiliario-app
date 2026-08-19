@@ -18,6 +18,7 @@ import { CatalogFilters } from "@/components/property/catalog-filters";
 import { CatalogSort } from "@/components/property/catalog-sort";
 import { CatalogStatus } from "@/components/property/catalog-status";
 import { PropertyGrid } from "@/components/property/property-grid";
+import { getFavoritePropertyIds } from "@/lib/favorites";
 import { PropertyGridSkeleton } from "@/components/property/property-grid-skeleton";
 import { fetchFilterOptions, fetchPublicProperties } from "@/lib/api-client";
 
@@ -118,7 +119,11 @@ export async function CatalogResults({
 }: {
   readonly query: PropertyListQuery;
 }) {
-  const catalog = await loadCatalog(query);
+  // Ambas consultas son independientes: se piden a la vez.
+  const [catalog, favoritePropertyIds] = await Promise.all([
+    loadCatalog(query),
+    getFavoritePropertyIds(),
+  ]);
 
   if (catalog.status === "error") {
     return (
@@ -159,6 +164,7 @@ export async function CatalogResults({
         properties={catalog.properties}
         imageSizes={GRID_IMAGE_SIZES}
         prioritizeFirstImages
+        favoritePropertyIds={favoritePropertyIds}
         className="mt-8 lg:grid-cols-2 xl:grid-cols-3"
       />
     </>

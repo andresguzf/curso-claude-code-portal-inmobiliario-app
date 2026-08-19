@@ -1,9 +1,18 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { buildPropertySummary } from "@/test-support/property-fixtures";
 
 import { PropertyCard } from "./property-card";
+
+vi.mock("@/lib/api-client", () => ({
+  addFavorite: vi.fn(),
+  removeFavorite: vi.fn(),
+}));
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh: vi.fn(), replace: vi.fn(), push: vi.fn() }),
+}));
 
 describe("PropertyCard", () => {
   it("muestra los datos que exige la especificación", () => {
@@ -111,5 +120,27 @@ describe("PropertyCard", () => {
       "sizes",
       "(min-width: 640px) 50vw, 100vw",
     );
+  });
+});
+
+describe("PropertyCard — guardar", () => {
+  it("no ofrece el botón a quien no ha iniciado sesión", () => {
+    render(<PropertyCard property={buildPropertySummary()} />);
+
+    expect(screen.queryByRole("button")).toBeNull();
+  });
+
+  it("ofrece guardar cuando hay sesión", () => {
+    render(
+      <PropertyCard property={buildPropertySummary()} isFavorite={false} />,
+    );
+
+    expect(screen.getByRole("button")).toHaveAttribute("aria-pressed", "false");
+  });
+
+  it("marca la tarjeta de una propiedad ya guardada", () => {
+    render(<PropertyCard property={buildPropertySummary()} isFavorite />);
+
+    expect(screen.getByRole("button")).toHaveAttribute("aria-pressed", "true");
   });
 });

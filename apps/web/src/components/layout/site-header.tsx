@@ -17,8 +17,11 @@ const SCROLL_THRESHOLD = 8;
 
 export function SiteHeader({
   currentUser,
+  favoriteCount,
 }: {
   readonly currentUser: AuthenticatedUserDto | null;
+  /** Cuántas propiedades tiene guardadas quien visita. */
+  readonly favoriteCount: number;
 }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -71,7 +74,11 @@ export function SiteHeader({
 
         <nav aria-label="Principal" className="hidden md:block">
           <Suspense fallback={null}>
-            <SiteNavigationLinks variant="desktop" currentUser={currentUser} />
+            <SiteNavigationLinks
+              variant="desktop"
+              currentUser={currentUser}
+              favoriteCount={favoriteCount}
+            />
           </Suspense>
         </nav>
 
@@ -99,6 +106,7 @@ export function SiteHeader({
             <SiteNavigationLinks
               variant="mobile"
               currentUser={currentUser}
+              favoriteCount={favoriteCount}
               onNavigate={closeMobileMenu}
             />
           </Suspense>

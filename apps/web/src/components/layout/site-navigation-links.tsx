@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 type SiteNavigationLinksProps = {
   variant: "desktop" | "mobile";
   currentUser: AuthenticatedUserDto | null;
+  favoriteCount: number;
   onNavigate?: () => void;
 };
 
@@ -24,6 +25,7 @@ const baseLinkClasses =
 export function SiteNavigationLinks({
   variant,
   currentUser,
+  favoriteCount,
   onNavigate,
 }: SiteNavigationLinksProps) {
   const pathname = usePathname();
@@ -67,6 +69,7 @@ export function SiteNavigationLinks({
       <li className={cn(isMobile ? "mt-2" : "ml-2")}>
         <SessionMenu
           currentUser={currentUser}
+          favoriteCount={favoriteCount}
           isMobile={isMobile}
           onNavigate={onNavigate}
         />
