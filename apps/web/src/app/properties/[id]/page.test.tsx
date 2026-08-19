@@ -15,6 +15,12 @@ const { fetchPublicPropertyById, notFound } = vi.hoisted(() => ({
 vi.mock("@/lib/api-client", () => ({ fetchPublicPropertyById }));
 vi.mock("next/navigation", () => ({ notFound }));
 
+// El catálogo pide los favoritos junto con las propiedades; sin sesión
+// no hay ninguno y las tarjetas no ofrecen el botón.
+vi.mock("@/lib/favorites", () => ({
+  getFavoritePropertyIds: async () => undefined,
+}));
+
 afterEach(() => {
   fetchPublicPropertyById.mockReset();
   notFound.mockClear();

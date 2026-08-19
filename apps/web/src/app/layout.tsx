@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
 import { getCurrentUser } from "@/lib/current-user";
+import { getFavoritePropertyIds } from "@/lib/favorites";
 
 import "./globals.css";
 
@@ -39,7 +40,10 @@ const MAIN_CONTENT_ID = "contenido-principal";
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   // La sesión se resuelve antes de pintar, para que el header no muestre
   // «Ingresar» un instante a quien ya inició sesión.
-  const currentUser = await getCurrentUser();
+  const [currentUser, favoritePropertyIds] = await Promise.all([
+    getCurrentUser(),
+    getFavoritePropertyIds(),
+  ]);
 
   return (
     <html
@@ -54,7 +58,10 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           Saltar al contenido principal
         </a>
 
-        <SiteHeader currentUser={currentUser} />
+        <SiteHeader
+          currentUser={currentUser}
+          favoriteCount={favoritePropertyIds?.size ?? 0}
+        />
 
         <main id={MAIN_CONTENT_ID} className="flex-1">
           {children}

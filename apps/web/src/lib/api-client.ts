@@ -1,6 +1,7 @@
 import {
   QUERY_PARAM_NAMES,
   type ApiErrorDto,
+  type FavoriteIdsDto,
   type AuthenticatedUserDto,
   type LoginRequestDto,
   type RegisterRequestDto,
@@ -293,4 +294,52 @@ export async function updateAccount(
   });
 
   return readOrThrow(response, "No pudimos guardar los cambios.");
+}
+
+/**
+ * Propiedades guardadas (spec.md, sección 16).
+ *
+ * La API deduce de quién son a partir de la sesión: no hay ningún parámetro
+ * con el identificador de la persona, y por tanto nada que manipular para
+ * ver la lista de otra.
+ */
+export async function fetchFavorites(
+  cookieHeader?: string,
+): Promise<PropertyListDto> {
+  const response = await fetch(buildApiUrl("/api/favorites"), {
+    cache: "no-store",
+    headers: cookieHeader ? { Cookie: cookieHeader } : undefined,
+  });
+
+  return readOrThrow(response, "No pudimos cargar tus propiedades guardadas.");
+}
+
+/** Solo los identificadores, para saber qué tarjetas pintar marcadas. */
+export async function fetchFavoriteIds(
+  cookieHeader?: string,
+): Promise<FavoriteIdsDto> {
+  const response = await fetch(buildApiUrl("/api/favorites/ids"), {
+    cache: "no-store",
+    headers: cookieHeader ? { Cookie: cookieHeader } : undefined,
+  });
+
+  return readOrThrow(response, "No pudimos cargar tus propiedades guardadas.");
+}
+
+export async function addFavorite(propertyId: string): Promise<void> {
+  const response = await fetch(
+    buildApiUrl(`/api/favorites/${encodeURIComponent(propertyId)}`),
+    { method: "POST" },
+  );
+
+  await readOrThrow(response, "No pudimos guardar la propiedad.");
+}
+
+export async function removeFavorite(propertyId: string): Promise<void> {
+  const response = await fetch(
+    buildApiUrl(`/api/favorites/${encodeURIComponent(propertyId)}`),
+    { method: "DELETE" },
+  );
+
+  await readOrThrow(response, "No pudimos quitar la propiedad.");
 }

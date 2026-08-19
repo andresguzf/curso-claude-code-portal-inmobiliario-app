@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import type { PropertySummaryDto } from "@portal/contracts";
 
+import { FavoriteButton } from "@/components/property/favorite-button";
 import {
   formatArea,
   formatOperationType,
@@ -33,6 +34,13 @@ type PropertyCardProps = {
   readonly imageSizes?: string;
   /** Carga la imagen con prioridad. Solo para tarjetas visibles al entrar. */
   readonly priority?: boolean;
+  /**
+   * Si la propiedad está guardada, o `undefined` para no ofrecer el botón.
+   *
+   * Quien no ha iniciado sesión no puede guardar nada, así que no se le
+   * muestra un botón que solo llevaría a un rechazo.
+   */
+  readonly isFavorite?: boolean | undefined;
   readonly className?: string;
 };
 
@@ -40,6 +48,7 @@ export function PropertyCard({
   property,
   imageSizes = DEFAULT_CARD_IMAGE_SIZES,
   priority = false,
+  isFavorite,
   className,
 }: PropertyCardProps) {
   const usableArea = formatArea(property.usableAreaSquareMeters);
@@ -72,6 +81,19 @@ export function PropertyCard({
             Destacada
           </span>
         ) : null}
+
+        {/*
+          El botón va por encima del enlace que cubre la tarjeta: sin `z-10`
+          quedaría debajo del seudoelemento y no se podría pulsar.
+        */}
+        {isFavorite === undefined ? null : (
+          <FavoriteButton
+            propertyId={property.id}
+            propertyTitle={property.title}
+            isFavorite={isFavorite}
+            className="absolute top-3 right-3 z-10 shadow-sm"
+          />
+        )}
       </div>
 
       <div className="flex flex-1 flex-col gap-2 p-4">

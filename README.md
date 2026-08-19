@@ -9,7 +9,7 @@ favoritas, y los administradores gestionar el portal desde un área privada.
 
 ## Estado
 
-Pasos 1 a 19b de `specs/portal-inmobiliario/tasks.md` completos.
+Pasos 1 a 20 de `specs/portal-inmobiliario/tasks.md` completos.
 
 | Funcionalidad | Estado |
 |---|---|
@@ -27,7 +27,8 @@ Pasos 1 a 19b de `specs/portal-inmobiliario/tasks.md` completos.
 | Autorización USER y ADMIN | ✅ |
 | Área privada de la cuenta | ✅ |
 | Edición de los propios datos | ✅ |
-| Favoritos y consultas guardadas | Pasos 20-21 |
+| Favoritos | ✅ |
+| Consultas guardadas | Paso 21 |
 | Área de administración | Pasos 22-30 |
 
 ## Arquitectura

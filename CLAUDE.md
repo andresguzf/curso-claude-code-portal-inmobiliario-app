@@ -149,14 +149,14 @@ Cambiar la paleta no debe requerir tocar componentes.
 
 ## Estado del proyecto
 
-Pasos 1 a 19b de `tasks.md` completos. En funcionamiento: portada, catálogo
+Pasos 1 a 20 de `tasks.md` completos. En funcionamiento: portada, catálogo
 con búsqueda, filtros combinados, ordenamiento, estados de carga/vacío/error,
 detalle de propiedad, galería, mapa de ubicación, formulario de contacto,
 autenticación con autorización por rol y el área privada de la cuenta, con
-edición de los propios datos.
+edición de los propios datos y favoritos.
 
-Pendiente desde el paso 20: favoritos, persistencia de las consultas en
-PostgreSQL (paso 21) y área de administración.
+Pendiente desde el paso 21: persistencia de las consultas en PostgreSQL y
+área de administración.
 
 ### Autenticación
 
@@ -186,6 +186,21 @@ repositorio no los admite. Enviarlos en el cuerpo no produce ningún efecto.
 
 Esta funcionalidad no estaba en la especificación original: se añadió a
 `spec.md` §17 y a `plan.md` §7 antes de implementarla.
+
+### Favoritos
+
+Guardar y quitar son idempotentes: repetir la operación deja el mismo
+resultado y no falla, que es lo que necesita un botón que alterna y coincide
+con lo que HTTP espera de `DELETE`. La unicidad la garantiza el esquema
+—`@@unique([userId, propertyId])`—, no la capa de servicios.
+
+El identificador de la persona sale siempre de la sesión, nunca de un
+parámetro: no hay nada que manipular para ver o alterar la lista de otra.
+
+El botón se pinta solo si hay sesión, y esa distinción la da la propia API:
+`GET /api/favorites/ids` responde 401 sin sesión y una lista vacía con ella.
+Por eso `getFavoritePropertyIds` devuelve `undefined` frente a un conjunto
+vacío, y son cosas distintas.
 
 ### Autorización
 
@@ -236,9 +251,8 @@ mínimo de ocho caracteres que exige el backend.
   servidor responde 403 con «Use our API in client side».
 - Una consulta enviada todavía no se guarda en PostgreSQL: solo se envía por
   correo. La persistencia y la asociación con el usuario llegan en el paso 21.
-- En `/account`, las secciones de propiedades interesadas y consultadas están
-  montadas con su estado vacío, pero aún no reciben datos: los favoritos son
-  del paso 20 y las consultas del 21.
+- En `/account`, la sección de propiedades consultadas sigue vacía: las
+  consultas se empiezan a guardar en el paso 21.
 - El mapa del detalle necesita dos claves: `GOOGLE_MAPS_API_KEY` en
   `apps/api/.env` (Geocoding v4, deduce las coordenadas) y
   `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` en `apps/web/.env` (Maps JavaScript API,

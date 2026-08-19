@@ -5,11 +5,13 @@ import type { PropertyDetailDto } from "@portal/contracts";
 
 import { CatalogStatus } from "@/components/property/catalog-status";
 import { PropertyContactForm } from "@/components/property/property-contact-form";
+import { FavoriteButton } from "@/components/property/favorite-button";
 import { PropertyFeatures } from "@/components/property/property-features";
 import { PropertyGallery } from "@/components/property/property-gallery";
 import { PropertyLocation } from "@/components/property/property-location";
 import { PropertySpecifications } from "@/components/property/property-specifications";
 import { fetchPublicPropertyById } from "@/lib/api-client";
+import { getFavoritePropertyIds } from "@/lib/favorites";
 import {
   formatFullLocation,
   formatOperationType,
@@ -34,7 +36,10 @@ export default async function PropertyDetailPage({
   params,
 }: PageProps<"/properties/[id]">) {
   const { id } = await params;
-  const result = await loadProperty(id);
+  const [result, favoritePropertyIds] = await Promise.all([
+    loadProperty(id),
+    getFavoritePropertyIds(),
+  ]);
 
   if (result.status === "error") {
     return (
@@ -54,13 +59,21 @@ export default async function PropertyDetailPage({
     notFound();
   }
 
-  return <PropertyDetail property={result.property} />;
+  return (
+    <PropertyDetail
+      property={result.property}
+      isFavorite={favoritePropertyIds?.has(result.property.id)}
+    />
+  );
 }
 
 function PropertyDetail({
   property,
+  isFavorite,
 }: {
   readonly property: PropertyDetailDto;
+  /** `undefined` cuando no hay sesión: sin ella no se ofrece guardar. */
+  readonly isFavorite?: boolean | undefined;
 }) {
   return (
     <article className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
@@ -84,13 +97,23 @@ function PropertyDetail({
           {property.title}
         </h1>
 
-        <p className="mt-3 text-2xl font-bold text-accent sm:text-3xl">
-          {formatPropertyPrice(
-            property.price,
-            property.currency,
-            property.operationType,
+        <div className="mt-3 flex flex-wrap items-center gap-4">
+          <p className="text-2xl font-bold text-accent sm:text-3xl">
+            {formatPropertyPrice(
+              property.price,
+              property.currency,
+              property.operationType,
+            )}
+          </p>
+
+          {isFavorite === undefined ? null : (
+            <FavoriteButton
+              propertyId={property.id}
+              propertyTitle={property.title}
+              isFavorite={isFavorite}
+            />
           )}
-        </p>
+        </div>
 
         <p className="mt-2 text-base text-ink-muted">
           {formatFullLocation(property)}

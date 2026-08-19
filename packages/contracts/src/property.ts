@@ -179,6 +179,16 @@ export const FILTER_LIMITS = {
   maxUsableArea: 1_000_000,
 } as const;
 
+/**
+ * Identificadores de las propiedades guardadas (spec.md, sección 16).
+ *
+ * Se devuelven aparte de la lista completa para que una página con muchas
+ * tarjetas sepa cuáles marcar sin traerse la ficha de cada una.
+ */
+export type FavoriteIdsDto = {
+  readonly propertyIds: readonly string[];
+};
+
 /** Formato uniforme de error (plan.md, sección 14). */
 export type ApiErrorDto = {
   readonly message: string;

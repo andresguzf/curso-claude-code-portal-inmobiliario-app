@@ -23,6 +23,13 @@ type PropertyGridProps = {
   readonly imageSizes?: string;
   /** Prioriza la carga de las primeras imágenes (contenido visible al entrar). */
   readonly prioritizeFirstImages?: boolean;
+  /**
+   * Identificadores ya guardados, o `undefined` para no ofrecer el botón.
+   *
+   * Llega resuelto desde el servidor: preguntarlo desde el navegador haría
+   * parpadear todas las tarjetas al cargar.
+   */
+  readonly favoritePropertyIds?: ReadonlySet<string> | undefined;
   readonly className?: string;
 };
 
@@ -30,6 +37,7 @@ export function PropertyGrid({
   properties,
   imageSizes = DEFAULT_CARD_IMAGE_SIZES,
   prioritizeFirstImages = false,
+  favoritePropertyIds,
   className,
 }: PropertyGridProps) {
   return (
@@ -45,6 +53,7 @@ export function PropertyGrid({
             property={property}
             imageSizes={imageSizes}
             priority={prioritizeFirstImages && index < PRIORITY_CARD_COUNT}
+            isFavorite={favoritePropertyIds?.has(property.id)}
           />
         </li>
       ))}

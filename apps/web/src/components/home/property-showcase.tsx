@@ -13,6 +13,8 @@ type PropertyShowcaseProps = {
   readonly properties: readonly PropertySummaryDto[];
   readonly linkHref: string;
   readonly linkLabel: string;
+  /** Identificadores ya guardados, o `undefined` para no ofrecer el botón. */
+  readonly favoritePropertyIds?: ReadonlySet<string> | undefined;
   /** Prioriza las imágenes cuando la sección es la primera de la página. */
   readonly prioritizeImages?: boolean;
 };
@@ -24,6 +26,7 @@ export function PropertyShowcase({
   properties,
   linkHref,
   linkLabel,
+  favoritePropertyIds,
   prioritizeImages = false,
 }: PropertyShowcaseProps) {
   if (properties.length === 0) {
@@ -51,6 +54,7 @@ export function PropertyShowcase({
 
         <PropertyGrid
           properties={properties}
+          favoritePropertyIds={favoritePropertyIds}
           prioritizeFirstImages={prioritizeImages}
           className="mt-8"
         />
