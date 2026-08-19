@@ -19,6 +19,23 @@ export type LoginRequestDto = {
   readonly password: string;
 };
 
+/**
+ * Cambios que alguien puede hacer sobre su propia cuenta.
+ *
+ * No incluye `role` ni `isActive` a propósito: quién es administrador y qué
+ * cuentas están activas lo decide ADMIN (spec.md, sección 21). Que el campo
+ * no exista en el contrato es la primera barrera; el backend además ignora
+ * cualquier campo que no espere.
+ */
+export type UpdateAccountRequestDto = {
+  readonly name: string;
+  readonly email: string;
+  /** Obligatoria: confirma que quien guarda es la persona dueña. */
+  readonly currentPassword: string;
+  /** Opcional: solo viaja cuando se quiere cambiar la contraseña. */
+  readonly newPassword?: string | undefined;
+};
+
 /** Usuario autenticado, tal como lo ve el navegador. */
 export type AuthenticatedUserDto = {
   readonly id: string;

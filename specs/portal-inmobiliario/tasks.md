@@ -120,10 +120,17 @@
   - Proteger páginas.
   - Aplicar permisos en backend.
 
-- [ ] **Paso 19 — Cuenta de usuario**
+- [x] **Paso 19 — Cuenta de usuario**
   - Crear `/account`.
   - Mostrar información básica.
   - Preparar secciones de propiedades interesadas y consultadas.
+
+- [x] **Paso 19b — Editar cuenta**
+  - Crear `/account/edit`.
+  - Editar nombre, email y contraseña.
+  - Confirmar la contraseña actual.
+  - Rechazar un email ya registrado.
+  - No permitir cambiar rol ni estado.
 
 - [ ] **Paso 20 — Favoritos**
   - Listar.

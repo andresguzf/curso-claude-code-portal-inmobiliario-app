@@ -149,13 +149,14 @@ Cambiar la paleta no debe requerir tocar componentes.
 
 ## Estado del proyecto
 
-Pasos 1 a 18 de `tasks.md` completos. En funcionamiento: portada, catálogo
+Pasos 1 a 19b de `tasks.md` completos. En funcionamiento: portada, catálogo
 con búsqueda, filtros combinados, ordenamiento, estados de carga/vacío/error,
-detalle de propiedad, galería, mapa de ubicación, formulario de contacto y la
-API REST de autenticación.
+detalle de propiedad, galería, mapa de ubicación, formulario de contacto,
+autenticación con autorización por rol y el área privada de la cuenta, con
+edición de los propios datos.
 
-Pendiente desde el paso 19: cuenta de usuario, favoritos, persistencia de
-las consultas en PostgreSQL (paso 21) y área de administración.
+Pendiente desde el paso 20: favoritos, persistencia de las consultas en
+PostgreSQL (paso 21) y área de administración.
 
 ### Autenticación
 
@@ -171,6 +172,20 @@ sin invalidar lo ya guardado.
 Existen `/login` y `/register`, y el header muestra la sesión: lo resuelve el
 layout en el servidor, así que nadie ve un instante de «Ingresar» estando ya
 dentro.
+
+### Edición de la cuenta
+
+`/account/edit` permite cambiar nombre, email y contraseña mediante
+`PATCH /api/auth/me`. Se exige la contraseña actual para guardar **cualquier**
+cambio, también uno de solo el nombre: es una regla única, sin condiciones que
+puedan quedar mal escritas.
+
+El rol y el estado de la cuenta no son editables desde ahí y no hay forma de
+colarlos: el DTO no los declara, el validador los descarta y la firma del
+repositorio no los admite. Enviarlos en el cuerpo no produce ningún efecto.
+
+Esta funcionalidad no estaba en la especificación original: se añadió a
+`spec.md` §17 y a `plan.md` §7 antes de implementarla.
 
 ### Autorización
 
@@ -221,6 +236,9 @@ mínimo de ocho caracteres que exige el backend.
   servidor responde 403 con «Use our API in client side».
 - Una consulta enviada todavía no se guarda en PostgreSQL: solo se envía por
   correo. La persistencia y la asociación con el usuario llegan en el paso 21.
+- En `/account`, las secciones de propiedades interesadas y consultadas están
+  montadas con su estado vacío, pero aún no reciben datos: los favoritos son
+  del paso 20 y las consultas del 21.
 - El mapa del detalle necesita dos claves: `GOOGLE_MAPS_API_KEY` en
   `apps/api/.env` (Geocoding v4, deduce las coordenadas) y
   `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` en `apps/web/.env` (Maps JavaScript API,

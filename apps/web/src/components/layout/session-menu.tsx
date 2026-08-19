@@ -76,10 +76,18 @@ export function SessionMenu({
         isMobile && "flex-col items-stretch",
       )}
     >
-      <span className={cn("px-3 py-2 text-sm text-on-dark-muted")}>
+      {/* El nombre es la puerta a la cuenta: es donde se busca. */}
+      <Link
+        href="/account"
+        onClick={onNavigate}
+        className={cn(
+          buttonClasses,
+          "text-on-dark-muted hover:bg-header-hover hover:text-on-dark",
+        )}
+      >
         Hola,{" "}
         <span className="font-medium text-on-dark">{currentUser.name}</span>
-      </span>
+      </Link>
 
       <button
         type="button"

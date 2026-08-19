@@ -4,6 +4,7 @@ import {
   type AuthenticatedUserDto,
   type LoginRequestDto,
   type RegisterRequestDto,
+  type UpdateAccountRequestDto,
   type InquiryCreatedDto,
   type InquiryRequestDto,
   type PropertyDetailDto,
@@ -279,4 +280,17 @@ export async function fetchCurrentUser(
   }
 
   return (await response.json()) as AuthenticatedUserDto;
+}
+
+/** Guarda los cambios de la propia cuenta. */
+export async function updateAccount(
+  changes: UpdateAccountRequestDto,
+): Promise<AuthenticatedUserDto> {
+  const response = await fetch(buildApiUrl("/api/auth/me"), {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(changes),
+  });
+
+  return readOrThrow(response, "No pudimos guardar los cambios.");
 }
