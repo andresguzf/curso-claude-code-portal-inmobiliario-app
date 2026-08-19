@@ -72,6 +72,14 @@ describe("SessionMenu con sesión", () => {
     expect(screen.queryByRole("link", { name: "Ingresar" })).toBeNull();
   });
 
+  it("lleva a la cuenta desde el nombre, que es donde se busca", () => {
+    render(<SessionMenu currentUser={MARIA} isMobile={false} />);
+
+    expect(
+      screen.getByRole("link", { name: /María González/ }),
+    ).toHaveAttribute("href", "/account");
+  });
+
   it("cierra la sesión y pide la página de nuevo al servidor", async () => {
     const user = userEvent.setup();
 

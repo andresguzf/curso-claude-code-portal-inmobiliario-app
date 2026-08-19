@@ -3,6 +3,7 @@ import {
   type CurrencyValue,
   type OperationTypeValue,
   type PropertyLocation,
+  type UserRoleValue,
 } from "@portal/contracts";
 
 /**
@@ -101,4 +102,14 @@ export function formatPropertyType(
   propertyType: keyof typeof PROPERTY_TYPE_LABELS,
 ): string {
   return PROPERTY_TYPE_LABELS[propertyType];
+}
+
+const USER_ROLE_LABELS = {
+  USER: "Usuario",
+  ADMIN: "Administración",
+} as const satisfies Record<UserRoleValue, string>;
+
+/** Nombre legible del rol, para mostrarlo en la cuenta. */
+export function formatUserRole(role: UserRoleValue): string {
+  return USER_ROLE_LABELS[role];
 }

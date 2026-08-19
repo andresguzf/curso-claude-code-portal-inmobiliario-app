@@ -158,11 +158,16 @@ GET /api/properties/{id}
 Autenticación:
 
 ```text
-POST /api/auth/register
-POST /api/auth/login
-POST /api/auth/logout
-GET  /api/auth/me
+POST  /api/auth/register
+POST  /api/auth/login
+POST  /api/auth/logout
+GET   /api/auth/me
+PATCH /api/auth/me
 ```
+
+`PATCH /api/auth/me` actualiza la cuenta de quien tiene la sesión. Solo
+admite nombre, email y contraseña: el rol y el estado no se aceptan aunque
+lleguen en el cuerpo.
 
 Favoritos:
 

@@ -34,3 +34,23 @@ export function createUser(user: {
     data: { ...user, email: normalizeEmail(user.email) },
   });
 }
+
+/**
+ * Actualiza los datos que alguien puede cambiar de su propia cuenta.
+ *
+ * La firma no admite `role` ni `isActive`: no es que se filtren, es que no
+ * hay forma de pasarlos por aquí.
+ */
+export function updateUser(
+  id: string,
+  changes: {
+    readonly name: string;
+    readonly email: string;
+    readonly passwordHash?: string;
+  },
+) {
+  return prisma.user.update({
+    where: { id },
+    data: { ...changes, email: normalizeEmail(changes.email) },
+  });
+}

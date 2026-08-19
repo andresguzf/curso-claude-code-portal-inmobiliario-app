@@ -37,5 +37,31 @@ export const registerSchema = z.object({
     .max(AUTH_LIMITS.maxPasswordLength, "La contraseña es demasiado larga."),
 });
 
+/**
+ * Cambios sobre la propia cuenta.
+ *
+ * `newPassword` vacío significa «no cambiarla». El campo siempre está en el
+ * formulario, así que la cadena vacía es su estado normal, no un error.
+ */
+export const accountUpdateSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, "Escribe tu nombre.")
+    .max(AUTH_LIMITS.maxNameLength, "El nombre es demasiado largo."),
+  email: emailField,
+  currentPassword: z
+    .string()
+    .min(1, "Escribe tu contraseña actual para guardar los cambios."),
+  newPassword: z
+    .string()
+    .max(AUTH_LIMITS.maxPasswordLength, "La contraseña es demasiado larga.")
+    .refine(
+      (value) => value === "" || value.length >= AUTH_LIMITS.minPasswordLength,
+      `La contraseña debe tener al menos ${AUTH_LIMITS.minPasswordLength} caracteres.`,
+    ),
+});
+
 export type LoginFormValues = z.infer<typeof loginSchema>;
 export type RegisterFormValues = z.infer<typeof registerSchema>;
+export type AccountUpdateFormValues = z.infer<typeof accountUpdateSchema>;

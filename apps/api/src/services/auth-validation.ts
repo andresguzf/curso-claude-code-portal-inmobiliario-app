@@ -2,6 +2,7 @@ import {
   AUTH_LIMITS,
   type LoginRequestDto,
   type RegisterRequestDto,
+  type UpdateAccountRequestDto,
 } from "@portal/contracts";
 
 /**
@@ -79,6 +80,79 @@ export function validateLogin(
   }
 
   return { ok: true, value: { email, password } };
+}
+
+/**
+ * Cambios sobre la propia cuenta.
+ *
+ * La contraseña actual se exige siempre, también para cambiar solo el
+ * nombre. Es una regla única, imposible de olvidar en una rama: cualquier
+ * modificación de la cuenta pide demostrar que se es su dueño. La alternativa
+ * —pedirla solo al tocar email o contraseña— es más cómoda, pero deja una
+ * condición que puede quedar mal escrita y abrir un hueco.
+ */
+export function validateAccountUpdate(
+  payload: unknown,
+): ValidationResult<UpdateAccountRequestDto> {
+  const fields = readFields(payload);
+
+  if (fields === null) {
+    return { ok: false, message: "El cuerpo de la solicitud es inválido." };
+  }
+
+  const name = readText(fields.name);
+
+  if (name === "") {
+    return { ok: false, message: "El nombre es obligatorio." };
+  }
+
+  if (name.length > AUTH_LIMITS.maxNameLength) {
+    return { ok: false, message: "El nombre es demasiado largo." };
+  }
+
+  const email = validateEmail(fields.email);
+
+  if (!email.ok) {
+    return email;
+  }
+
+  const currentPassword =
+    typeof fields.currentPassword === "string" ? fields.currentPassword : "";
+
+  if (currentPassword === "") {
+    return {
+      ok: false,
+      message: "Escribe tu contraseña actual para guardar los cambios.",
+    };
+  }
+
+  // Un campo ausente o vacío significa «no cambiar la contraseña», no
+  // «ponerla en blanco».
+  const wantsNewPassword =
+    typeof fields.newPassword === "string" && fields.newPassword !== "";
+
+  if (!wantsNewPassword) {
+    return {
+      ok: true,
+      value: { name, email: email.value, currentPassword },
+    };
+  }
+
+  const newPassword = validatePassword(fields.newPassword);
+
+  if (!newPassword.ok) {
+    return newPassword;
+  }
+
+  return {
+    ok: true,
+    value: {
+      name,
+      email: email.value,
+      currentPassword,
+      newPassword: newPassword.value,
+    },
+  };
 }
 
 function validateEmail(value: unknown): ValidationResult<string> {

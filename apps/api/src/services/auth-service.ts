@@ -8,8 +8,13 @@ import {
   createUser,
   findUserByEmail,
   findUserById,
+  updateUser,
 } from "@/repositories/user-repository";
-import { validateLogin, validateRegister } from "@/services/auth-validation";
+import {
+  validateAccountUpdate,
+  validateLogin,
+  validateRegister,
+} from "@/services/auth-validation";
 
 /**
  * Reglas de autenticación (spec.md, sección 15).
@@ -110,6 +115,57 @@ export async function getAuthenticatedUser(
   const user = await findUserById(userId);
 
   return user && user.isActive ? toAuthenticatedUser(user) : null;
+}
+
+export type UpdateAccountOutcome =
+  | { readonly status: "updated"; readonly user: AuthenticatedUserDto }
+  | { readonly status: "invalid"; readonly message: string }
+  | { readonly status: "wrong-password" }
+  | { readonly status: "email-taken" }
+  | { readonly status: "gone" };
+
+/**
+ * Actualiza la propia cuenta (spec.md, sección 17).
+ *
+ * Solo toca nombre, email y contraseña. El rol y el estado no llegan hasta
+ * aquí —el contrato no los declara y el repositorio no los admite—, de modo
+ * que nadie puede ascenderse a ADMIN enviando un campo de más.
+ */
+export async function updateAccount(
+  userId: string,
+  payload: unknown,
+): Promise<UpdateAccountOutcome> {
+  const validation = validateAccountUpdate(payload);
+
+  if (!validation.ok) {
+    return { status: "invalid", message: validation.message };
+  }
+
+  const { name, email, currentPassword, newPassword } = validation.value;
+  const user = await findUserById(userId);
+
+  if (!user || !user.isActive) {
+    // La cuenta desapareció o fue desactivada con la sesión abierta.
+    return { status: "gone" };
+  }
+
+  if (!(await verifyPassword(currentPassword, user.passwordHash))) {
+    return { status: "wrong-password" };
+  }
+
+  const owner = await findUserByEmail(email);
+
+  if (owner && owner.id !== user.id) {
+    return { status: "email-taken" };
+  }
+
+  const updated = await updateUser(user.id, {
+    name,
+    email,
+    ...(newPassword ? { passwordHash: await hashPassword(newPassword) } : {}),
+  });
+
+  return { status: "updated", user: toAuthenticatedUser(updated) };
 }
 
 /** El hash de la contraseña nunca sale de esta capa. */

@@ -37,6 +37,7 @@ Puede realizar todas las acciones públicas y además:
 
 - cerrar sesión;
 - acceder a su cuenta;
+- editar su información básica y su contraseña;
 - guardar propiedades como favoritas o interesadas;
 - eliminar propiedades guardadas;
 - consultar sus propiedades interesadas;
@@ -385,6 +386,22 @@ El área privada debe mostrar:
 - información básica;
 - propiedades interesadas;
 - propiedades consultadas.
+
+### Edición de la cuenta
+
+USER puede editar su propia información en una página aparte:
+
+- nombre;
+- email;
+- contraseña.
+
+Requisitos:
+
+- confirmar la contraseña actual para guardar cualquier cambio;
+- rechazar un email que ya pertenezca a otra cuenta;
+- nadie puede cambiarse el rol ni el estado de su cuenta: eso es de ADMIN
+  (sección 21);
+- la autorización se comprueba en backend.
 
 ---
 

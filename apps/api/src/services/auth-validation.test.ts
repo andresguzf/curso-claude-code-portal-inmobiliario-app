@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { validateLogin, validateRegister } from "./auth-validation";
+import {
+  validateAccountUpdate,
+  validateLogin,
+  validateRegister,
+} from "./auth-validation";
 
 const VALID_REGISTER = {
   name: "Ana Pérez",
@@ -112,5 +116,71 @@ describe("validateLogin", () => {
     expect(
       rejectionOf(validateLogin, { email: "ana", password: "" }),
     ).toContain("obligatorios");
+  });
+});
+
+describe("validateAccountUpdate", () => {
+  const VALID_UPDATE = {
+    name: "Ana Pérez",
+    email: "ana@example.com",
+    currentPassword: "la de siempre",
+  };
+
+  it("acepta un cambio de nombre y email", () => {
+    expect(validateAccountUpdate(VALID_UPDATE)).toEqual({
+      ok: true,
+      value: VALID_UPDATE,
+    });
+  });
+
+  it("acepta además una contraseña nueva", () => {
+    expect(
+      validateAccountUpdate({ ...VALID_UPDATE, newPassword: "otra distinta" }),
+    ).toMatchObject({ ok: true, value: { newPassword: "otra distinta" } });
+  });
+
+  it("exige la contraseña actual incluso para cambiar solo el nombre", () => {
+    // Regla única: cualquier cambio pide demostrar que se es el dueño.
+    expect(
+      rejectionOf(validateAccountUpdate, {
+        ...VALID_UPDATE,
+        currentPassword: "",
+      }),
+    ).toContain("contraseña actual");
+  });
+
+  it("trata una contraseña nueva vacía como «no cambiarla»", () => {
+    // Y no como «dejarla en blanco».
+    expect(validateAccountUpdate({ ...VALID_UPDATE, newPassword: "" })).toEqual(
+      { ok: true, value: VALID_UPDATE },
+    );
+  });
+
+  it("aplica el mínimo de largo a la contraseña nueva", () => {
+    expect(
+      rejectionOf(validateAccountUpdate, {
+        ...VALID_UPDATE,
+        newPassword: "corta7c",
+      }),
+    ).toContain("al menos 8");
+  });
+
+  it("descarta el rol y el estado aunque lleguen en el cuerpo", () => {
+    const result = validateAccountUpdate({
+      ...VALID_UPDATE,
+      role: "ADMIN",
+      isActive: false,
+    });
+
+    expect(result).toEqual({ ok: true, value: VALID_UPDATE });
+  });
+
+  it("exige nombre y email válidos", () => {
+    expect(
+      rejectionOf(validateAccountUpdate, { ...VALID_UPDATE, name: "" }),
+    ).toContain("nombre");
+    expect(
+      rejectionOf(validateAccountUpdate, { ...VALID_UPDATE, email: "ana" }),
+    ).toContain("email");
   });
 });
