@@ -21,6 +21,9 @@ vi.mock("@/lib/favorites", () => ({
   getFavoritePropertyIds: async () => undefined,
 }));
 
+// Sin sesión el formulario de contacto llega con los campos vacíos.
+vi.mock("@/lib/current-user", () => ({ getCurrentUser: async () => null }));
+
 afterEach(() => {
   fetchPublicPropertyById.mockReset();
   notFound.mockClear();

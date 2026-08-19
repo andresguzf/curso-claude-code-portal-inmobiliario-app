@@ -2,6 +2,7 @@ import {
   QUERY_PARAM_NAMES,
   type ApiErrorDto,
   type FavoriteIdsDto,
+  type UserInquiryPageDto,
   type AuthenticatedUserDto,
   type LoginRequestDto,
   type RegisterRequestDto,
@@ -342,4 +343,46 @@ export async function removeFavorite(propertyId: string): Promise<void> {
   );
 
   await readOrThrow(response, "No pudimos quitar la propiedad.");
+}
+
+/**
+ * Historial de solicitudes de quien tiene la sesión.
+ *
+ * La página y la búsqueda las resuelve el servidor: traer el historial entero
+ * para mostrar seis entradas crece con cada consulta enviada.
+ */
+export async function fetchUserInquiries(
+  options: { readonly search?: string; readonly page?: number },
+  cookieHeader?: string,
+): Promise<UserInquiryPageDto> {
+  const parameters = new URLSearchParams();
+
+  if (options.search) {
+    parameters.set("search", options.search);
+  }
+
+  if (options.page && options.page > 1) {
+    parameters.set("page", String(options.page));
+  }
+
+  const query = parameters.toString();
+  const response = await fetch(
+    buildApiUrl(`/api/inquiries${query ? `?${query}` : ""}`),
+    {
+      cache: "no-store",
+      headers: cookieHeader ? { Cookie: cookieHeader } : undefined,
+    },
+  );
+
+  return readOrThrow(response, "No pudimos cargar tus consultas.");
+}
+
+/** Quita una solicitud del historial propio. */
+export async function hideInquiry(inquiryId: string): Promise<void> {
+  const response = await fetch(
+    buildApiUrl(`/api/inquiries/${encodeURIComponent(inquiryId)}`),
+    { method: "DELETE" },
+  );
+
+  await readOrThrow(response, "No pudimos eliminar la consulta.");
 }

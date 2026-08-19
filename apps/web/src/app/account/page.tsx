@@ -1,10 +1,15 @@
 import { cookies } from "next/headers";
 import Link from "next/link";
 
-import type { AuthenticatedUserDto, PropertyListDto } from "@portal/contracts";
+import type {
+  AuthenticatedUserDto,
+  PropertyListDto,
+  UserInquiryPageDto,
+} from "@portal/contracts";
 
+import { InquiryHistory } from "@/components/account/inquiry-history";
 import { PropertyGrid } from "@/components/property/property-grid";
-import { fetchFavorites } from "@/lib/api-client";
+import { fetchFavorites, fetchUserInquiries } from "@/lib/api-client";
 import { formatUserRole } from "@/lib/format";
 import { requireCurrentUser } from "@/lib/require-user";
 
@@ -29,9 +34,20 @@ const ACCOUNT_PATH = "/account";
  * su estado vacío. Los favoritos llegan en el paso 20 y las consultas se
  * empiezan a guardar en el paso 21.
  */
-export default async function AccountPage() {
+export default async function AccountPage({
+  searchParams,
+}: PageProps<"/account">) {
   const user = await requireCurrentUser(ACCOUNT_PATH);
-  const favorites = await loadFavorites();
+  const { search, page } = readHistoryParams(await searchParams);
+  const cookieHeader = (await cookies()).toString();
+
+  const [favorites, inquiries] = await Promise.all([
+    loadList(() => fetchFavorites(cookieHeader), "guardadas"),
+    loadList(
+      () => fetchUserInquiries({ search, page }, cookieHeader),
+      "consultadas",
+    ),
+  ]);
 
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
@@ -74,11 +90,15 @@ export default async function AccountPage() {
           />
         )}
 
-        <EmptySection
-          id="propiedades-consultadas"
-          title="Propiedades consultadas"
-          description="Aquí aparecerán las propiedades por las que has escrito. Todavía no has enviado ninguna consulta."
-        />
+        {inquiries ? (
+          <InquiryHistory page={inquiries} search={search} />
+        ) : (
+          <EmptySection
+            id="propiedades-consultadas"
+            title="Mis consultas"
+            description="No pudimos cargar tus consultas en este momento. Vuelve a intentarlo en unos minutos."
+          />
+        )}
       </div>
     </div>
   );
@@ -157,17 +177,33 @@ function EmptySection({
 }
 
 /**
- * Propiedades guardadas.
+ * Una lista de la cuenta.
  *
- * Un fallo al consultarlas no debe tumbar la cuenta entera: se devuelve
- * `null` y la sección muestra su estado vacío.
+ * Un fallo al consultarla no debe tumbar la página entera: se devuelve `null`
+ * y esa sección muestra su estado vacío.
  */
-async function loadFavorites(): Promise<PropertyListDto | null> {
+async function loadList<TList extends PropertyListDto | UserInquiryPageDto>(
+  load: () => Promise<TList>,
+  description: string,
+): Promise<TList | null> {
   try {
-    return await fetchFavorites((await cookies()).toString());
+    return await load();
   } catch (error) {
-    console.error("[cuenta] No fue posible cargar las guardadas", error);
+    console.error(`[cuenta] No fue posible cargar las ${description}`, error);
 
     return null;
   }
+}
+
+/** Búsqueda y página del historial, tal como llegan en la URL. */
+function readHistoryParams(
+  parameters: Record<string, string | string[] | undefined>,
+) {
+  const read = (name: string) => {
+    const value = parameters[name];
+
+    return (Array.isArray(value) ? value[0] : value) ?? "";
+  };
+
+  return { search: read("search").trim(), page: Number(read("page")) || 1 };
 }

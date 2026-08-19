@@ -1,6 +1,7 @@
 import "server-only";
 
 import { cookies } from "next/headers";
+import { cache } from "react";
 
 import type { AuthenticatedUserDto } from "@portal/contracts";
 
@@ -15,13 +16,19 @@ import { fetchCurrentUser } from "@/lib/api-client";
  *
  * Un fallo al consultar la API se trata como «sin sesión»: el portal público
  * debe seguir viéndose aunque la autenticación esté caída.
+ *
+ * Va envuelto en `cache` porque la piden el layout, para la barra, y algunas
+ * páginas, para rellenar formularios. Sin esto serían dos consultas idénticas
+ * por cada visita.
  */
-export async function getCurrentUser(): Promise<AuthenticatedUserDto | null> {
-  try {
-    return await fetchCurrentUser((await cookies()).toString());
-  } catch (error) {
-    console.error("[sesión] No fue posible leer la sesión", error);
+export const getCurrentUser = cache(
+  async function getCurrentUser(): Promise<AuthenticatedUserDto | null> {
+    try {
+      return await fetchCurrentUser((await cookies()).toString());
+    } catch (error) {
+      console.error("[sesión] No fue posible leer la sesión", error);
 
-    return null;
-  }
-}
+      return null;
+    }
+  },
+);

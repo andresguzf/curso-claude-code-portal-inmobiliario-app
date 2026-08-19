@@ -1,4 +1,6 @@
-import type { InquiryCreatedDto } from "@portal/contracts";
+import { cookies } from "next/headers";
+
+import type { InquiryCreatedDto, UserInquiryPageDto } from "@portal/contracts";
 
 import {
   HTTP_STATUS,
@@ -6,7 +8,10 @@ import {
   jsonInternalError,
   jsonOk,
 } from "@/lib/api-response";
-import { createInquiry } from "@/services/inquiry-service";
+import { requireAuthenticatedUser } from "@/lib/auth-guard";
+import { SESSION_COOKIE_NAME } from "@/lib/session";
+import { getAuthenticatedUser } from "@/services/auth-service";
+import { createInquiry, listUserInquiries } from "@/services/inquiry-service";
 
 /** Cada consulta se procesa en el momento. */
 export const dynamic = "force-dynamic";
@@ -14,8 +19,12 @@ export const dynamic = "force-dynamic";
 /**
  * POST /api/inquiries
  *
- * Valida una consulta sobre una propiedad publicada. El correo lo envía
- * después el navegador mediante Web3Forms, que no acepta envíos desde el
+ * Registra una consulta sobre una propiedad publicada y la asocia a quien
+ * tiene sesión, si la hay: el portal admite consultas de visitantes
+ * (spec.md, sección 14).
+ *
+ * La consulta se guarda antes de que salga ningún correo. El envío lo hace
+ * después el navegador mediante Web3Forms, que no acepta peticiones desde el
  * servidor en su plan gratuito (plan.md, sección 13).
  *
  * Una propiedad inexistente y una despublicada responden ambas 404, como en
@@ -24,13 +33,20 @@ export const dynamic = "force-dynamic";
  */
 export async function POST(request: Request) {
   try {
+    // La sesión es opcional: sin ella la consulta se guarda sin usuario.
+    const sessionCookie = (await cookies()).get(SESSION_COOKIE_NAME);
+    const user = await getAuthenticatedUser(sessionCookie?.value);
+
     const payload: unknown = await request.json().catch(() => null);
-    const outcome = await createInquiry(payload);
+    const outcome = await createInquiry(payload, user?.id ?? null);
 
     switch (outcome.status) {
-      case "accepted":
+      case "created":
         return jsonOk<InquiryCreatedDto>(
-          { message: "Consulta enviada. Te responderemos a la brevedad." },
+          {
+            id: outcome.id,
+            message: "Consulta enviada. Te responderemos a la brevedad.",
+          },
           HTTP_STATUS.CREATED,
         );
 
@@ -42,5 +58,33 @@ export async function POST(request: Request) {
     }
   } catch (error) {
     return jsonInternalError("POST /api/inquiries", error);
+  }
+}
+
+/**
+ * GET /api/inquiries?search=&page=
+ *
+ * Historial de solicitudes de quien tiene la sesión, paginado y filtrable.
+ * La lista es siempre la suya: el identificador sale de la sesión, no de un
+ * parámetro, así que no hay nada que manipular para leer la de otra persona.
+ */
+export async function GET(request: Request) {
+  try {
+    const session = await requireAuthenticatedUser();
+
+    if (!session.ok) {
+      return session.response;
+    }
+
+    const parameters = new URL(request.url).searchParams;
+
+    return jsonOk<UserInquiryPageDto>(
+      await listUserInquiries(session.user.id, {
+        search: parameters.get("search") ?? "",
+        page: Number(parameters.get("page")) || 1,
+      }),
+    );
+  } catch (error) {
+    return jsonInternalError("GET /api/inquiries", error);
   }
 }

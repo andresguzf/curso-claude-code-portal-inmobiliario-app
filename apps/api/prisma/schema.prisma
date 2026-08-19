@@ -214,8 +214,13 @@ model Inquiry {
 
   createdAt DateTime @default(now()) @map("created_at")
 
+  /// Cuándo la ocultó de su historial quien la envió. La solicitud se
+  /// conserva para ADMIN: es el contacto que la inmobiliaria debe responder
+  /// y quien escribió no puede hacerlo desaparecer (spec.md, sección 17).
+  hiddenByUserAt DateTime? @map("hidden_by_user_at")
+
   @@index([propertyId, createdAt])
-  @@index([userId])
+  @@index([userId, hiddenByUserAt, createdAt])
   @@index([createdAt])
   @@map("inquiries")
 }

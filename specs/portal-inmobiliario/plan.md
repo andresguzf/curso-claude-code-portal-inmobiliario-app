@@ -180,8 +180,16 @@ DELETE /api/favorites/{propertyId}
 Consultas:
 
 ```text
-POST /api/inquiries
+POST   /api/inquiries
+GET    /api/inquiries
+DELETE /api/inquiries/{id}
 ```
+
+`GET /api/inquiries` devuelve las solicitudes de quien tiene la sesión,
+paginadas y filtrables por título de propiedad o texto del mensaje.
+
+`DELETE /api/inquiries/{id}` las oculta del historial propio sin borrarlas:
+siguen disponibles para ADMIN.
 
 Administración:
 

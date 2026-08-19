@@ -9,7 +9,7 @@ favoritas, y los administradores gestionar el portal desde un área privada.
 
 ## Estado
 
-Pasos 1 a 20 de `specs/portal-inmobiliario/tasks.md` completos.
+Pasos 1 a 21b de `specs/portal-inmobiliario/tasks.md` completos.
 
 | Funcionalidad | Estado |
 |---|---|
@@ -28,7 +28,7 @@ Pasos 1 a 20 de `specs/portal-inmobiliario/tasks.md` completos.
 | Área privada de la cuenta | ✅ |
 | Edición de los propios datos | ✅ |
 | Favoritos | ✅ |
-| Consultas guardadas | Paso 21 |
+| Consultas guardadas, con buscador y paginación | ✅ |
 | Área de administración | Pasos 22-30 |
 
 ## Arquitectura
@@ -200,8 +200,8 @@ credenciales son solo para desarrollo.
 - El formulario de contacto necesita `NEXT_PUBLIC_WEB3FORMS_ACCESS_KEY` en
   `apps/web/.env`, que se obtiene gratis en web3forms.com. Vive en el
   frontend porque el plan gratuito de Web3Forms solo acepta envíos desde el
-  navegador. Una consulta enviada todavía no se guarda en PostgreSQL: la
-  persistencia llega en el paso 21.
+  navegador. Sin esa clave la consulta se guarda igualmente: lo que no sale
+  es el aviso por correo.
 - El mapa del detalle necesita dos claves de Google Maps: una de
   geocodificación en `apps/api/.env` (`GOOGLE_MAPS_API_KEY`) y otra para el
   mapa del navegador en `apps/web/.env`

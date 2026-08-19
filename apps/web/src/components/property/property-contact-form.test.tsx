@@ -8,11 +8,12 @@ vi.mock("@/lib/inquiry-submission", () => ({ sendInquiry }));
 
 import { PropertyContactForm } from "./property-contact-form";
 
-function renderForm() {
+function renderForm(contact?: { name: string; email: string }) {
   return render(
     <PropertyContactForm
       propertyId="seed-property-01"
       propertyTitle="Casa en Las Condes"
+      contact={contact}
     />,
   );
 }
@@ -214,5 +215,60 @@ describe("PropertyContactForm", () => {
     ).toBeVisible();
     // El formulario conserva lo escrito: quien reintenta no vuelve a teclearlo.
     expect(screen.getByLabelText(/Nombre/)).toHaveValue("Ana Pérez");
+  });
+});
+
+describe("PropertyContactForm — con sesión iniciada", () => {
+  const MARIA = { name: "María González", email: "maria@example.com" };
+
+  it("llega con el nombre y el email ya puestos", () => {
+    renderForm(MARIA);
+
+    expect(screen.getByLabelText(/Nombre/)).toHaveValue("María González");
+    expect(screen.getByLabelText(/Email/)).toHaveValue("maria@example.com");
+  });
+
+  it("deja el teléfono en blanco: la cuenta no lo guarda", () => {
+    renderForm(MARIA);
+
+    expect(screen.getByLabelText(/Teléfono/)).toHaveValue("");
+  });
+
+  it("permite responder a otra dirección", async () => {
+    const user = userEvent.setup();
+
+    sendInquiry.mockResolvedValue({ message: "ok", isEmailDelivered: true });
+    renderForm(MARIA);
+    await user.clear(screen.getByLabelText(/Email/));
+    await user.type(screen.getByLabelText(/Email/), "otra@example.com");
+    await user.click(screen.getByRole("button", { name: "Enviar consulta" }));
+
+    await waitFor(() =>
+      expect(sendInquiry).toHaveBeenCalledWith(
+        expect.objectContaining({ email: "otra@example.com" }),
+        "Casa en Las Condes",
+      ),
+    );
+  });
+
+  it("tras enviar vuelve a los datos de la sesión, no a campos vacíos", async () => {
+    const user = userEvent.setup();
+
+    sendInquiry.mockResolvedValue({
+      message: "Consulta enviada.",
+      isEmailDelivered: true,
+    });
+    renderForm(MARIA);
+    await user.click(screen.getByRole("button", { name: "Enviar consulta" }));
+
+    expect(await screen.findByText("Consulta enviada.")).toBeVisible();
+    expect(screen.getByLabelText(/Nombre/)).toHaveValue("María González");
+  });
+
+  it("un visitante sigue viendo los campos vacíos", () => {
+    renderForm();
+
+    expect(screen.getByLabelText(/Nombre/)).toHaveValue("");
+    expect(screen.getByLabelText(/Email/)).toHaveValue("");
   });
 });

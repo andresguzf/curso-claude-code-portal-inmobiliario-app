@@ -149,14 +149,13 @@ Cambiar la paleta no debe requerir tocar componentes.
 
 ## Estado del proyecto
 
-Pasos 1 a 20 de `tasks.md` completos. En funcionamiento: portada, catálogo
+Pasos 1 a 21b de `tasks.md` completos. En funcionamiento: portada, catálogo
 con búsqueda, filtros combinados, ordenamiento, estados de carga/vacío/error,
 detalle de propiedad, galería, mapa de ubicación, formulario de contacto,
 autenticación con autorización por rol y el área privada de la cuenta, con
-edición de los propios datos y favoritos.
+edición de los propios datos, favoritos y consultas guardadas.
 
-Pendiente desde el paso 21: persistencia de las consultas en PostgreSQL y
-área de administración.
+Pendiente desde el paso 22: el área de administración.
 
 ### Autenticación
 
@@ -186,6 +185,25 @@ repositorio no los admite. Enviarlos en el cuerpo no produce ningún efecto.
 
 Esta funcionalidad no estaba en la especificación original: se añadió a
 `spec.md` §17 y a `plan.md` §7 antes de implementarla.
+
+### Consultas
+
+Se guardan en PostgreSQL **antes** de que salga ningún correo, y se asocian a
+quien tiene sesión; un visitante las envía igual y quedan con `userId` nulo.
+
+En `/account` se muestran como registros —propiedad, mensaje y fecha—, con
+buscador sobre el título de la propiedad y el texto del mensaje, y paginadas
+de a seis. Búsqueda y página viven en la URL, como en el catálogo.
+
+Eliminar una consulta la oculta del historial propio mediante
+`hiddenByUserAt`, pero **no la borra**: sigue disponible para ADMIN, porque es
+el contacto que la inmobiliaria debe responder y quien escribió no puede
+hacerlo desaparecer. Esta funcionalidad no estaba en la especificación
+original: se añadió a `spec.md` §17 y a `plan.md` §7 antes de implementarla.
+
+Como la consulta ya está a salvo, un fallo de Web3Forms dejó de ser una
+pérdida: se avisa de que quedó registrada y el mensaje no invita a reintentar,
+porque reintentar la guardaría dos veces.
 
 ### Favoritos
 
@@ -249,10 +267,6 @@ mínimo de ocho caracteres que exige el backend.
   una consulta que no salió. La clave está en el frontend porque el plan
   gratuito de Web3Forms solo acepta envíos desde el navegador: uno desde el
   servidor responde 403 con «Use our API in client side».
-- Una consulta enviada todavía no se guarda en PostgreSQL: solo se envía por
-  correo. La persistencia y la asociación con el usuario llegan en el paso 21.
-- En `/account`, la sección de propiedades consultadas sigue vacía: las
-  consultas se empiezan a guardar en el paso 21.
 - El mapa del detalle necesita dos claves: `GOOGLE_MAPS_API_KEY` en
   `apps/api/.env` (Geocoding v4, deduce las coordenadas) y
   `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` en `apps/web/.env` (Maps JavaScript API,

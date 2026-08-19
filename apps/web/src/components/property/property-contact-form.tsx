@@ -42,12 +42,25 @@ const DEFAULT_MESSAGE =
  * Se declaran los cuatro campos, y no solo el mensaje, porque `reset` fija
  * exactamente los valores que recibe: omitir uno lo dejaría con lo que
  * hubiera tecleado la persona anterior.
+ *
+ * Quien tiene sesión llega con su nombre y su correo puestos, y puede
+ * cambiarlos: puede querer que le respondan a otra dirección.
  */
-const INITIAL_VALUES: InquiryFormValues = {
-  name: "",
-  email: "",
-  phone: "",
-  message: DEFAULT_MESSAGE,
+function buildInitialValues(
+  contact: ContactDefaults | undefined,
+): InquiryFormValues {
+  return {
+    name: contact?.name ?? "",
+    email: contact?.email ?? "",
+    phone: "",
+    message: DEFAULT_MESSAGE,
+  };
+}
+
+/** Datos de contacto de quien ya inició sesión. */
+export type ContactDefaults = {
+  readonly name: string;
+  readonly email: string;
 };
 
 type SubmissionResult =
@@ -58,12 +71,16 @@ type SubmissionResult =
 export function PropertyContactForm({
   propertyId,
   propertyTitle,
+  contact,
 }: {
   readonly propertyId: string;
   readonly propertyTitle: string;
+  /** Datos de la sesión, o `undefined` para un visitante. */
+  readonly contact?: ContactDefaults | undefined;
 }) {
   const fieldId = useId();
   const [result, setResult] = useState<SubmissionResult>({ kind: "idle" });
+  const initialValues = buildInitialValues(contact);
 
   const {
     register,
@@ -72,7 +89,7 @@ export function PropertyContactForm({
     formState: { errors, isSubmitting },
   } = useForm<InquiryFormValues>({
     resolver: zodResolver(inquirySchema),
-    defaultValues: INITIAL_VALUES,
+    defaultValues: initialValues,
     // La validación al enviar evita regañar mientras se escribe; a partir de
     // ahí corrige en vivo, que es cuando el aviso ayuda.
     mode: "onSubmit",
@@ -83,13 +100,15 @@ export function PropertyContactForm({
     setResult({ kind: "idle" });
 
     try {
-      const response = await sendInquiry(
+      const outcome = await sendInquiry(
         { ...values, propertyId },
         propertyTitle,
       );
 
-      reset(INITIAL_VALUES);
-      setResult({ kind: "sent", message: response.message });
+      // También se vacía si el correo falló: la consulta quedó guardada, y
+      // dejar el texto invitaría a enviarla otra vez.
+      reset(initialValues);
+      setResult({ kind: "sent", message: outcome.message });
     } catch (error) {
       setResult({
         kind: "error",
