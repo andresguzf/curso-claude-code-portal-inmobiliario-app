@@ -1,9 +1,11 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 
 import { PrismaClient } from "../src/generated/prisma/client";
+import { hashPassword } from "../src/lib/password";
 import {
   SEED_FEATURES,
   SEED_PROPERTIES,
+  SEED_USERS,
   buildSeedImages,
   type SeedProperty,
 } from "./seed-data";
@@ -55,6 +57,24 @@ async function main(): Promise<void> {
   });
 
   try {
+    for (const user of SEED_USERS) {
+      const passwordHash = await hashPassword(user.password);
+      const fields = {
+        name: user.name,
+        role: user.role,
+        isActive: user.isActive,
+        passwordHash,
+      };
+
+      await prisma.user.upsert({
+        where: { email: user.email },
+        create: { email: user.email, ...fields },
+        update: fields,
+      });
+    }
+
+    console.log(`Usuarios cargados: ${SEED_USERS.length}`);
+
     for (const feature of SEED_FEATURES) {
       await prisma.feature.upsert({
         where: { slug: feature.slug },
@@ -105,9 +125,7 @@ async function main(): Promise<void> {
     });
     const imageCount = await prisma.propertyImage.count();
 
-    console.log(
-      `Publicadas: ${publishedCount} · Imágenes: ${imageCount}`,
-    );
+    console.log(`Publicadas: ${publishedCount} · Imágenes: ${imageCount}`);
   } finally {
     await prisma.$disconnect();
   }

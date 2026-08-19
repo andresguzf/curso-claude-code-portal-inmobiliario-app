@@ -19,12 +19,7 @@ export type SeedProperty = {
   readonly description: string;
   readonly operationType: "SALE" | "RENT";
   readonly propertyType:
-    | "HOUSE"
-    | "APARTMENT"
-    | "LAND"
-    | "OFFICE"
-    | "COMMERCIAL"
-    | "OTHER";
+    "HOUSE" | "APARTMENT" | "LAND" | "OFFICE" | "COMMERCIAL" | "OTHER";
   readonly price: string;
   readonly usableAreaSquareMeters: string | null;
   readonly totalAreaSquareMeters: string | null;
@@ -43,6 +38,68 @@ export type SeedProperty = {
 };
 
 /** Características del inmueble (spec.md, sección 4). */
+/**
+ * Cuentas de desarrollo.
+ *
+ * Las contraseñas están en claro porque este archivo solo alimenta la base de
+ * datos local: el seed las convierte en hash antes de guardarlas y en
+ * PostgreSQL nunca aparece el texto. No deben usarse fuera de desarrollo.
+ *
+ * El registro público solo crea cuentas `USER`, así que la de administración
+ * tiene que llegar por aquí. Se incluye además una cuenta desactivada, para
+ * poder comprobar que un usuario inactivo no puede autenticarse (plan.md,
+ * sección 10).
+ *
+ * La contraseña de cada cuenta es su nombre seguido de dígitos hasta llegar
+ * al mínimo que exige el backend. Son fáciles de recordar al probar y a nadie
+ * se le ocurrirá confundirlas con contraseñas de verdad.
+ */
+export type SeedUser = {
+  readonly name: string;
+  readonly email: string;
+  readonly password: string;
+  readonly role: "ADMIN" | "USER";
+  readonly isActive: boolean;
+};
+
+export const SEED_USERS: readonly SeedUser[] = [
+  {
+    name: "Administradora del portal",
+    email: "admin@portal.cl",
+    password: "admin1234",
+    role: "ADMIN",
+    isActive: true,
+  },
+  {
+    name: "María González",
+    email: "maria@example.com",
+    password: "maria1234",
+    role: "USER",
+    isActive: true,
+  },
+  {
+    name: "Pedro Rojas",
+    email: "pedro@example.com",
+    password: "pedro1234",
+    role: "USER",
+    isActive: false,
+  },
+  {
+    name: "Ana Pérez",
+    email: "ana@example.com",
+    password: "ana12345",
+    role: "USER",
+    isActive: true,
+  },
+  {
+    name: "Bruno Soto",
+    email: "bruno@example.com",
+    password: "bruno1234",
+    role: "USER",
+    isActive: true,
+  },
+];
+
 export const SEED_FEATURES: readonly SeedFeature[] = [
   { slug: "piscina", name: "Piscina" },
   { slug: "gimnasio", name: "Gimnasio" },

@@ -9,7 +9,7 @@ favoritas, y los administradores gestionar el portal desde un área privada.
 
 ## Estado
 
-Pasos 1 a 16 de `specs/portal-inmobiliario/tasks.md` completos.
+Pasos 1 a 18 de `specs/portal-inmobiliario/tasks.md` completos.
 
 | Funcionalidad | Estado |
 |---|---|
@@ -22,7 +22,10 @@ Pasos 1 a 16 de `specs/portal-inmobiliario/tasks.md` completos.
 | Galería de imágenes | ✅ |
 | Ubicación en Google Maps | ✅ |
 | Formulario de contacto con Web3Forms | ✅ |
-| Autenticación y favoritos | Pasos 17-21 |
+| API REST de autenticación | ✅ |
+| Registro, login y sesión en la barra | ✅ |
+| Autorización USER y ADMIN | ✅ |
+| Cuenta, favoritos y consultas | Pasos 19-21 |
 | Área de administración | Pasos 22-30 |
 
 ## Arquitectura
@@ -165,6 +168,24 @@ literales, así que ajustar la paleta no obliga a recorrerlos.
 
 Header y pie oscuros enmarcan un cuerpo claro y cálido, con acento terracota
 en precios y acciones. La interfaz es de tema claro único.
+
+## Cuentas de desarrollo
+
+El seed crea cinco cuentas. Sirven para probar el login en el navegador o en
+Postman (`POST /api/auth/login`):
+
+| Correo | Contraseña | Rol | Estado |
+|---|---|---|---|
+| `admin@portal.cl` | `admin1234` | ADMIN | activa |
+| `maria@example.com` | `maria1234` | USER | activa |
+| `pedro@example.com` | `pedro1234` | USER | desactivada |
+| `ana@example.com` | `ana12345` | USER | activa |
+| `bruno@example.com` | `bruno1234` | USER | activa |
+
+La de Pedro está desactivada a propósito: sirve para comprobar que un usuario
+inactivo no puede autenticarse. La contraseña de cada cuenta es su nombre
+seguido de dígitos hasta alcanzar el mínimo de ocho caracteres. Estas
+credenciales son solo para desarrollo.
 
 ## Limitaciones conocidas
 

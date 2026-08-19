@@ -149,12 +149,61 @@ Cambiar la paleta no debe requerir tocar componentes.
 
 ## Estado del proyecto
 
-Pasos 1 a 16 de `tasks.md` completos. En funcionamiento: portada, catálogo
+Pasos 1 a 18 de `tasks.md` completos. En funcionamiento: portada, catálogo
 con búsqueda, filtros combinados, ordenamiento, estados de carga/vacío/error,
-detalle de propiedad, galería, mapa de ubicación y formulario de contacto.
+detalle de propiedad, galería, mapa de ubicación, formulario de contacto y la
+API REST de autenticación.
 
-Pendiente desde el paso 17: autenticación, favoritos, persistencia de las
-consultas en PostgreSQL (paso 21) y área de administración.
+Pendiente desde el paso 19: cuenta de usuario, favoritos, persistencia de
+las consultas en PostgreSQL (paso 21) y área de administración.
+
+### Autenticación
+
+La sesión viaja en una cookie `httpOnly` firmada con `AUTH_SECRET`, nunca en
+`localStorage`. El testigo solo lleva el identificador del usuario: el rol y
+el estado de la cuenta se releen de PostgreSQL en cada petición, de modo que
+desactivar a alguien o cambiarle el rol surta efecto en el acto.
+
+Las contraseñas se guardan con `scrypt` de Node, con sal propia por
+contraseña y los parámetros de coste dentro del hash para poder endurecerlos
+sin invalidar lo ya guardado.
+
+Existen `/login` y `/register`, y el header muestra la sesión: lo resuelve el
+layout en el servidor, así que nadie ve un instante de «Ingresar» estando ya
+dentro.
+
+### Autorización
+
+La decisión siempre la toma el backend. Hay tres piezas:
+
+| Pieza | Dónde | Qué hace |
+|---|---|---|
+| `middleware.ts` | `apps/web` | Primera barrera de `/account/*` y `/admin/*`: solo mira si existe la cookie |
+| `require-user.ts` | `apps/web` | Guarda de página: pregunta al backend quién es y con qué rol |
+| `auth-guard.ts` | `apps/api` | Guarda de Route Handler: devuelve el usuario o la respuesta con la que cortar |
+
+El `middleware` no valida la firma del testigo porque el frontend no tiene
+`AUTH_SECRET` ni debe tenerlo: solo evita cargar una página privada a quien
+claramente no ha entrado. La comprobación que manda es la de la página.
+
+Ante un rol insuficiente, la API responde 403 y la página responde «no
+existe». La diferencia es deliberada: a un programa le sirve el código
+preciso, y a una persona curiosa no se le confirma que el área existe, igual
+que la API pública devuelve 404 para una propiedad en borrador.
+
+Cuentas del seed, solo para desarrollo:
+
+| Correo | Contraseña | Rol | Estado |
+|---|---|---|---|
+| `admin@portal.cl` | `admin1234` | ADMIN | activa |
+| `maria@example.com` | `maria1234` | USER | activa |
+| `pedro@example.com` | `pedro1234` | USER | **desactivada** |
+| `ana@example.com` | `ana12345` | USER | activa |
+| `bruno@example.com` | `bruno1234` | USER | activa |
+
+La de Pedro existe para comprobar que un usuario inactivo no puede entrar. La
+contraseña de cada cuenta es su nombre seguido de dígitos hasta alcanzar el
+mínimo de ocho caracteres que exige el backend.
 
 ### Limitaciones conocidas
 
@@ -163,6 +212,8 @@ consultas en PostgreSQL (paso 21) y área de administración.
   PostgreSQL (previsto para el paso 32).
 - Las imágenes del seed son de `picsum.photos`. Cloudinary se integra en el
   paso 26.
+- El registro público solo da de alta cuentas con rol `USER`. El `ADMIN`
+  llega por el seed.
 - El formulario de contacto necesita `NEXT_PUBLIC_WEB3FORMS_ACCESS_KEY` en
   `apps/web/.env`. Sin ella el formulario lo dice, en vez de dar por enviada
   una consulta que no salió. La clave está en el frontend porque el plan

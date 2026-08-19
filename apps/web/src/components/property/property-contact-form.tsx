@@ -6,6 +6,11 @@ import { useForm } from "react-hook-form";
 
 import { INQUIRY_LIMITS } from "@portal/contracts";
 
+import {
+  fieldErrorAttributes,
+  fieldInputClassName,
+  FormField,
+} from "@/components/form/form-field";
 import { sendInquiry } from "@/lib/inquiry-submission";
 import {
   inquirySchema,
@@ -113,7 +118,7 @@ export function PropertyContactForm({
         className="mt-6 flex flex-col gap-5 rounded-xl border border-line bg-card p-5 sm:p-6"
       >
         <div className="grid gap-5 sm:grid-cols-2">
-          <Field
+          <FormField
             id={`${fieldId}-name`}
             label="Nombre"
             error={errors.name?.message}
@@ -123,16 +128,13 @@ export function PropertyContactForm({
               type="text"
               autoComplete="name"
               maxLength={INQUIRY_LIMITS.maxNameLength}
-              aria-invalid={errors.name ? true : undefined}
-              aria-describedby={
-                errors.name ? `${fieldId}-name-error` : undefined
-              }
-              className={inputClassName(Boolean(errors.name))}
+              {...fieldErrorAttributes(`${fieldId}-name`, Boolean(errors.name))}
+              className={fieldInputClassName(Boolean(errors.name))}
               {...register("name")}
             />
-          </Field>
+          </FormField>
 
-          <Field
+          <FormField
             id={`${fieldId}-email`}
             label="Email"
             error={errors.email?.message}
@@ -144,17 +146,17 @@ export function PropertyContactForm({
               autoComplete="email"
               spellCheck={false}
               maxLength={INQUIRY_LIMITS.maxEmailLength}
-              aria-invalid={errors.email ? true : undefined}
-              aria-describedby={
-                errors.email ? `${fieldId}-email-error` : undefined
-              }
-              className={inputClassName(Boolean(errors.email))}
+              {...fieldErrorAttributes(
+                `${fieldId}-email`,
+                Boolean(errors.email),
+              )}
+              className={fieldInputClassName(Boolean(errors.email))}
               {...register("email")}
             />
-          </Field>
+          </FormField>
         </div>
 
-        <Field
+        <FormField
           id={`${fieldId}-phone`}
           label="Teléfono"
           hint="Opcional"
@@ -166,16 +168,13 @@ export function PropertyContactForm({
             inputMode="tel"
             autoComplete="tel"
             maxLength={INQUIRY_LIMITS.maxPhoneLength}
-            aria-invalid={errors.phone ? true : undefined}
-            aria-describedby={
-              errors.phone ? `${fieldId}-phone-error` : undefined
-            }
-            className={inputClassName(Boolean(errors.phone))}
+            {...fieldErrorAttributes(`${fieldId}-phone`, Boolean(errors.phone))}
+            className={fieldInputClassName(Boolean(errors.phone))}
             {...register("phone")}
           />
-        </Field>
+        </FormField>
 
-        <Field
+        <FormField
           id={`${fieldId}-message`}
           label="Mensaje"
           error={errors.message?.message}
@@ -184,14 +183,17 @@ export function PropertyContactForm({
             id={`${fieldId}-message`}
             rows={5}
             maxLength={INQUIRY_LIMITS.maxMessageLength}
-            aria-invalid={errors.message ? true : undefined}
-            aria-describedby={
-              errors.message ? `${fieldId}-message-error` : undefined
-            }
-            className={cn(inputClassName(Boolean(errors.message)), "resize-y")}
+            {...fieldErrorAttributes(
+              `${fieldId}-message`,
+              Boolean(errors.message),
+            )}
+            className={cn(
+              fieldInputClassName(Boolean(errors.message)),
+              "resize-y",
+            )}
             {...register("message")}
           />
-        </Field>
+        </FormField>
 
         <div className="flex flex-wrap items-center gap-4">
           <button
@@ -216,49 +218,5 @@ export function PropertyContactForm({
         </div>
       </form>
     </section>
-  );
-}
-
-function Field({
-  id,
-  label,
-  hint,
-  error,
-  children,
-}: {
-  readonly id: string;
-  readonly label: string;
-  readonly hint?: string;
-  readonly error?: string | undefined;
-  readonly children: React.ReactNode;
-}) {
-  return (
-    <div className="flex flex-col gap-2">
-      <label htmlFor={id} className="text-sm font-medium text-ink">
-        {label}
-        {hint ? (
-          <span className="ml-2 font-normal text-ink-muted">{hint}</span>
-        ) : null}
-      </label>
-
-      {children}
-
-      {error ? (
-        <p id={`${id}-error`} className="text-sm text-accent-strong">
-          {error}
-        </p>
-      ) : null}
-    </div>
-  );
-}
-
-/**
- * El tamaño de fuente no baja de 16px a propósito: por debajo, Safari en iOS
- * amplía la página al enfocar el campo.
- */
-function inputClassName(hasError: boolean): string {
-  return cn(
-    "w-full rounded-lg border bg-page px-3 py-2 text-base text-ink transition-colors placeholder:text-ink-muted",
-    hasError ? "border-accent-strong" : "border-line hover:border-line-strong",
   );
 }

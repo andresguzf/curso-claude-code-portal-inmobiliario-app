@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 
+import { AUTH_LIMITS } from "@portal/contracts";
+
 import {
   SEED_FEATURES,
   SEED_PROPERTIES,
+  SEED_USERS,
   buildSeedImages,
   type SeedProperty,
 } from "./seed-data";
@@ -169,6 +172,39 @@ describe("buildSeedImages", () => {
         buildSeedImages(seedProperty).length,
         `propiedad ${seedProperty.id}`,
       ).toBeGreaterThan(0);
+    }
+  });
+});
+
+describe("SEED_USERS", () => {
+  it("no repite correos", () => {
+    const emails = SEED_USERS.map((user) => user.email);
+
+    expect(new Set(emails).size).toBe(emails.length);
+  });
+
+  it("usa contraseñas que el backend aceptaría", () => {
+    // Sin esta comprobación, una cuenta del seed podría quedar imposible de
+    // usar: el seed guarda el hash sin validar, y el fallo solo aparecería
+    // al intentar entrar.
+    for (const user of SEED_USERS) {
+      expect(user.password.length).toBeGreaterThanOrEqual(
+        AUTH_LIMITS.minPasswordLength,
+      );
+    }
+  });
+
+  it("incluye una cuenta de administración", () => {
+    expect(SEED_USERS.some((user) => user.role === "ADMIN")).toBe(true);
+  });
+
+  it("incluye una cuenta desactivada, para probar que no puede entrar", () => {
+    expect(SEED_USERS.some((user) => !user.isActive)).toBe(true);
+  });
+
+  it("guarda los correos en minúsculas, como los normaliza el repositorio", () => {
+    for (const user of SEED_USERS) {
+      expect(user.email).toBe(user.email.toLowerCase());
     }
   });
 });

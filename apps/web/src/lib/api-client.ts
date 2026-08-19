@@ -1,6 +1,9 @@
 import {
   QUERY_PARAM_NAMES,
   type ApiErrorDto,
+  type AuthenticatedUserDto,
+  type LoginRequestDto,
+  type RegisterRequestDto,
   type InquiryCreatedDto,
   type InquiryRequestDto,
   type PropertyDetailDto,
@@ -192,4 +195,88 @@ export async function submitInquiry(
   }
 
   return body as InquiryCreatedDto;
+}
+
+/**
+ * Lee el cuerpo de una respuesta y propaga el mensaje del servidor si falló.
+ *
+ * Los errores de la API traen un texto pensado para leerse; ese es el que
+ * llega a la interfaz, porque explica qué corregir.
+ */
+async function readOrThrow<TBody>(
+  response: Response,
+  fallbackMessage: string,
+): Promise<TBody> {
+  const body: unknown = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new Error((body as ApiErrorDto | null)?.message ?? fallbackMessage);
+  }
+
+  return body as TBody;
+}
+
+/**
+ * Autenticación.
+ *
+ * Estas funciones se ejecutan en el navegador y la sesión viaja en una cookie
+ * `httpOnly` que pone el servidor: no hay ningún testigo que guardar ni que
+ * leer desde JavaScript (spec.md, sección 15).
+ */
+
+export async function registerAccount(
+  credentials: RegisterRequestDto,
+): Promise<AuthenticatedUserDto> {
+  const response = await fetch(buildApiUrl("/api/auth/register"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(credentials),
+  });
+
+  return readOrThrow(response, "No pudimos crear tu cuenta.");
+}
+
+export async function logIn(
+  credentials: LoginRequestDto,
+): Promise<AuthenticatedUserDto> {
+  const response = await fetch(buildApiUrl("/api/auth/login"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(credentials),
+  });
+
+  return readOrThrow(response, "No pudimos iniciar sesión.");
+}
+
+export async function logOut(): Promise<void> {
+  const response = await fetch(buildApiUrl("/api/auth/logout"), {
+    method: "POST",
+  });
+
+  await readOrThrow(response, "No pudimos cerrar la sesión.");
+}
+
+/**
+ * Usuario de la sesión vigente, o `null` si no hay ninguna.
+ *
+ * Desde el servidor hay que reenviar la cookie a mano: `fetch` no arrastra
+ * las del navegador, y sin ella la API respondería que no hay sesión.
+ */
+export async function fetchCurrentUser(
+  cookieHeader?: string,
+): Promise<AuthenticatedUserDto | null> {
+  const response = await fetch(buildApiUrl("/api/auth/me"), {
+    cache: "no-store",
+    headers: cookieHeader ? { Cookie: cookieHeader } : undefined,
+  });
+
+  if (response.status === 401) {
+    return null;
+  }
+
+  if (!response.ok) {
+    throw new Error(`La API respondió ${response.status} al leer la sesión.`);
+  }
+
+  return (await response.json()) as AuthenticatedUserDto;
 }

@@ -107,14 +107,14 @@
 
 ## Fase 3 — Autenticación y usuario
 
-- [ ] **Paso 17 — Registro y login REST**
+- [x] **Paso 17 — Registro y login REST**
   - Registro.
   - Login.
   - Logout.
   - Endpoint de usuario actual.
   - Hashing seguro.
 
-- [ ] **Paso 18 — Autorización USER y ADMIN**
+- [x] **Paso 18 — Autorización USER y ADMIN**
   - Crear roles.
   - Proteger APIs.
   - Proteger páginas.

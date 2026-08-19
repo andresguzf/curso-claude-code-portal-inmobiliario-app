@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 
+import type { AuthenticatedUserDto } from "@portal/contracts";
+
+import { SessionMenu } from "@/components/layout/session-menu";
 import {
-  LOGIN_NAVIGATION_ITEM,
   PUBLIC_NAVIGATION_ITEMS,
   isNavigationItemActive,
 } from "@/lib/navigation";
@@ -12,6 +14,7 @@ import { cn } from "@/lib/utils";
 
 type SiteNavigationLinksProps = {
   variant: "desktop" | "mobile";
+  currentUser: AuthenticatedUserDto | null;
   onNavigate?: () => void;
 };
 
@@ -20,6 +23,7 @@ const baseLinkClasses =
 
 export function SiteNavigationLinks({
   variant,
+  currentUser,
   onNavigate,
 }: SiteNavigationLinksProps) {
   const pathname = usePathname();
@@ -61,16 +65,11 @@ export function SiteNavigationLinks({
       })}
 
       <li className={cn(isMobile ? "mt-2" : "ml-2")}>
-        <Link
-          href={LOGIN_NAVIGATION_ITEM.href}
-          onClick={onNavigate}
-          className={cn(
-            baseLinkClasses,
-            "block bg-accent text-center text-white hover:bg-accent-strong",
-          )}
-        >
-          {LOGIN_NAVIGATION_ITEM.label}
-        </Link>
+        <SessionMenu
+          currentUser={currentUser}
+          isMobile={isMobile}
+          onNavigate={onNavigate}
+        />
       </li>
     </ul>
   );
