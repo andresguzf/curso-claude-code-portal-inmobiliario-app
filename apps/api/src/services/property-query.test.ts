@@ -319,12 +319,20 @@ describe("buildPropertyOrderBy", () => {
 });
 
 describe("buildPropertyWhere", () => {
-  it("no restringe nada sin consulta ni alcance", () => {
-    expect(buildPropertyWhere({})).toEqual({});
+  it("descarta siempre las propiedades eliminadas", () => {
+    // Va en la condición base y no en cada consulta: repartirla sería
+    // olvidarla en la siguiente que alguien escriba, y el olvido no se nota
+    // hasta que una propiedad borrada reaparece en el catálogo.
+    expect(buildPropertyWhere({})).toEqual({ deletedAt: null });
+  });
+
+  it("no restringe nada más sin consulta ni alcance", () => {
+    expect(Object.keys(buildPropertyWhere({}))).toEqual(["deletedAt"]);
   });
 
   it("aplica el alcance de publicación", () => {
     expect(buildPropertyWhere({}, { isPublished: true })).toEqual({
+      deletedAt: null,
       isPublished: true,
     });
   });
@@ -333,6 +341,7 @@ describe("buildPropertyWhere", () => {
     expect(
       buildPropertyWhere({ operations: ["SALE"], types: ["HOUSE"] }),
     ).toEqual({
+      deletedAt: null,
       operationType: { in: ["SALE"] },
       propertyType: { in: ["HOUSE"] },
     });
@@ -340,6 +349,7 @@ describe("buildPropertyWhere", () => {
 
   it("combina varios tipos con OR mediante «in»", () => {
     expect(buildPropertyWhere({ types: ["HOUSE", "APARTMENT"] })).toEqual({
+      deletedAt: null,
       propertyType: { in: ["HOUSE", "APARTMENT"] },
     });
   });
@@ -347,23 +357,27 @@ describe("buildPropertyWhere", () => {
   it("ignora las listas vacías", () => {
     expect(
       buildPropertyWhere({ operations: [], types: [], communes: [] }),
-    ).toEqual({});
+    ).toEqual({ deletedAt: null });
   });
 
   it("construye el rango de precio con los extremos presentes", () => {
     expect(buildPropertyWhere({ minPrice: 100 })).toEqual({
+      deletedAt: null,
       price: { gte: 100 },
     });
     expect(buildPropertyWhere({ maxPrice: 900 })).toEqual({
+      deletedAt: null,
       price: { lte: 900 },
     });
     expect(buildPropertyWhere({ minPrice: 100, maxPrice: 900 })).toEqual({
+      deletedAt: null,
       price: { gte: 100, lte: 900 },
     });
   });
 
   it("trata dormitorios y baños como mínimo, no como igualdad", () => {
     expect(buildPropertyWhere({ bedrooms: 3, bathrooms: 2 })).toEqual({
+      deletedAt: null,
       bedrooms: { gte: 3 },
       bathrooms: { gte: 2 },
     });
@@ -373,6 +387,7 @@ describe("buildPropertyWhere", () => {
     expect(
       buildPropertyWhere({ communes: ["Las Condes", "Providencia"] }),
     ).toEqual({
+      deletedAt: null,
       AND: [
         {
           OR: [
@@ -386,6 +401,7 @@ describe("buildPropertyWhere", () => {
 
   it("compara ciudad y región sin distinguir mayúsculas", () => {
     expect(buildPropertyWhere({ city: "santiago", region: "rm" })).toEqual({
+      deletedAt: null,
       city: { equals: "santiago", mode: "insensitive" },
       region: { equals: "rm", mode: "insensitive" },
     });
@@ -422,6 +438,7 @@ describe("buildPropertyWhere", () => {
     );
 
     expect(where).toEqual({
+      deletedAt: null,
       isPublished: true,
       operationType: { in: ["SALE"] },
       propertyType: { in: ["APARTMENT", "HOUSE"] },

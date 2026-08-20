@@ -1,6 +1,7 @@
 import "server-only";
 
 import { prisma } from "@/lib/prisma";
+import { PUBLIC_PROPERTY_SCOPE } from "@/repositories/property-scope";
 
 /**
  * Acceso a la tabla `inquiries`.

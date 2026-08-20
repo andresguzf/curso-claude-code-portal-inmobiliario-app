@@ -3,6 +3,7 @@ import "server-only";
 import { OperationType } from "@portal/contracts";
 
 import { prisma } from "@/lib/prisma";
+import { NOT_DELETED } from "@/repositories/property-scope";
 
 /**
  * Recuentos para el panel de administración.
@@ -22,10 +23,14 @@ export async function countOverview() {
     users,
     inquiries,
   ] = await Promise.all([
-    prisma.property.count(),
-    prisma.property.count({ where: { isPublished: true } }),
-    prisma.property.count({ where: { operationType: OperationType.SALE } }),
-    prisma.property.count({ where: { operationType: OperationType.RENT } }),
+    prisma.property.count({ where: NOT_DELETED }),
+    prisma.property.count({ where: { ...NOT_DELETED, isPublished: true } }),
+    prisma.property.count({
+      where: { ...NOT_DELETED, operationType: OperationType.SALE },
+    }),
+    prisma.property.count({
+      where: { ...NOT_DELETED, operationType: OperationType.RENT },
+    }),
     prisma.user.count(),
     prisma.inquiry.count(),
   ]);

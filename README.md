@@ -9,7 +9,7 @@ favoritas, y los administradores gestionar el portal desde un área privada.
 
 ## Estado
 
-Pasos 1 a 22 de `specs/portal-inmobiliario/tasks.md` completos.
+Pasos 1 a 23 de `specs/portal-inmobiliario/tasks.md` completos.
 
 | Funcionalidad | Estado |
 |---|---|
@@ -30,7 +30,8 @@ Pasos 1 a 22 de `specs/portal-inmobiliario/tasks.md` completos.
 | Favoritos | ✅ |
 | Consultas guardadas, con buscador y paginación | ✅ |
 | Panel de administración con indicadores | ✅ |
-| CRUD de propiedades e imágenes | Pasos 23-30 |
+| CRUD REST de propiedades | ✅ |
+| Interfaz de administración e imágenes | Pasos 24-30 |
 
 ## Arquitectura
 
@@ -190,6 +191,17 @@ La de Pedro está desactivada a propósito: sirve para comprobar que un usuario
 inactivo no puede autenticarse. La contraseña de cada cuenta es su nombre
 seguido de dígitos hasta alcanzar el mínimo de ocho caracteres. Estas
 credenciales son solo para desarrollo.
+
+## Decisiones que conviene conocer
+
+Eliminar una propiedad desde la administración es un **borrado lógico**: la
+fila se conserva y la propiedad desaparece de todas las vistas. El motivo es
+que arrastra consultas, que son contactos comerciales, y favoritos ajenos.
+Para retirarla del catálogo conservándola a la vista de la administración
+está despublicarla.
+
+Lo mismo ocurre al eliminar una consulta desde la cuenta: se oculta del
+historial propio, pero la inmobiliaria la conserva.
 
 ## Limitaciones conocidas
 
