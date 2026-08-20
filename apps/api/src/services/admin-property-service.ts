@@ -4,6 +4,7 @@ import {
   ADMIN_PROPERTIES_PER_PAGE,
   type AdminPropertyDto,
   type AdminPropertyPageDto,
+  type PropertyInputDto,
 } from "@portal/contracts";
 
 import {
@@ -13,6 +14,7 @@ import {
   findAdminPropertyById,
   updateProperty,
 } from "@/repositories/admin-property-repository";
+import { findExistingFeatureSlugs } from "@/repositories/feature-repository";
 import { validatePropertyInput } from "@/services/admin-property-validation";
 import { toAdminProperty } from "@/services/admin-property-mapper";
 
@@ -66,6 +68,12 @@ export async function createAdminProperty(
     return { status: "invalid", message: validation.message };
   }
 
+  const unknownFeatures = await describeUnknownFeatures(validation.property);
+
+  if (unknownFeatures) {
+    return { status: "invalid", message: unknownFeatures };
+  }
+
   return {
     status: "ok",
     property: toAdminProperty(await createProperty(validation.property)),
@@ -80,6 +88,12 @@ export async function updateAdminProperty(
 
   if (!validation.ok) {
     return { status: "invalid", message: validation.message };
+  }
+
+  const unknownFeatures = await describeUnknownFeatures(validation.property);
+
+  if (unknownFeatures) {
+    return { status: "invalid", message: unknownFeatures };
   }
 
   // Se comprueba antes de escribir para poder responder 404 en lugar de
@@ -114,6 +128,32 @@ export async function deleteAdminProperty(
   await markPropertyAsDeleted(id);
 
   return { status: "deleted" };
+}
+
+/**
+ * Mensaje de error si alguna característica no existe, o `null` si todas sí.
+ *
+ * Conectar por `slug` uno que no está en la tabla hace lanzar al ORM, y eso
+ * llegaría como un 500 mudo. Comprobarlo aquí lo convierte en un 400 que
+ * dice cuál sobra.
+ */
+async function describeUnknownFeatures(
+  property: PropertyInputDto,
+): Promise<string | null> {
+  const slugs = property.featureSlugs ?? [];
+
+  if (slugs.length === 0) {
+    return null;
+  }
+
+  const existing = new Set(await findExistingFeatureSlugs(slugs));
+  const unknown = slugs.filter((slug) => !existing.has(slug));
+
+  if (unknown.length === 0) {
+    return null;
+  }
+
+  return `Estas características no existen: ${unknown.join(", ")}.`;
 }
 
 /** Una página fuera de rango se trata como la primera. */

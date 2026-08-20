@@ -1,11 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
-import type { ReactNode } from "react";
 
 import type { UserInquiryPageDto } from "@portal/contracts";
 
 import { HideInquiryButton } from "@/components/account/hide-inquiry-button";
-import { InquirySearch } from "@/components/account/inquiry-search";
+import { Pagination } from "@/components/ui/pagination";
+import { SearchForm } from "@/components/ui/search-form";
 
 /**
  * Historial de solicitudes propias (spec.md, sección 17).
@@ -34,7 +34,14 @@ export function InquiryHistory({
         Mis consultas
       </h2>
 
-      <InquirySearch search={search} className="mt-4" />
+      <SearchForm
+        basePath="/account"
+        hash="#propiedades-consultadas"
+        search={search}
+        label="Buscar en mis consultas"
+        placeholder="Título de la propiedad o texto del mensaje…"
+        className="mt-4"
+      />
 
       {page.data.length === 0 ? (
         <p className="mt-4 rounded-xl border border-dashed border-line bg-muted px-5 py-8 text-center text-sm text-ink-muted">
@@ -52,7 +59,14 @@ export function InquiryHistory({
         </ul>
       )}
 
-      <Pagination currentPage={page.page} lastPage={lastPage} search={search} />
+      <Pagination
+        basePath="/account"
+        hash="#propiedades-consultadas"
+        currentPage={page.page}
+        lastPage={lastPage}
+        search={search}
+        label="Páginas de mis consultas"
+      />
     </section>
   );
 }
@@ -101,97 +115,6 @@ function InquiryRow({
         propertyTitle={inquiry.property.title}
       />
     </article>
-  );
-}
-
-function Pagination({
-  currentPage,
-  lastPage,
-  search,
-}: {
-  readonly currentPage: number;
-  readonly lastPage: number;
-  readonly search: string;
-}) {
-  if (lastPage <= 1) {
-    return null;
-  }
-
-  return (
-    <nav
-      aria-label="Páginas de mis consultas"
-      className="mt-6 flex items-center justify-between gap-4"
-    >
-      <PageLink
-        page={currentPage - 1}
-        search={search}
-        isDisabled={currentPage <= 1}
-      >
-        ← Anteriores
-      </PageLink>
-
-      <p className="text-sm text-ink-muted">
-        Página {currentPage} de {lastPage}
-      </p>
-
-      <PageLink
-        page={currentPage + 1}
-        search={search}
-        isDisabled={currentPage >= lastPage}
-      >
-        Siguientes →
-      </PageLink>
-    </nav>
-  );
-}
-
-/**
- * Un extremo del recorrido.
- *
- * En el límite se pinta como texto y no como enlace inerte: un enlace que no
- * lleva a ninguna parte confunde a quien navega con teclado.
- */
-function PageLink({
-  page,
-  search,
-  isDisabled,
-  children,
-}: {
-  readonly page: number;
-  readonly search: string;
-  readonly isDisabled: boolean;
-  readonly children: ReactNode;
-}) {
-  const className =
-    "inline-flex min-h-11 items-center rounded-lg border border-line px-4 text-sm font-medium";
-
-  if (isDisabled) {
-    return (
-      <span className={`${className} text-ink-muted opacity-50`}>
-        {children}
-      </span>
-    );
-  }
-
-  const parameters = new URLSearchParams();
-
-  if (search) {
-    parameters.set("search", search);
-  }
-
-  if (page > 1) {
-    parameters.set("page", String(page));
-  }
-
-  const query = parameters.toString();
-
-  return (
-    <Link
-      href={`/account${query ? `?${query}` : ""}#propiedades-consultadas`}
-      className={`${className} text-ink transition-colors hover:bg-muted`}
-    >
-      {children}
-    </Link>
   );
 }
 

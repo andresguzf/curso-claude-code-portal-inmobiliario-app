@@ -27,6 +27,11 @@ export function createInquiry(inquiry: {
  * Solo las suyas y solo las que no ha ocultado. La búsqueda mira el título de
  * la propiedad y el texto del mensaje, que son las dos formas naturales de
  * recordar una consulta.
+ *
+ * Se exige además que la propiedad siga en el catálogo público, igual que en
+ * los favoritos: una eliminada o despublicada no tiene ficha que abrir, y el
+ * registro llevaría a un 404. La consulta no se pierde —ADMIN la conserva
+ * para responderla—, simplemente deja de figurar aquí.
  */
 export async function findUserInquiries(
   userId: string,
@@ -39,6 +44,7 @@ export async function findUserInquiries(
   const where = {
     userId,
     hiddenByUserAt: null,
+    property: PUBLIC_PROPERTY_SCOPE,
     ...(options.search
       ? {
           OR: [

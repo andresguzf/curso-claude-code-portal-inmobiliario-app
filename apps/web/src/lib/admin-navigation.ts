@@ -5,8 +5,7 @@
  * si el panel está roto o la sección aún no está hecha, y esa duda cuesta
  * más que la ausencia del enlace.
  *
- * Las de propiedades, usuarios y consultas se añaden en los pasos 24, 29
- * y 30.
+ * Las de usuarios y consultas se añaden en los pasos 29 y 30.
  */
 export type AdminNavigationItem = {
   readonly href: string;
@@ -20,6 +19,11 @@ export const ADMIN_NAVIGATION_ITEMS: readonly AdminNavigationItem[] = [
     href: "/admin",
     label: "Resumen",
     icon: "M4 13h6V4H4v9Zm0 7h6v-5H4v5Zm10 0h6V11h-6v9Zm0-16v5h6V4h-6Z",
+  },
+  {
+    href: "/admin/properties",
+    label: "Propiedades",
+    icon: "M3 10.5 12 4l9 6.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9.5Z",
   },
   {
     href: "/admin/profile",

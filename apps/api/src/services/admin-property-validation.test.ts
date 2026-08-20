@@ -83,7 +83,7 @@ describe("validatePropertyInput", () => {
       "city",
       "region",
     ]) {
-      expect(rejectionOf({ ...VALID, [field]: "  " })).toContain("obligatorio");
+      expect(rejectionOf({ ...VALID, [field]: "  " })).toContain("Falta");
     }
   });
 

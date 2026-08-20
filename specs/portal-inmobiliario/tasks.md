@@ -167,12 +167,12 @@
   - Eliminar.
   - Proteger endpoints.
 
-- [ ] **Paso 24 — Interfaz de administración**
+- [x] **Paso 24 — Interfaz de administración**
   - `/admin/properties`.
   - `/admin/properties/new`.
   - `/admin/properties/{id}/edit`.
 
-- [ ] **Paso 25 — Formulario de propiedad**
+- [x] **Paso 25 — Formulario de propiedad**
   - Título y descripción.
   - Operación y tipo.
   - Precio.

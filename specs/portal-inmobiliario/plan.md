@@ -205,6 +205,20 @@ DELETE /api/admin/properties/{id}
 de todas las consultas, incluidas las de administración. Sus consultas y los
 favoritos ajenos sobreviven.
 
+Características disponibles, para el formulario de propiedad:
+
+```text
+GET /api/admin/features
+```
+
+Vive bajo `/admin` porque hoy solo la administración necesita la lista
+completa: el catálogo público muestra las características de cada propiedad,
+no el vocabulario entero. Crear y editar características llega en el paso 28.
+
+El formulario las ofrece como casillas y el backend rechaza con 400 un
+identificador que no exista, en lugar de dejar que el ORM falle al conectarlo
+y responder un 500 sin explicación.
+
 Crear recursos REST adicionales cuando sean necesarios para:
 
 - imágenes;

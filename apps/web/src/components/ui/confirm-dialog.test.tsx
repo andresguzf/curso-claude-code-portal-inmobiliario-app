@@ -68,12 +68,18 @@ describe("ConfirmDialog", () => {
   });
 
   it("bloquea ambos botones mientras la acción está en curso", () => {
-    renderDialog({ isPending: true });
+    renderDialog({ isPending: true, pendingLabel: "Quitando…" });
 
     expect(
       screen.getByRole("button", { name: "No, conservarla" }),
     ).toBeDisabled();
     expect(screen.getByRole("button", { name: "Quitando…" })).toBeDisabled();
+  });
+
+  it("anuncia la espera con un texto genérico si no se le da uno", () => {
+    renderDialog({ isPending: true });
+
+    expect(screen.getByRole("button", { name: "Un momento…" })).toBeDisabled();
   });
 
   it("se cierra cuando deja de pedirse abierto", async () => {

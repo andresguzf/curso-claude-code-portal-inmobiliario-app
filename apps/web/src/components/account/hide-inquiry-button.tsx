@@ -74,6 +74,7 @@ export function HideInquiryButton({
         description={`La consulta sobre «${propertyTitle}» dejará de aparecer aquí. La inmobiliaria la conserva para poder responderte.`}
         confirmLabel="Sí, quitarla"
         cancelLabel="No, conservarla"
+        pendingLabel="Quitando…"
         isPending={isPending}
         onConfirm={remove}
         onCancel={() => setIsConfirming(false)}

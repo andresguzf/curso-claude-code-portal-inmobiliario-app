@@ -165,15 +165,15 @@ El más justo es el texto claro sobre el acento en oscuro, con 4.53.
 
 ## Estado del proyecto
 
-Pasos 1 a 23 de `tasks.md` completos. En funcionamiento: portada, catálogo
+Pasos 1 a 25 de `tasks.md` completos. En funcionamiento: portada, catálogo
 con búsqueda, filtros combinados, ordenamiento, estados de carga/vacío/error,
 detalle de propiedad, galería, mapa de ubicación, formulario de contacto,
 autenticación con autorización por rol, el área privada de la cuenta —con
 edición de los propios datos, favoritos y consultas guardadas— y el panel de
-administración con sus indicadores.
+administración con sus indicadores y el alta, edición y baja de propiedades.
 
-Pendiente desde el paso 24: la interfaz de administración, Cloudinary y la
-gestión de usuarios y consultas.
+Pendiente desde el paso 26: Cloudinary, las imágenes y la gestión de
+características, usuarios y consultas.
 
 ### Autenticación
 
@@ -212,6 +212,11 @@ quien tiene sesión; un visitante las envía igual y quedan con `userId` nulo.
 En `/account` se muestran como registros —propiedad, mensaje y fecha—, con
 buscador sobre el título de la propiedad y el texto del mensaje, y paginadas
 de a seis. Búsqueda y página viven en la URL, como en el catálogo.
+
+Solo figuran las de propiedades que siguen en el catálogo público, igual que
+en favoritos: una eliminada o despublicada no tiene ficha que abrir, y el
+registro llevaría a un 404. La consulta no se pierde —ADMIN la conserva para
+responderla—, simplemente deja de aparecer ahí.
 
 Eliminar una consulta la oculta del historial propio mediante
 `hiddenByUserAt`, pero **no la borra**: sigue disponible para ADMIN, porque es
@@ -289,6 +294,34 @@ hasta que una propiedad borrada reaparece.
 
 Para retirar una propiedad del catálogo conservándola a la vista de la
 administración está despublicarla, que es una acción distinta.
+
+### Interfaz de propiedades
+
+`/admin/properties` lista todo —borradores incluidos— en una tabla, no en
+una cuadrícula de tarjetas: aquí se compara entre filas, y para eso sirven
+las columnas. La búsqueda y la página viven en la URL y las resuelve
+PostgreSQL, igual que en el catálogo.
+
+El alta y la edición comparten **un solo formulario**. Los campos son los
+mismos y duplicarlo garantizaría que uno se quedase atrás al añadir el
+siguiente; lo único que cambia es a dónde va al guardar.
+
+Sus campos no llevan autocompletado. Los datos son de la propiedad, no de
+quien los escribe: con `autocomplete="street-address"`, el navegador ofrecía
+la dirección de quien administra, que es justo lo que no va en esa ficha.
+
+Los valores iniciales se pintan además como atributos `defaultValue`. React
+Hook Form los asigna al hidratar, así que sin ellos el servidor mandaba una
+ficha de edición en blanco y los datos aparecían un instante después.
+
+Las características son casillas y no texto libre: el backend las conecta por
+`slug` contra la tabla `features`, y una escrita a mano no existiría. Las
+ofrece `GET /api/admin/features`. Un `slug` inexistente se rechaza con 400 y
+dice cuál sobra, en vez de hacer fallar al ORM y responder un 500 mudo.
+
+Un campo numérico vacío viaja como `null`, no como cero: una propiedad por
+estrenar tiene cero años de antigüedad, y un terreno no declara dormitorios;
+son cosas distintas y el formulario las distingue en ambos sentidos.
 
 ### Autorización
 
