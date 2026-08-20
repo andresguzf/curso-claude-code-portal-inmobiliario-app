@@ -86,6 +86,11 @@ export function PropertyTable({
                     <Badge isStrong>Destacada</Badge>
                   ) : null}
                 </div>
+
+                <PublicationDate
+                  isPublished={property.isPublished}
+                  publishedAt={property.publishedAt}
+                />
               </td>
 
               <td className="px-4 py-3">
@@ -115,6 +120,41 @@ export function PropertyTable({
       </table>
     </div>
   );
+}
+
+/**
+ * Cuándo salió al portal.
+ *
+ * Una propiedad despublicada conserva su fecha, y decirlo a secas se leería
+ * como que sigue publicada. Por eso ahí el texto es «se publicó», en pasado.
+ */
+function PublicationDate({
+  isPublished,
+  publishedAt,
+}: {
+  readonly isPublished: boolean;
+  readonly publishedAt: string | null;
+}) {
+  if (publishedAt === null) {
+    return null;
+  }
+
+  return (
+    <p className="mt-1 text-xs whitespace-nowrap text-ink-muted">
+      {isPublished ? "Desde el " : "Se publicó el "}
+      <time dateTime={publishedAt}>{formatPublicationDate(publishedAt)}</time>
+    </p>
+  );
+}
+
+const PUBLICATION_DATE_FORMAT = new Intl.DateTimeFormat("es-CL", {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+});
+
+function formatPublicationDate(isoDate: string): string {
+  return PUBLICATION_DATE_FORMAT.format(new Date(isoDate));
 }
 
 function HeaderCell({ children }: { readonly children: ReactNode }) {

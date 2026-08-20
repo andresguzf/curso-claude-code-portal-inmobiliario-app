@@ -1,4 +1,5 @@
 import {
+  ADMIN_QUERY_PARAM_NAMES,
   QUERY_PARAM_NAMES,
   type AdminOverviewDto,
   type AdminPropertyDto,
@@ -417,23 +418,41 @@ export async function fetchAdminOverview(
  * la cookie a mano; las escrituras salen del navegador, que ya la lleva.
  */
 
-export async function fetchAdminProperties(
-  options: { readonly search?: string; readonly page?: number },
-  cookieHeader?: string,
-): Promise<AdminPropertyPageDto> {
+/**
+ * Copia de la URL solo los parámetros que el listado entiende.
+ *
+ * Se reenvían tal cual, sin interpretarlos: quien decide si un filtro es
+ * válido es el backend, y un valor escrito a mano en la URL debe producir su
+ * 400 en lugar de descartarse en silencio y devolver un listado que no
+ * corresponde a lo pedido.
+ */
+export function buildAdminPropertyQueryString(
+  searchParams: URLSearchParams,
+): string {
   const parameters = new URLSearchParams();
 
-  if (options.search) {
-    parameters.set("search", options.search);
-  }
-
-  if (options.page && options.page > 1) {
-    parameters.set("page", String(options.page));
+  for (const name of Object.values(ADMIN_QUERY_PARAM_NAMES)) {
+    for (const value of searchParams.getAll(name)) {
+      if (value.trim() !== "") {
+        // `append` y no `set`: tipo y operación admiten varios valores.
+        parameters.append(name, value);
+      }
+    }
   }
 
   const query = parameters.toString();
+
+  return query ? `?${query}` : "";
+}
+
+export async function fetchAdminProperties(
+  searchParams: URLSearchParams,
+  cookieHeader?: string,
+): Promise<AdminPropertyPageDto> {
   const response = await fetch(
-    buildApiUrl(`/api/admin/properties${query ? `?${query}` : ""}`),
+    buildApiUrl(
+      `/api/admin/properties${buildAdminPropertyQueryString(searchParams)}`,
+    ),
     {
       cache: "no-store",
       headers: cookieHeader ? { Cookie: cookieHeader } : undefined,

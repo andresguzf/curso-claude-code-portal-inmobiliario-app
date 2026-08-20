@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { QUERY_PARAM_NAMES } from "@portal/contracts";
 
 import {
+  buildAdminPropertyQueryString,
   buildApiUrl,
   buildPropertyQueryString,
   resolveApiBaseUrl,
@@ -141,5 +142,46 @@ describe("buildPropertyQueryString", () => {
     expect(buildPropertyQueryString({ search: "a&b=c" })).toBe(
       "?search=a%26b%3Dc",
     );
+  });
+});
+
+describe("buildAdminPropertyQueryString", () => {
+  function build(queryString: string): string {
+    return buildAdminPropertyQueryString(new URLSearchParams(queryString));
+  }
+
+  it("no produce nada cuando no hay filtros", () => {
+    expect(build("")).toBe("");
+  });
+
+  it("reenvía los filtros que el listado entiende", () => {
+    const query = new URLSearchParams(
+      build("status=draft&minPrice=1000&publishedFrom=2026-01-01"),
+    );
+
+    expect(query.get("status")).toBe("draft");
+    expect(query.get("minPrice")).toBe("1000");
+    expect(query.get("publishedFrom")).toBe("2026-01-01");
+  });
+
+  it("conserva los valores repetidos de tipo y operación", () => {
+    const query = new URLSearchParams(build("type=HOUSE&type=APARTMENT"));
+
+    expect(query.getAll("type")).toEqual(["HOUSE", "APARTMENT"]);
+  });
+
+  it("descarta lo que el listado no conoce", () => {
+    // Un parámetro ajeno en la URL no tiene por qué llegar a la API.
+    expect(build("utm_source=correo&orden=magica")).toBe("");
+  });
+
+  it("omite los parámetros vacíos", () => {
+    expect(build("status=&minPrice=&search=")).toBe("");
+  });
+
+  it("no interpreta los valores: de eso responde el backend", () => {
+    // Un filtro escrito a mano debe producir su 400, no descartarse en
+    // silencio y devolver un listado que no corresponde a lo pedido.
+    expect(build("status=archivada")).toBe("?status=archivada");
   });
 });

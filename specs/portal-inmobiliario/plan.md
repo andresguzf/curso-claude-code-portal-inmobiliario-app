@@ -127,6 +127,12 @@ Property * --- * Feature
 
 `Inquiry.userId` puede ser nulo para permitir consultas de visitantes.
 
+`Property.publishedAt` es nulo mientras la propiedad no haya salido nunca al
+portal. Lo sella el repositorio cuando `isPublished` pasa a verdadero, y no
+lo escribe el formulario: es una consecuencia de publicar, no un campo que
+alguien rellene. Al despublicar se conserva, porque destruir una fecha es
+destruir información y el estado ya responde aparte si está publicada ahora.
+
 ## 6. Persistencia
 
 PostgreSQL es la única base de datos.
@@ -200,6 +206,19 @@ GET    /api/admin/properties/{id}
 PUT    /api/admin/properties/{id}
 DELETE /api/admin/properties/{id}
 ```
+
+`GET /api/admin/properties` acepta, además de `search` y `page`, los filtros
+de la sección 19 de la especificación:
+
+```text
+?minPrice=&maxPrice=&status=published|draft&type=HOUSE&operation=SALE
+&publishedFrom=2026-01-01&publishedTo=2026-03-31
+```
+
+`type` y `operation` admiten varios valores repitiendo el parámetro, como en
+el catálogo público. Un parámetro presente pero inválido produce un 400 en
+lugar de ignorarse: devolver resultados que no corresponden al filtro pedido
+es peor que rechazar la solicitud.
 
 `DELETE` es un borrado lógico: marca la propiedad como eliminada y la retira
 de todas las consultas, incluidas las de administración. Sus consultas y los

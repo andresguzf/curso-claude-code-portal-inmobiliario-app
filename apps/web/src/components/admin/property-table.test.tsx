@@ -36,6 +36,7 @@ function buildProperty(
     images: [],
     createdAt: "2026-01-01T00:00:00.000Z",
     updatedAt: "2026-01-01T00:00:00.000Z",
+    publishedAt: "2026-01-05T00:00:00.000Z",
     ...overrides,
   };
 }
@@ -91,6 +92,49 @@ describe("PropertyTable", () => {
     );
 
     expect(screen.getByText("Destacada")).toBeVisible();
+  });
+
+  it("dice desde cuándo está publicada", () => {
+    render(
+      <PropertyTable
+        properties={[
+          buildProperty({ publishedAt: "2026-03-15T10:00:00.000Z" }),
+        ]}
+      />,
+    );
+
+    expect(screen.getByText(/Desde el/)).toBeVisible();
+    expect(screen.getByRole("time")).toHaveAttribute(
+      "datetime",
+      "2026-03-15T10:00:00.000Z",
+    );
+  });
+
+  it("habla en pasado de una despublicada que sí llegó a salir", () => {
+    // Decir «desde el» de algo que ya no está publicado se leería como que
+    // sigue estándolo.
+    render(
+      <PropertyTable
+        properties={[
+          buildProperty({
+            isPublished: false,
+            publishedAt: "2026-03-15T10:00:00.000Z",
+          }),
+        ]}
+      />,
+    );
+
+    expect(screen.getByText(/Se publicó el/)).toBeVisible();
+  });
+
+  it("no inventa fecha para un borrador que nunca salió", () => {
+    render(
+      <PropertyTable
+        properties={[buildProperty({ isPublished: false, publishedAt: null })]}
+      />,
+    );
+
+    expect(screen.queryByRole("time")).toBeNull();
   });
 
   it("da a cada fila su propio botón de eliminar", () => {

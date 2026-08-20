@@ -64,7 +64,7 @@ export function InquiryHistory({
         hash="#propiedades-consultadas"
         currentPage={page.page}
         lastPage={lastPage}
-        search={search}
+        preserved={new URLSearchParams(search ? { search } : undefined)}
         label="Páginas de mis consultas"
       />
     </section>

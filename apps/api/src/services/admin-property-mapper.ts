@@ -11,7 +11,10 @@ import type { PropertyRecord } from "@/services/property-mapper";
  * su tipo no declara.
  */
 export function toAdminProperty(
-  property: PropertyRecord & { readonly isPublished: boolean },
+  property: PropertyRecord & {
+    readonly isPublished: boolean;
+    readonly publishedAt: Date | null;
+  },
 ): AdminPropertyDto {
   const images = [...property.images].sort(
     (first, second) => first.position - second.position,
@@ -54,6 +57,7 @@ export function toAdminProperty(
     })),
     createdAt: property.createdAt.toISOString(),
     updatedAt: property.updatedAt.toISOString(),
+    publishedAt: property.publishedAt?.toISOString() ?? null,
   };
 }
 

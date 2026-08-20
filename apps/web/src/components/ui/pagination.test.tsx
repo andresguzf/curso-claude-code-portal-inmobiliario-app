@@ -9,7 +9,7 @@ function renderPagination(overrides = {}) {
       basePath="/admin/properties"
       currentPage={2}
       lastPage={3}
-      search=""
+      preserved={new URLSearchParams()}
       label="Páginas de propiedades"
       {...overrides}
     />,
@@ -49,17 +49,42 @@ describe("Pagination", () => {
     );
   });
 
-  it("conserva la búsqueda al cambiar de página", () => {
-    renderPagination({ search: "ñuñoa" });
+  it("conserva la búsqueda y los filtros al cambiar de página", () => {
+    // Si se perdieran, la segunda página mostraría otro listado que la
+    // primera.
+    renderPagination({
+      preserved: new URLSearchParams("search=ñuñoa&status=draft&type=HOUSE"),
+    });
 
-    expect(screen.getByRole("link", { name: /Siguientes/ })).toHaveAttribute(
+    const href = screen
+      .getByRole("link", { name: /Siguientes/ })
+      .getAttribute("href");
+    const query = new URLSearchParams(href?.split("?")[1]);
+
+    expect(query.get("search")).toBe("ñuñoa");
+    expect(query.get("status")).toBe("draft");
+    expect(query.get("type")).toBe("HOUSE");
+    expect(query.get("page")).toBe("3");
+  });
+
+  it("descarta la página que traía la URL al retroceder a la primera", () => {
+    renderPagination({
+      currentPage: 2,
+      preserved: new URLSearchParams("status=draft&page=2"),
+    });
+
+    expect(screen.getByRole("link", { name: /Anteriores/ })).toHaveAttribute(
       "href",
-      "/admin/properties?search=%C3%B1u%C3%B1oa&page=3",
+      "/admin/properties?status=draft",
     );
   });
 
   it("salta al ancla del listado cuando se le da una", () => {
-    renderPagination({ basePath: "/account", hash: "#mis-consultas" });
+    renderPagination({
+      basePath: "/account",
+      hash: "#mis-consultas",
+      preserved: new URLSearchParams(),
+    });
 
     expect(screen.getByRole("link", { name: /Siguientes/ })).toHaveAttribute(
       "href",

@@ -38,7 +38,82 @@ export type AdminPropertyDto = {
   readonly images: readonly PropertyImageDto[];
   readonly createdAt: string;
   readonly updatedAt: string;
+  /**
+   * Cuándo salió al portal por primera vez, o `null` si nunca lo hizo.
+   *
+   * No lo escribe el formulario: lo sella el servidor al publicar. Se
+   * conserva al despublicar, así que una propiedad puede estar en borrador y
+   * tener fecha (spec.md, sección 3).
+   */
+  readonly publishedAt: string | null;
 };
+
+/**
+ * Estado de publicación por el que se puede acotar el listado.
+ *
+ * `all` no es un valor que se envíe: es la ausencia del filtro, y se declara
+ * para poder nombrarla en la interfaz sin repetir la cadena vacía.
+ */
+export const AdminPropertyStatus = {
+  ALL: "all",
+  PUBLISHED: "published",
+  DRAFT: "draft",
+} as const;
+
+export type AdminPropertyStatusValue =
+  (typeof AdminPropertyStatus)[keyof typeof AdminPropertyStatus];
+
+export function isAdminPropertyStatus(
+  value: unknown,
+): value is AdminPropertyStatusValue {
+  return (
+    typeof value === "string" &&
+    Object.values<string>(AdminPropertyStatus).includes(value)
+  );
+}
+
+/**
+ * Filtros del listado de administración (spec.md, sección 19).
+ *
+ * Son combinables entre sí y con la búsqueda, y viven en la URL para que el
+ * resultado se pueda compartir, igual que en el catálogo público.
+ *
+ * La diferencia principal con aquel es `status`: allí no hay borradores que
+ * distinguir.
+ */
+export type AdminPropertyListQuery = {
+  readonly search?: string | undefined;
+  readonly page?: number | undefined;
+  readonly minPrice?: number | undefined;
+  readonly maxPrice?: number | undefined;
+  readonly status?: AdminPropertyStatusValue | undefined;
+  /** Admite varios: `?type=HOUSE&type=APARTMENT`. */
+  readonly types?: readonly PropertyTypeValue[] | undefined;
+  /** Admite ambas, que equivale a no filtrar por operación. */
+  readonly operations?: readonly OperationTypeValue[] | undefined;
+  /** Fecha `AAAA-MM-DD` inclusive. */
+  readonly publishedFrom?: string | undefined;
+  /** Fecha `AAAA-MM-DD` inclusive: cubre el día entero. */
+  readonly publishedTo?: string | undefined;
+};
+
+/**
+ * Nombres de los parámetros en la URL.
+ *
+ * Los múltiples van en singular y se repiten, que es la convención de HTML
+ * y la que ya usa el catálogo público.
+ */
+export const ADMIN_QUERY_PARAM_NAMES = {
+  search: "search",
+  page: "page",
+  minPrice: "minPrice",
+  maxPrice: "maxPrice",
+  status: "status",
+  types: "type",
+  operations: "operation",
+  publishedFrom: "publishedFrom",
+  publishedTo: "publishedTo",
+} as const satisfies Record<keyof AdminPropertyListQuery, string>;
 
 /** Página del listado de administración. */
 export type AdminPropertyPageDto = {

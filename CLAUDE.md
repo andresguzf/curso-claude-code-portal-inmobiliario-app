@@ -276,6 +276,14 @@ Una propiedad **nace despublicada** salvo que se pida lo contrario: es
 preferible que algo a medio escribir no aparezca en el portal a que aparezca
 por omisión.
 
+`publishedAt` la sella el repositorio la primera vez que se publica, y no
+viaja en el formulario: es una consecuencia de publicar, no un campo que
+alguien rellene. Al despublicar **se conserva** —destruir una fecha es
+destruir información— y al republicar no se resella. Si está publicada ahora
+lo responde `isPublished`, que es un dato distinto. Las filas anteriores a la
+columna se rellenaron con su fecha de alta: no es exacta, pero dejarlas en
+nulo las escondería de cualquier filtro por fecha.
+
 `PUT` reemplaza la propiedad entera, características incluidas, con `set` y
 no `connect`: quien envía el formulario manda la lista definitiva, y con
 `connect` quitar una característica no tendría ningún efecto.
@@ -299,8 +307,18 @@ administración está despublicarla, que es una acción distinta.
 
 `/admin/properties` lista todo —borradores incluidos— en una tabla, no en
 una cuadrícula de tarjetas: aquí se compara entre filas, y para eso sirven
-las columnas. La búsqueda y la página viven en la URL y las resuelve
-PostgreSQL, igual que en el catálogo.
+las columnas. La búsqueda, los filtros y la página viven en la URL y los
+resuelve PostgreSQL, igual que en el catálogo.
+
+Los filtros —precio, estado, tipo, operación y fecha de publicación— están
+en un panel colapsable **a la derecha**: a la izquierda ya está la barra de
+secciones, y dos barras enfrentadas dejarían la tabla sin sitio. Contraído
+dice cuántos hay puestos, para que nadie olvide que ve un listado acotado.
+
+Un filtro inválido escrito a mano en la URL produce un 400 con su motivo, y
+la página lo dice. El cliente REST reenvía los parámetros **sin
+interpretarlos**: descartarlos en silencio mostraría un listado que no
+corresponde a lo pedido, que es peor que un error.
 
 El alta y la edición comparten **un solo formulario**. Los campos son los
 mismos y duplicarlo garantizaría que uno se quedase atrás al añadir el
