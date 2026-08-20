@@ -165,15 +165,15 @@ El más justo es el texto claro sobre el acento en oscuro, con 4.53.
 
 ## Estado del proyecto
 
-Pasos 1 a 25 de `tasks.md` completos. En funcionamiento: portada, catálogo
+Pasos 1 a 26 de `tasks.md` completos. En funcionamiento: portada, catálogo
 con búsqueda, filtros combinados, ordenamiento, estados de carga/vacío/error,
 detalle de propiedad, galería, mapa de ubicación, formulario de contacto,
 autenticación con autorización por rol, el área privada de la cuenta —con
 edición de los propios datos, favoritos y consultas guardadas— y el panel de
 administración con sus indicadores y el alta, edición y baja de propiedades.
 
-Pendiente desde el paso 26: Cloudinary, las imágenes y la gestión de
-características, usuarios y consultas.
+Pendiente desde el paso 27: la administración de imágenes en la interfaz y
+la gestión de características, usuarios y consultas.
 
 ### Autenticación
 
@@ -341,6 +341,37 @@ Un campo numérico vacío viaja como `null`, no como cero: una propiedad por
 estrenar tiene cero años de antigüedad, y un terreno no declara dormitorios;
 son cosas distintas y el formulario las distingue en ambos sentidos.
 
+### Imágenes
+
+`POST /api/admin/properties/{id}/images` sube una imagen a Cloudinary y la
+asocia a la propiedad. El cuerpo es `multipart/form-data`: lo que viaja es un
+archivo, no un JSON.
+
+El archivo pasa **por la API** camino de Cloudinary, no directo desde el
+navegador: la firma exige el secreto de la cuenta y ese secreto no sale del
+servidor. Se habla con su API REST sin el SDK —dos llamadas y una firma
+SHA-1—, igual que con Geocoding y Web3Forms.
+
+Todas aterrizan en la carpeta `propiedades-claude`, para poder revisarlas o
+borrarlas en bloque sin tocar el resto de la cuenta.
+
+Se admiten JPG, PNG, WebP y AVIF. **No** `image/svg+xml`: también es una
+imagen, y admite scripts. Tipo y tamaño se comprueban antes de subir, porque
+al revés un archivo rechazado habría gastado igualmente una llamada.
+
+Los códigos distinguen de quién es el problema: 400 el formato, 413 el
+tamaño, 404 la propiedad, **503** si el entorno no tiene credenciales y
+**502** si Cloudinary falla. Los dos últimos no son lo mismo: uno no tiene
+nada que reintentar.
+
+Si la subida sale bien pero la fila no llega a guardarse, se elimina el
+recurso recién subido. Un archivo que nada referencia es un huérfano que
+nadie sabría que sobra.
+
+La primera imagen de una propiedad queda como principal: sin portada no se
+pintaría en el catálogo. Reordenar, cambiar la principal y eliminar llegan en
+el paso 27.
+
 ### Autorización
 
 La decisión siempre la toma el backend. Hay tres piezas:
@@ -379,8 +410,9 @@ mínimo de ocho caracteres que exige el backend.
 - La búsqueda y los filtros de ubicación distinguen acentos: `nunoa` no
   encuentra `Ñuñoa`. Resolverlo requiere la extensión `unaccent` de
   PostgreSQL (previsto para el paso 32).
-- Las imágenes del seed son de `picsum.photos`. Cloudinary se integra en el
-  paso 26.
+- Las imágenes del seed siguen siendo de `picsum.photos`: el seed no sube
+  nada a Cloudinary, para no gastar la cuota de la cuenta en datos de
+  desarrollo que se recrean a menudo.
 - El registro público solo da de alta cuentas con rol `USER`. El `ADMIN`
   llega por el seed.
 - El formulario de contacto necesita `NEXT_PUBLIC_WEB3FORMS_ACCESS_KEY` en

@@ -20,6 +20,8 @@ export const HTTP_STATUS = {
   FORBIDDEN: 403,
   NOT_FOUND: 404,
   CONFLICT: 409,
+  /** El cuerpo excede lo que el endpoint acepta (una imagen demasiado grande). */
+  PAYLOAD_TOO_LARGE: 413,
   INTERNAL_SERVER_ERROR: 500,
   /** Un servicio externo respondió mal (Google Maps, Cloudinary, Web3Forms). */
   BAD_GATEWAY: 502,

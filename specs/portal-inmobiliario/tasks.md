@@ -184,7 +184,7 @@
   - Publicada/destacada.
   - No agregar latitud/longitud manual.
 
-- [ ] **Paso 26 — Subida a Cloudinary**
+- [x] **Paso 26 — Subida a Cloudinary**
   - Configurar Cloudinary.
   - Crear subida segura mediante REST.
   - Validar tipo y tamaño.

@@ -12,8 +12,14 @@ const nextConfig: NextConfig = {
 
   images: {
     remotePatterns: [
+      // Imágenes de las propiedades (paso 26).
+      //
+      // El patrón admite el servidor entero, no solo nuestra cuenta: el
+      // nombre de la cuenta vive en `apps/api`, y el frontend no lo conoce.
+      // Es aceptable porque estas URL no las escribe nadie de fuera: salen
+      // de PostgreSQL, y allí solo llegan las que sube esta API.
+      { protocol: "https", hostname: "res.cloudinary.com" },
       // Imágenes de marcador de posición del seed de desarrollo.
-      // Cloudinary se incorpora en el Paso 26.
       { protocol: "https", hostname: "picsum.photos" },
       // Fotografía de fondo del hero.
       { protocol: "https", hostname: "images.unsplash.com" },
