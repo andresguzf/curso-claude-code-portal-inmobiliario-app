@@ -34,6 +34,9 @@ describe("AdminShell", () => {
 
     expect(within(barra).getByRole("link", { name: "Resumen" })).toBeVisible();
     expect(
+      within(barra).getByRole("link", { name: "Propiedades" }),
+    ).toBeVisible();
+    expect(
       within(barra).getByRole("link", { name: "Mi perfil" }),
     ).toBeVisible();
   });
@@ -42,9 +45,16 @@ describe("AdminShell", () => {
     // El panel es otra raíz: quien administra no tiene favoritos.
     renderShell();
 
-    for (const ausente of [/guardada/i, /favorito/i, /Propiedades$/]) {
+    for (const ausente of [/guardada/i, /favorito/i, /mi cuenta/i]) {
       expect(screen.queryByRole("link", { name: ausente })).toBeNull();
     }
+
+    // «Propiedades» sí existe, pero es la sección del panel: lleva a
+    // administrarlas, no al catálogo público.
+    expect(screen.getByRole("link", { name: "Propiedades" })).toHaveAttribute(
+      "href",
+      "/admin/properties",
+    );
   });
 
   it("marca la sección en la que se está", () => {

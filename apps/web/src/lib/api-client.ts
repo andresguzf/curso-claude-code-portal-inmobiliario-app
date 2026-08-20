@@ -1,6 +1,10 @@
 import {
   QUERY_PARAM_NAMES,
   type AdminOverviewDto,
+  type AdminPropertyDto,
+  type AdminPropertyPageDto,
+  type FeatureListDto,
+  type PropertyInputDto,
   type ApiErrorDto,
   type FavoriteIdsDto,
   type UserInquiryPageDto,
@@ -403,4 +407,121 @@ export async function fetchAdminOverview(
   });
 
   return readOrThrow(response, "No pudimos cargar los indicadores.");
+}
+
+/**
+ * Administración de propiedades (spec.md, sección 19).
+ *
+ * Todas exigen rol ADMIN: la API responde 403 a cualquier otra sesión. El
+ * listado y la lectura se piden desde el servidor, así que hay que reenviar
+ * la cookie a mano; las escrituras salen del navegador, que ya la lleva.
+ */
+
+export async function fetchAdminProperties(
+  options: { readonly search?: string; readonly page?: number },
+  cookieHeader?: string,
+): Promise<AdminPropertyPageDto> {
+  const parameters = new URLSearchParams();
+
+  if (options.search) {
+    parameters.set("search", options.search);
+  }
+
+  if (options.page && options.page > 1) {
+    parameters.set("page", String(options.page));
+  }
+
+  const query = parameters.toString();
+  const response = await fetch(
+    buildApiUrl(`/api/admin/properties${query ? `?${query}` : ""}`),
+    {
+      cache: "no-store",
+      headers: cookieHeader ? { Cookie: cookieHeader } : undefined,
+    },
+  );
+
+  return readOrThrow(response, "No pudimos cargar las propiedades.");
+}
+
+/**
+ * Una propiedad para editarla, o `null` si no existe.
+ *
+ * La distinción entre 404 y cualquier otro fallo importa: lo primero
+ * significa que la propiedad no está —o se eliminó—, y la página responde
+ * «no encontrada»; lo segundo no dice nada sobre ella y no debe presentarse
+ * como si lo dijera.
+ */
+export async function fetchAdminProperty(
+  propertyId: string,
+  cookieHeader?: string,
+): Promise<AdminPropertyDto | null> {
+  const response = await fetch(
+    buildApiUrl(`/api/admin/properties/${encodeURIComponent(propertyId)}`),
+    {
+      cache: "no-store",
+      headers: cookieHeader ? { Cookie: cookieHeader } : undefined,
+    },
+  );
+
+  if (response.status === 404) {
+    return null;
+  }
+
+  return readOrThrow(response, "No pudimos cargar la propiedad.");
+}
+
+/** Características disponibles, para las casillas del formulario. */
+export async function fetchAdminFeatures(
+  cookieHeader?: string,
+): Promise<FeatureListDto> {
+  const response = await fetch(buildApiUrl("/api/admin/features"), {
+    cache: "no-store",
+    headers: cookieHeader ? { Cookie: cookieHeader } : undefined,
+  });
+
+  return readOrThrow(response, "No pudimos cargar las características.");
+}
+
+export async function createAdminProperty(
+  property: PropertyInputDto,
+): Promise<AdminPropertyDto> {
+  const response = await fetch(buildApiUrl("/api/admin/properties"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(property),
+  });
+
+  return readOrThrow(response, "No pudimos crear la propiedad.");
+}
+
+/** `PUT` reemplaza la propiedad entera: el cuerpo es la versión definitiva. */
+export async function updateAdminProperty(
+  propertyId: string,
+  property: PropertyInputDto,
+): Promise<AdminPropertyDto> {
+  const response = await fetch(
+    buildApiUrl(`/api/admin/properties/${encodeURIComponent(propertyId)}`),
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(property),
+    },
+  );
+
+  return readOrThrow(response, "No pudimos guardar la propiedad.");
+}
+
+/**
+ * Elimina una propiedad.
+ *
+ * El borrado es lógico: la propiedad desaparece del portal y del panel, pero
+ * sus consultas y los favoritos ajenos se conservan (spec.md, sección 19).
+ */
+export async function deleteAdminProperty(propertyId: string): Promise<void> {
+  const response = await fetch(
+    buildApiUrl(`/api/admin/properties/${encodeURIComponent(propertyId)}`),
+    { method: "DELETE" },
+  );
+
+  await readOrThrow(response, "No pudimos eliminar la propiedad.");
 }

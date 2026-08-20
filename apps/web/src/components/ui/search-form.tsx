@@ -7,20 +7,31 @@ import { fieldInputClassName } from "@/components/form/form-field";
 import { cn } from "@/lib/utils";
 
 /**
- * Búsqueda dentro del historial propio.
+ * Búsqueda sobre un listado paginado.
  *
- * Busca en el título de la propiedad y en el texto del mensaje, que son las
- * dos formas naturales de recordar una consulta.
+ * La usan el historial de consultas y el listado de propiedades del panel:
+ * ambos buscan en el servidor y guardan el término en la URL, como el
+ * catálogo, para que el resultado sea compartible y el botón de atrás haga
+ * lo que se espera.
  *
  * Es un formulario de verdad, con `method="get"`: sin JavaScript sigue
  * funcionando. Al enviarlo se intercepta para navegar sin recargar y para
  * quitar de la URL los parámetros vacíos.
  */
-export function InquirySearch({
+export function SearchForm({
+  basePath,
+  hash = "",
   search,
+  label,
+  placeholder,
   className,
 }: {
+  readonly basePath: string;
+  /** Ancla a la que saltar tras buscar, si el listado no encabeza la página. */
+  readonly hash?: string;
   readonly search: string;
+  readonly label: string;
+  readonly placeholder: string;
   readonly className?: string;
 }) {
   const fieldId = useId();
@@ -45,28 +56,26 @@ export function InquirySearch({
 
     const query = parameters.toString();
 
-    router.replace(
-      `/account${query ? `?${query}` : ""}#propiedades-consultadas`,
-    );
+    router.replace(`${basePath}${query ? `?${query}` : ""}${hash}`);
   }
 
   return (
     <form
       method="get"
-      action="/account"
+      action={basePath}
       onSubmit={submit}
       className={cn("flex flex-wrap items-end gap-3", className)}
     >
       <div className="flex min-w-56 flex-1 flex-col gap-2">
         <label htmlFor={fieldId} className="text-sm font-medium text-ink">
-          Buscar en mis consultas
+          {label}
         </label>
         <input
           id={fieldId}
           type="search"
           name="search"
           defaultValue={search}
-          placeholder="Título de la propiedad o texto del mensaje"
+          placeholder={placeholder}
           className={fieldInputClassName(false)}
         />
       </div>
@@ -80,7 +89,7 @@ export function InquirySearch({
 
       {search ? (
         <a
-          href="/account#propiedades-consultadas"
+          href={`${basePath}${hash}`}
           className="inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-medium text-ink-muted underline underline-offset-4 hover:text-accent"
         >
           Limpiar

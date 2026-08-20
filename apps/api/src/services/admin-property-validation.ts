@@ -105,11 +105,14 @@ export function validatePropertyInput(
     const value = readText(fields[field.name]);
 
     if (value === "") {
-      return { ok: false, message: `${field.label} es obligatorio.` };
+      return { ok: false, message: `Falta ${lowerFirst(field.label)}.` };
     }
 
     if (value.length > field.max) {
-      return { ok: false, message: `${field.label} es demasiado largo.` };
+      return {
+        ok: false,
+        message: `${field.label} supera el largo máximo.`,
+      };
     }
 
     texts[field.name] = value;
@@ -194,6 +197,18 @@ export function validatePropertyInput(
       isFeatured: fields.isFeatured === true,
     },
   };
+}
+
+/**
+ * Minúscula inicial, para encajar la etiqueta dentro de una frase.
+ *
+ * Las etiquetas llevan artículo —«La comuna»— porque encabezan la mayoría de
+ * los mensajes. En «Falta la comuna» va en medio, y ahí la mayúscula sobra.
+ * Es también lo que evita un «La comuna es obligatorio»: la frase se
+ * construye alrededor del artículo, no de la concordancia.
+ */
+function lowerFirst(label: string): string {
+  return label.charAt(0).toLowerCase() + label.slice(1);
 }
 
 function readText(value: unknown): string {

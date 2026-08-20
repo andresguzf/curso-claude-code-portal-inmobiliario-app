@@ -18,6 +18,7 @@ export function ConfirmDialog({
   description,
   confirmLabel,
   cancelLabel = "Cancelar",
+  pendingLabel = "Un momento…",
   isPending = false,
   onConfirm,
   onCancel,
@@ -27,6 +28,8 @@ export function ConfirmDialog({
   readonly description: string;
   readonly confirmLabel: string;
   readonly cancelLabel?: string;
+  /** Reemplaza al de confirmar mientras la acción está en curso. */
+  readonly pendingLabel?: string;
   readonly isPending?: boolean;
   readonly onConfirm: () => void;
   readonly onCancel: () => void;
@@ -102,7 +105,7 @@ export function ConfirmDialog({
             disabled={isPending}
             className="inline-flex min-h-11 items-center justify-center rounded-lg bg-accent-strong px-4 text-sm font-semibold text-white transition-colors hover:bg-accent disabled:cursor-progress disabled:opacity-70"
           >
-            {isPending ? "Quitando…" : confirmLabel}
+            {isPending ? pendingLabel : confirmLabel}
           </button>
         </div>
       </div>
