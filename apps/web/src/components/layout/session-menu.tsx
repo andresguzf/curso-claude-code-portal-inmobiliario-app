@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 
-import type { AuthenticatedUserDto } from "@portal/contracts";
+import { UserRole, type AuthenticatedUserDto } from "@portal/contracts";
 
 import { logOut } from "@/lib/api-client";
 import { LOGIN_NAVIGATION_ITEM } from "@/lib/navigation";
@@ -78,6 +78,19 @@ export function SessionMenu({
         isMobile && "flex-col items-stretch",
       )}
     >
+      {currentUser.role === UserRole.ADMIN ? (
+        <Link
+          href="/admin"
+          onClick={onNavigate}
+          className={cn(
+            buttonClasses,
+            "text-on-dark-muted hover:bg-header-hover hover:text-on-dark",
+          )}
+        >
+          Administración
+        </Link>
+      ) : null}
+
       <FavoriteCount count={favoriteCount} onNavigate={onNavigate} />
 
       {/* El nombre es la puerta a la cuenta: es donde se busca. */}

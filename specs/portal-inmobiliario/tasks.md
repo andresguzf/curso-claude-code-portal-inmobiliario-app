@@ -154,7 +154,7 @@
 
 ## Fase 4 — Administración
 
-- [ ] **Paso 22 — Dashboard ADMIN**
+- [x] **Paso 22 — Dashboard ADMIN**
   - Crear `/admin`.
   - Mostrar indicadores.
   - Restringir a ADMIN.

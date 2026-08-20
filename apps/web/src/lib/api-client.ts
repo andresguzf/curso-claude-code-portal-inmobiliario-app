@@ -1,5 +1,6 @@
 import {
   QUERY_PARAM_NAMES,
+  type AdminOverviewDto,
   type ApiErrorDto,
   type FavoriteIdsDto,
   type UserInquiryPageDto,
@@ -385,4 +386,21 @@ export async function hideInquiry(inquiryId: string): Promise<void> {
   );
 
   await readOrThrow(response, "No pudimos eliminar la consulta.");
+}
+
+/**
+ * Indicadores del panel de administración.
+ *
+ * Requiere rol ADMIN: la API responde 403 a cualquier otra sesión, así que
+ * no basta con conocer la ruta.
+ */
+export async function fetchAdminOverview(
+  cookieHeader?: string,
+): Promise<AdminOverviewDto> {
+  const response = await fetch(buildApiUrl("/api/admin/overview"), {
+    cache: "no-store",
+    headers: cookieHeader ? { Cookie: cookieHeader } : undefined,
+  });
+
+  return readOrThrow(response, "No pudimos cargar los indicadores.");
 }

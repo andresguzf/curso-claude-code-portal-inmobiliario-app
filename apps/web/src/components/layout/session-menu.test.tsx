@@ -147,3 +147,36 @@ describe("SessionMenu — contador de guardadas", () => {
     ).toBeInTheDocument();
   });
 });
+
+describe("SessionMenu — acceso a administración", () => {
+  it("ofrece el panel a un ADMIN", () => {
+    render(
+      <SessionMenu
+        currentUser={{ ...MARIA, role: "ADMIN" }}
+        favoriteCount={0}
+        isMobile={false}
+      />,
+    );
+
+    expect(
+      screen.getByRole("link", { name: "Administración" }),
+    ).toHaveAttribute("href", "/admin");
+  });
+
+  it("no lo menciona a un USER", () => {
+    // Esconderlo es cortesía; quien protege es la guarda del servidor.
+    render(
+      <SessionMenu currentUser={MARIA} favoriteCount={0} isMobile={false} />,
+    );
+
+    expect(screen.queryByRole("link", { name: "Administración" })).toBeNull();
+  });
+
+  it("tampoco a quien no ha iniciado sesión", () => {
+    render(
+      <SessionMenu currentUser={null} favoriteCount={0} isMobile={false} />,
+    );
+
+    expect(screen.queryByRole("link", { name: "Administración" })).toBeNull();
+  });
+});
