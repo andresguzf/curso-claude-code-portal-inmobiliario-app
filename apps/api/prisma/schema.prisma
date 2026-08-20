@@ -106,6 +106,13 @@ model Property {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  /// Cuándo salió al portal por primera vez. Lo sella el repositorio al
+  /// publicar, no el formulario: es una consecuencia de publicar, no un
+  /// campo que alguien rellene. Al despublicar se conserva, porque destruir
+  /// una fecha es destruir información y `isPublished` ya responde aparte si
+  /// está publicada ahora (spec.md, sección 3).
+  publishedAt DateTime? @map("published_at")
+
   /// Cuándo se eliminó. Es un borrado lógico: la propiedad deja de existir
   /// para todo el mundo, pero la fila se conserva para no destruir las
   /// consultas que arrastra, que son contactos comerciales (spec.md,

@@ -19,31 +19,12 @@ const adminSelection = {
 } as const;
 
 export async function findAdminProperties(options: {
-  readonly search: string;
+  /** Condiciones ya traducidas por `admin-property-query.ts`. */
+  readonly filters: Record<string, unknown>;
   readonly skip: number;
   readonly take: number;
 }) {
-  const where = {
-    ...NOT_DELETED,
-    ...(options.search
-      ? {
-          OR: [
-            {
-              title: { contains: options.search, mode: "insensitive" as const },
-            },
-            {
-              commune: {
-                contains: options.search,
-                mode: "insensitive" as const,
-              },
-            },
-            {
-              city: { contains: options.search, mode: "insensitive" as const },
-            },
-          ],
-        }
-      : {}),
-  };
+  const where = { ...NOT_DELETED, ...options.filters };
 
   const [properties, total] = await Promise.all([
     prisma.property.findMany({
@@ -68,10 +49,17 @@ export function findAdminPropertyById(id: string) {
   });
 }
 
+/**
+ * Crea una propiedad.
+ *
+ * Si nace publicada, la fecha de publicación se sella aquí: es una
+ * consecuencia de publicar, no un campo del formulario (spec.md, sección 3).
+ */
 export function createProperty(input: PropertyInputDto) {
   return prisma.property.create({
     data: {
       ...toColumns(input),
+      publishedAt: input.isPublished ? new Date() : null,
       features: { connect: toFeatureConnections(input) },
     },
     include: adminSelection,
@@ -84,12 +72,24 @@ export function createProperty(input: PropertyInputDto) {
  * `set` reemplaza las características en vez de añadirlas: quien envía el
  * formulario manda la lista definitiva, y sin esto quitar una no tendría
  * ningún efecto.
+ *
+ * La fecha de publicación es la excepción: no viene del formulario. Se sella
+ * la primera vez que la propiedad se publica y no se toca después, ni
+ * siquiera al despublicarla, porque registra que salió al portal ese día
+ * (spec.md, sección 3).
  */
-export function updateProperty(id: string, input: PropertyInputDto) {
+export function updateProperty(
+  id: string,
+  input: PropertyInputDto,
+  currentPublishedAt: Date | null,
+) {
   return prisma.property.update({
     where: { id },
     data: {
       ...toColumns(input),
+      ...(input.isPublished && currentPublishedAt === null
+        ? { publishedAt: new Date() }
+        : {}),
       features: { set: toFeatureConnections(input) },
     },
     include: adminSelection,

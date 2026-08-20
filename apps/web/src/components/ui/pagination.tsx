@@ -15,15 +15,21 @@ export function Pagination({
   hash = "",
   currentPage,
   lastPage,
-  search,
+  preserved,
   label,
 }: {
   readonly basePath: string;
   readonly hash?: string;
   readonly currentPage: number;
   readonly lastPage: number;
-  /** Se conserva al cambiar de página: filtrar y paginar son compatibles. */
-  readonly search: string;
+  /**
+   * Parámetros que sobreviven al cambio de página.
+   *
+   * Filtrar y paginar son compatibles: si al pasar de página se perdieran
+   * los filtros, la segunda página mostraría otro listado que la primera.
+   * `page` se ignora, porque es justo lo que este control decide.
+   */
+  readonly preserved: URLSearchParams;
   /** Nombre del recorrido para quien navega con lector de pantalla. */
   readonly label: string;
 }) {
@@ -40,7 +46,7 @@ export function Pagination({
         basePath={basePath}
         hash={hash}
         page={currentPage - 1}
-        search={search}
+        preserved={preserved}
         isDisabled={currentPage <= 1}
       >
         ← Anteriores
@@ -54,7 +60,7 @@ export function Pagination({
         basePath={basePath}
         hash={hash}
         page={currentPage + 1}
-        search={search}
+        preserved={preserved}
         isDisabled={currentPage >= lastPage}
       >
         Siguientes →
@@ -73,14 +79,14 @@ function PageLink({
   basePath,
   hash,
   page,
-  search,
+  preserved,
   isDisabled,
   children,
 }: {
   readonly basePath: string;
   readonly hash: string;
   readonly page: number;
-  readonly search: string;
+  readonly preserved: URLSearchParams;
   readonly isDisabled: boolean;
   readonly children: ReactNode;
 }) {
@@ -95,14 +101,14 @@ function PageLink({
     );
   }
 
-  const parameters = new URLSearchParams();
+  const parameters = new URLSearchParams(preserved);
 
-  if (search) {
-    parameters.set("search", search);
-  }
-
+  // La primera página no lleva parámetro: `?page=1` es la misma URL que sin
+  // él, y ensucia lo que se comparte.
   if (page > 1) {
     parameters.set("page", String(page));
+  } else {
+    parameters.delete("page");
   }
 
   const query = parameters.toString();

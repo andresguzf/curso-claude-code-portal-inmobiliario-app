@@ -1,8 +1,15 @@
 import { cookies } from "next/headers";
 import Link from "next/link";
 
-import type { AdminPropertyPageDto } from "@portal/contracts";
+import {
+  ADMIN_QUERY_PARAM_NAMES,
+  type AdminPropertyPageDto,
+} from "@portal/contracts";
 
+import {
+  PropertyFilters,
+  type PropertyFilterValues,
+} from "@/components/admin/property-filters";
 import { PropertyTable } from "@/components/admin/property-table";
 import { Pagination } from "@/components/ui/pagination";
 import { SearchForm } from "@/components/ui/search-form";
@@ -18,30 +25,31 @@ export const metadata = {
 
 const PROPERTIES_PATH = "/admin/properties";
 
+type RawSearchParams = Record<string, string | string[] | undefined>;
+
 /**
  * Administración de propiedades (spec.md, sección 19).
  *
  * A diferencia del catálogo público, aquí se ven también los borradores: es
  * el sitio donde se escriben antes de publicarlos.
  *
- * La búsqueda y la página viven en la URL y las resuelve el servidor, como
- * en el catálogo: traer el listado entero para mostrar diez filas crece con
- * cada propiedad que se dé de alta.
+ * La búsqueda, los filtros y la página viven en la URL y los resuelve
+ * PostgreSQL, como en el catálogo: traer el listado entero para mostrar diez
+ * filas crece con cada propiedad que se dé de alta.
  */
 export default async function AdminPropertiesPage({
   searchParams,
 }: {
-  readonly searchParams: Promise<Record<string, string | string[] | undefined>>;
+  readonly searchParams: Promise<RawSearchParams>;
 }) {
   await requireAdminUser(PROPERTIES_PATH);
 
-  const parameters = await searchParams;
-  const search = readSingle(parameters.search);
-  const page = Number(readSingle(parameters.page)) || 1;
-  const result = await loadProperties(search, page);
+  const parameters = toSearchParams(await searchParams);
+  const search = parameters.get(ADMIN_QUERY_PARAM_NAMES.search) ?? "";
+  const result = await loadProperties(parameters);
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Propiedades</h1>
@@ -66,31 +74,35 @@ export default async function AdminPropertiesPage({
         className="mt-6"
       />
 
-      {result === null ? (
-        <p className="mt-4 rounded-xl border border-dashed border-line bg-muted px-5 py-8 text-center text-sm text-ink-muted">
-          No pudimos cargar las propiedades en este momento. Vuelve a intentarlo
-          en unos minutos.
-        </p>
-      ) : (
-        <Listing page={result} search={search} />
-      )}
+      <div className="mt-4 flex flex-col gap-6 lg:flex-row lg:items-start">
+        <div className="min-w-0 flex-1">
+          {result === null ? (
+            <p className="rounded-xl border border-dashed border-line bg-muted px-5 py-8 text-center text-sm text-ink-muted">
+              No pudimos cargar las propiedades con esos filtros. Revisa la
+              dirección o quítalos y vuelve a intentarlo.
+            </p>
+          ) : (
+            <Listing page={result} parameters={parameters} />
+          )}
+        </div>
+
+        <PropertyFilters values={toFilterValues(parameters)} />
+      </div>
     </div>
   );
 }
 
 function Listing({
   page,
-  search,
+  parameters,
 }: {
   readonly page: AdminPropertyPageDto;
-  readonly search: string;
+  readonly parameters: URLSearchParams;
 }) {
   if (page.data.length === 0) {
     return (
-      <p className="mt-4 rounded-xl border border-dashed border-line bg-muted px-5 py-8 text-center text-sm text-ink-muted">
-        {search
-          ? `Ninguna propiedad coincide con «${search}».`
-          : "Todavía no hay propiedades. Crea la primera."}
+      <p className="rounded-xl border border-dashed border-line bg-muted px-5 py-8 text-center text-sm text-ink-muted">
+        Ninguna propiedad coincide con lo que has pedido.
       </p>
     );
   }
@@ -104,10 +116,10 @@ function Listing({
       </p>
 
       <Pagination
-        basePath="/admin/properties"
+        basePath={PROPERTIES_PATH}
         currentPage={page.page}
         lastPage={Math.max(1, Math.ceil(page.total / page.pageSize))}
-        search={search}
+        preserved={parameters}
         label="Páginas de propiedades"
       />
     </>
@@ -115,29 +127,58 @@ function Listing({
 }
 
 /**
+ * Los parámetros de la página, como `URLSearchParams`.
+ *
+ * Next.js los entrega como objeto, y un parámetro repetido —tipo y
+ * operación admiten varios— llega como lista. Aquí vuelven a su forma
+ * natural, que es la que entienden el cliente REST y el panel de filtros.
+ */
+function toSearchParams(raw: RawSearchParams): URLSearchParams {
+  const parameters = new URLSearchParams();
+
+  for (const [name, value] of Object.entries(raw)) {
+    for (const item of Array.isArray(value) ? value : [value ?? ""]) {
+      if (item !== "") {
+        parameters.append(name, item);
+      }
+    }
+  }
+
+  return parameters;
+}
+
+/** Lo que el panel necesita para pintarse marcado como está la URL. */
+function toFilterValues(parameters: URLSearchParams): PropertyFilterValues {
+  const names = ADMIN_QUERY_PARAM_NAMES;
+
+  return {
+    search: parameters.get(names.search) ?? "",
+    minPrice: parameters.get(names.minPrice) ?? "",
+    maxPrice: parameters.get(names.maxPrice) ?? "",
+    status: parameters.get(names.status) ?? "",
+    types: parameters.getAll(names.types),
+    operations: parameters.getAll(names.operations),
+    publishedFrom: parameters.get(names.publishedFrom) ?? "",
+    publishedTo: parameters.get(names.publishedTo) ?? "",
+  };
+}
+
+/**
  * Listado de propiedades.
  *
  * Un fallo al consultarlo no debe tumbar el panel: se devuelve `null` y la
  * página lo dice, en vez de mostrar un listado vacío que se leería como «no
- * hay ninguna».
+ * hay ninguna». También llega aquí un filtro inválido escrito a mano en la
+ * URL, que la API rechaza con 400.
  */
 async function loadProperties(
-  search: string,
-  page: number,
+  parameters: URLSearchParams,
 ): Promise<AdminPropertyPageDto | null> {
   try {
-    return await fetchAdminProperties(
-      { search, page },
-      (await cookies()).toString(),
-    );
+    return await fetchAdminProperties(parameters, (await cookies()).toString());
   } catch (error) {
     console.error("[admin] No fue posible cargar las propiedades", error);
 
     return null;
   }
-}
-
-/** Un parámetro repetido en la URL se queda con el primero. */
-function readSingle(value: string | string[] | undefined): string {
-  return (Array.isArray(value) ? value[0] : value) ?? "";
 }

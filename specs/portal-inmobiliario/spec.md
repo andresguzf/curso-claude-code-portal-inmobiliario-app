@@ -88,7 +88,14 @@ Cada propiedad debe soportar como mínimo:
 - estado de publicación;
 - indicador de propiedad destacada;
 - fecha de creación;
-- fecha de actualización.
+- fecha de actualización;
+- fecha de publicación.
+
+La fecha de publicación se sella cuando la propiedad pasa a estar publicada,
+y no la escribe nadie a mano. Es nula mientras la propiedad nunca haya salido
+al portal, y se conserva si más tarde se despublica: registra que se publicó
+ese día, aunque después se retirara. Si está publicada ahora lo responde el
+estado, que es un dato distinto.
 
 ### Tipo de operación
 
@@ -494,9 +501,30 @@ la inmobiliaria necesita y que quien administra no siempre sabe que existen.
 Para retirar una propiedad del catálogo conservándola a la vista de la
 administración está despublicarla, que es una acción distinta.
 
----
+### Filtros del listado
 
-## 20. Administración de imágenes
+Además de la búsqueda por texto, ADMIN puede acotar el listado por:
+
+- rango de precio;
+- estado de publicación —publicadas, borradores o ambas—;
+- tipo de propiedad;
+- tipo de operación;
+- rango de fechas de publicación.
+
+Son combinables entre sí y con la búsqueda, se resuelven en PostgreSQL y su
+estado vive en la URL, igual que en el catálogo público: así el resultado se
+puede compartir y el botón de atrás del navegador hace lo que se espera.
+
+Se presentan en un panel lateral colapsable a la derecha del listado. A la
+izquierda ya está la barra de secciones del panel, y dos barras enfrentadas
+dejarían la tabla sin sitio.
+
+El panel empieza abierto y se puede contraer; contraído indica cuántos
+filtros están aplicados, para que nadie olvide que está viendo un listado
+acotado.
+
+El filtro de estado es la diferencia principal con el catálogo público, que
+no tiene ninguno: allí no hay borradores que distinguir.
 
 ADMIN puede:
 

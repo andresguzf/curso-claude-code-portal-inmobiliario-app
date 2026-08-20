@@ -52,6 +52,7 @@ const PROPERTY: AdminPropertyDto = {
   images: [],
   createdAt: "2026-01-01T00:00:00.000Z",
   updatedAt: "2026-01-01T00:00:00.000Z",
+  publishedAt: "2026-01-05T00:00:00.000Z",
 };
 
 /** Rellena lo imprescindible para que el formulario pase la validación. */

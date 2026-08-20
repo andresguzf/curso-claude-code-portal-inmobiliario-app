@@ -7,6 +7,7 @@ import {
   jsonOk,
 } from "@/lib/api-response";
 import { requireAdmin } from "@/lib/auth-guard";
+import { parseAdminPropertyListQuery } from "@/services/admin-property-query";
 import {
   createAdminProperty,
   listAdminProperties,
@@ -15,10 +16,14 @@ import {
 export const dynamic = "force-dynamic";
 
 /**
- * GET /api/admin/properties?search=&page=
+ * GET /api/admin/properties
  *
  * Listado completo, borradores incluidos. Es lo contrario del catálogo
  * público, que solo expone lo publicado: aquí se administra todo.
+ *
+ * Acepta búsqueda, página y los filtros de la sección 19: rango de precio,
+ * estado, tipo, operación y rango de fechas de publicación. Un parámetro
+ * inválido produce un 400 en lugar de ignorarse.
  */
 export async function GET(request: Request) {
   try {
@@ -28,13 +33,16 @@ export async function GET(request: Request) {
       return session.response;
     }
 
-    const parameters = new URL(request.url).searchParams;
+    const parsed = parseAdminPropertyListQuery(
+      new URL(request.url).searchParams,
+    );
+
+    if (!parsed.ok) {
+      return jsonError(parsed.message, HTTP_STATUS.BAD_REQUEST);
+    }
 
     return jsonOk<AdminPropertyPageDto>(
-      await listAdminProperties({
-        search: parameters.get("search") ?? "",
-        page: Number(parameters.get("page")) || 1,
-      }),
+      await listAdminProperties(parsed.query),
     );
   } catch (error) {
     return jsonInternalError("GET /api/admin/properties", error);

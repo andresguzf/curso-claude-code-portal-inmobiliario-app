@@ -16,7 +16,7 @@ import {
  * `id`, `featureSlugs` e `imageCount` quedan fuera a propósito: el primero
  * identifica la fila y los otros dos describen relaciones, no columnas.
  */
-function toPropertyFields(property: SeedProperty) {
+function toPropertyFields(property: SeedProperty, index: number) {
   return {
     title: property.title,
     description: property.description,
@@ -35,7 +35,29 @@ function toPropertyFields(property: SeedProperty) {
     region: property.region,
     isPublished: property.isPublished,
     isFeatured: property.isFeatured,
+    publishedAt: toPublicationDate(property, index),
   };
+}
+
+/**
+ * Fecha de publicación de una propiedad del seed.
+ *
+ * Un borrador no tiene ninguna. Las publicadas se reparten una por semana
+ * hacia atrás desde una fecha fija, para que el filtro por rango de fechas
+ * tenga algo que filtrar en desarrollo.
+ *
+ * El ancla es fija y no `Date.now()`: el seed es idempotente, y una fecha
+ * relativa al momento de ejecutarlo movería los datos en cada corrida.
+ */
+const PUBLICATION_ANCHOR = Date.parse("2026-08-01T12:00:00.000Z");
+const ONE_WEEK_IN_MILLISECONDS = 7 * 24 * 60 * 60 * 1000;
+
+function toPublicationDate(property: SeedProperty, index: number): Date | null {
+  if (!property.isPublished) {
+    return null;
+  }
+
+  return new Date(PUBLICATION_ANCHOR - index * ONE_WEEK_IN_MILLISECONDS);
 }
 
 /**
@@ -85,9 +107,9 @@ async function main(): Promise<void> {
 
     console.log(`Características cargadas: ${SEED_FEATURES.length}`);
 
-    for (const property of SEED_PROPERTIES) {
+    for (const [index, property] of SEED_PROPERTIES.entries()) {
       const { id } = property;
-      const propertyFields = toPropertyFields(property);
+      const propertyFields = toPropertyFields(property, index);
       const featureConnections = property.featureSlugs.map((slug) => ({
         slug,
       }));
@@ -120,8 +142,11 @@ async function main(): Promise<void> {
 
     console.log(`Propiedades cargadas: ${SEED_PROPERTIES.length}`);
 
+    // `deletedAt: null` también aquí: una propiedad eliminada no cuenta
+    // como publicada, y sin esta condición el resumen del seed contaba las
+    // que ya no existen para nadie.
     const publishedCount = await prisma.property.count({
-      where: { isPublished: true },
+      where: { isPublished: true, deletedAt: null },
     });
     const imageCount = await prisma.propertyImage.count();
 

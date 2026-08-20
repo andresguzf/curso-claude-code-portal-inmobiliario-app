@@ -3,6 +3,7 @@ import "server-only";
 import {
   ADMIN_PROPERTIES_PER_PAGE,
   type AdminPropertyDto,
+  type AdminPropertyListQuery,
   type AdminPropertyPageDto,
   type PropertyInputDto,
 } from "@portal/contracts";
@@ -15,6 +16,7 @@ import {
   updateProperty,
 } from "@/repositories/admin-property-repository";
 import { findExistingFeatureSlugs } from "@/repositories/feature-repository";
+import { buildAdminPropertyWhere } from "@/services/admin-property-query";
 import { validatePropertyInput } from "@/services/admin-property-validation";
 import { toAdminProperty } from "@/services/admin-property-mapper";
 
@@ -32,13 +34,12 @@ export type PropertyMutationOutcome =
   | { readonly status: "not-found" };
 
 export async function listAdminProperties(
-  options: { readonly search?: string; readonly page?: number } = {},
+  query: AdminPropertyListQuery = {},
 ): Promise<AdminPropertyPageDto> {
-  const page = normalizePage(options.page);
-  const search = (options.search ?? "").trim();
+  const page = normalizePage(query.page);
 
   const { properties, total } = await findAdminProperties({
-    search,
+    filters: buildAdminPropertyWhere(query),
     skip: (page - 1) * ADMIN_PROPERTIES_PER_PAGE,
     take: ADMIN_PROPERTIES_PER_PAGE,
   });
@@ -97,14 +98,19 @@ export async function updateAdminProperty(
   }
 
   // Se comprueba antes de escribir para poder responder 404 en lugar de
-  // dejar que falle la actualización con un error del ORM.
-  if (!(await findAdminPropertyById(id))) {
+  // dejar que falle la actualización con un error del ORM. De paso trae la
+  // fecha de publicación vigente, que decide si hay que sellarla.
+  const current = await findAdminPropertyById(id);
+
+  if (!current) {
     return { status: "not-found" };
   }
 
   return {
     status: "ok",
-    property: toAdminProperty(await updateProperty(id, validation.property)),
+    property: toAdminProperty(
+      await updateProperty(id, validation.property, current.publishedAt),
+    ),
   };
 }
 
