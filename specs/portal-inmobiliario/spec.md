@@ -46,9 +46,14 @@ Puede realizar todas las acciones públicas y además:
 
 ### ADMIN
 
-Puede realizar las acciones anteriores y además:
+ADMIN administra el portal; no lo usa como visitante registrado. No tiene
+favoritos, no consulta propiedades y no dispone del área de cuenta: sus
+propios datos y su contraseña los edita desde el panel.
+
+Puede realizar las acciones públicas y además:
 
 - acceder al panel administrativo;
+- editar su perfil desde el panel;
 - crear propiedades;
 - editar propiedades;
 - eliminar propiedades;
@@ -423,6 +428,11 @@ Requisitos:
 
 ## 18. Dashboard administrativo
 
+El panel tiene su propia disposición, distinta de la del portal público: una
+barra lateral colapsable con las secciones de administración y una cabecera
+propia. No muestra la navegación pública, ni favoritos, ni consultas
+personales, porque quien administra no las tiene.
+
 Mostrar indicadores como:
 
 - total de propiedades;
@@ -509,7 +519,19 @@ ADMIN puede:
 - buscar;
 - consultar;
 - activar/desactivar;
-- modificar rol cuando corresponda.
+- modificar rol cuando corresponda;
+- editar sus propios datos y su contraseña, como los de cualquier usuario.
+
+Sobre su propia cuenta, ADMIN **no** puede:
+
+- eliminarla;
+- desactivarla;
+- dejar de ser ADMIN.
+
+El motivo es que el registro público solo crea cuentas `USER`: una
+administración que se quita a sí misma el rol, se desactiva o se borra deja
+el portal sin nadie que pueda administrarlo, y sin forma de recuperarlo desde
+la propia aplicación.
 
 La autorización siempre debe comprobarse en backend.
 

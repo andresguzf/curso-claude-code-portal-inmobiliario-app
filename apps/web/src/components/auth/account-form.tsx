@@ -29,10 +29,13 @@ import {
 export function AccountForm({
   name,
   email,
+  redirectTo = "/account",
 }: {
   /** Solo lo que el formulario edita: el rol no viaja al navegador. */
   readonly name: string;
   readonly email: string;
+  /** A dónde volver tras guardar. El panel y la cuenta no comparten ruta. */
+  readonly redirectTo?: string;
 }) {
   const fieldId = useId();
   const router = useRouter();
@@ -59,7 +62,7 @@ export function AccountForm({
         ...(values.newPassword ? { newPassword: values.newPassword } : {}),
       });
 
-      router.replace("/account");
+      router.replace(redirectTo);
       // El nombre también vive en la cabecera, que pinta el servidor.
       router.refresh();
     } catch (error) {

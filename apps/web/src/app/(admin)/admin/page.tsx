@@ -9,9 +9,9 @@ import { requireAdminUser } from "@/lib/require-user";
 /** Los indicadores reflejan el estado vigente en cada visita. */
 export const dynamic = "force-dynamic";
 
-/** El layout añade el sufijo del sitio mediante su plantilla de título. */
+/** El layout añade « | Administración» mediante su plantilla de título. */
 export const metadata = {
-  title: "Administración",
+  title: "Resumen",
 };
 
 const ADMIN_PATH = "/admin";

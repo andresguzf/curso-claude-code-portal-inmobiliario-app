@@ -1,7 +1,7 @@
 import type { PropertyListDto } from "@portal/contracts";
 
 import { jsonInternalError, jsonOk } from "@/lib/api-response";
-import { requireAuthenticatedUser } from "@/lib/auth-guard";
+import { requireStandardUser } from "@/lib/auth-guard";
 import { listFavorites } from "@/services/favorite-service";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
  */
 export async function GET() {
   try {
-    const session = await requireAuthenticatedUser();
+    const session = await requireStandardUser();
 
     if (!session.ok) {
       return session.response;

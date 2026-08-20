@@ -50,3 +50,23 @@ export async function requireAdminUser(
 
   return user;
 }
+
+/**
+ * Exige una sesión que no sea de administración.
+ *
+ * ADMIN no tiene área de cuenta: no acumula favoritos ni consultas, y sus
+ * datos los edita en el panel (spec.md, sección 3). Se le lleva allí en
+ * lugar de responderle «no existe», porque la página sí existe y él sabe que
+ * existe: simplemente no es la suya.
+ */
+export async function requireStandardUser(
+  currentPath: string,
+): Promise<AuthenticatedUserDto> {
+  const user = await requireCurrentUser(currentPath);
+
+  if (user.role === UserRole.ADMIN) {
+    redirect("/admin");
+  }
+
+  return user;
+}
