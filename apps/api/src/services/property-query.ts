@@ -351,6 +351,11 @@ export function buildPropertyWhere(
   };
 
   return {
+    // Una propiedad eliminada no existe para nadie. Va aquí, y no en cada
+    // consulta, porque este es el único paso obligado del catálogo: repartir
+    // la condición sería olvidarla en la siguiente que alguien escriba
+    // (spec.md, sección 19).
+    deletedAt: null,
     ...(options.isPublished === undefined
       ? {}
       : { isPublished: options.isPublished }),

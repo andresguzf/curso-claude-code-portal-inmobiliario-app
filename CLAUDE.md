@@ -149,15 +149,15 @@ Cambiar la paleta no debe requerir tocar componentes.
 
 ## Estado del proyecto
 
-Pasos 1 a 22 de `tasks.md` completos. En funcionamiento: portada, catálogo
+Pasos 1 a 23 de `tasks.md` completos. En funcionamiento: portada, catálogo
 con búsqueda, filtros combinados, ordenamiento, estados de carga/vacío/error,
 detalle de propiedad, galería, mapa de ubicación, formulario de contacto,
 autenticación con autorización por rol, el área privada de la cuenta —con
 edición de los propios datos, favoritos y consultas guardadas— y el panel de
 administración con sus indicadores.
 
-Pendiente desde el paso 23: el CRUD de propiedades y el resto del área de
-administración.
+Pendiente desde el paso 24: la interfaz de administración, Cloudinary y la
+gestión de usuarios y consultas.
 
 ### Autenticación
 
@@ -221,6 +221,35 @@ El botón se pinta solo si hay sesión, y esa distinción la da la propia API:
 `GET /api/favorites/ids` responde 401 sin sesión y una lista vacía con ella.
 Por eso `getFavoritePropertyIds` devuelve `undefined` frente a un conjunto
 vacío, y son cosas distintas.
+
+### Administración de propiedades
+
+El CRUD vive en `/api/admin/properties` y lo protege `requireAdmin`. A
+diferencia del catálogo público, aquí no hay filtro por `isPublished`: quien
+administra ve también los borradores.
+
+Una propiedad **nace despublicada** salvo que se pida lo contrario: es
+preferible que algo a medio escribir no aparezca en el portal a que aparezca
+por omisión.
+
+`PUT` reemplaza la propiedad entera, características incluidas, con `set` y
+no `connect`: quien envía el formulario manda la lista definitiva, y con
+`connect` quitar una característica no tendría ningún efecto.
+
+`DELETE` es un **borrado lógico**: marca `deletedAt` y la propiedad deja de
+existir para el catálogo, para la administración y para las listas de
+cualquier persona, pero sus consultas y los favoritos ajenos sobreviven.
+Borrarla de verdad destruiría contactos comerciales que quien administra no
+siempre sabe que existen.
+
+La condición `deletedAt: null` vive en un solo sitio por cada frente:
+`buildPropertyWhere` para todo el catálogo público, y `property-scope.ts`
+para favoritos, consultas e indicadores. Repartirla por cada consulta es lo
+que se olvida en la siguiente que alguien escriba, y el olvido no se nota
+hasta que una propiedad borrada reaparece.
+
+Para retirar una propiedad del catálogo conservándola a la vista de la
+administración está despublicarla, que es una acción distinta.
 
 ### Autorización
 

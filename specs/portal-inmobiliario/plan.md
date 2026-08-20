@@ -201,6 +201,10 @@ PUT    /api/admin/properties/{id}
 DELETE /api/admin/properties/{id}
 ```
 
+`DELETE` es un borrado lógico: marca la propiedad como eliminada y la retira
+de todas las consultas, incluidas las de administración. Sus consultas y los
+favoritos ajenos sobreviven.
+
 Crear recursos REST adicionales cuando sean necesarios para:
 
 - imágenes;

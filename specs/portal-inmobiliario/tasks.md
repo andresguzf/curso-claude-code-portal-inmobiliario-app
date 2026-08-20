@@ -159,7 +159,7 @@
   - Mostrar indicadores.
   - Restringir a ADMIN.
 
-- [ ] **Paso 23 — CRUD REST de propiedades**
+- [x] **Paso 23 — CRUD REST de propiedades**
   - Listar.
   - Crear.
   - Obtener.

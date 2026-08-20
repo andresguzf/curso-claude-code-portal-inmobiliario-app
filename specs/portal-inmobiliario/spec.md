@@ -471,6 +471,19 @@ Formulario:
 
 No solicitar latitud ni longitud.
 
+### Eliminación
+
+Eliminar una propiedad es un borrado lógico: deja de existir para el portal,
+para la administración y para las listas de cualquier persona, pero la fila
+se conserva.
+
+El motivo es que una propiedad arrastra consultas, que son contactos
+comerciales, y favoritos ajenos. Borrarla de verdad destruiría registros que
+la inmobiliaria necesita y que quien administra no siempre sabe que existen.
+
+Para retirar una propiedad del catálogo conservándola a la vista de la
+administración está despublicarla, que es una acción distinta.
+
 ---
 
 ## 20. Administración de imágenes

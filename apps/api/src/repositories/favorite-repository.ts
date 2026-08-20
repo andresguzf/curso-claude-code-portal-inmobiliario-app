@@ -1,6 +1,7 @@
 import "server-only";
 
 import { prisma } from "@/lib/prisma";
+import { PUBLIC_PROPERTY_SCOPE } from "@/repositories/property-scope";
 
 /**
  * Acceso a la tabla `favorites`.
@@ -11,7 +12,7 @@ import { prisma } from "@/lib/prisma";
  */
 
 /** Solo el catálogo público puede guardarse (spec.md, sección 8). */
-const PUBLISHED = { isPublished: true } as const;
+const PUBLISHED = PUBLIC_PROPERTY_SCOPE;
 
 /** Imagen principal para las tarjetas, igual que en el catálogo. */
 const summarySelection = {
