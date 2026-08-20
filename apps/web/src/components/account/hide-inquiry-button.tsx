@@ -63,7 +63,7 @@ export function HideInquiryButton({
       </button>
 
       {hasFailed ? (
-        <p role="status" className="text-xs text-accent-strong">
+        <p role="status" className="text-xs text-danger">
           No se pudo
         </p>
       ) : null}

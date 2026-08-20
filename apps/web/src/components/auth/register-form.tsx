@@ -115,7 +115,7 @@ export function RegisterForm({ redirectTo }: { readonly redirectTo: string }) {
 
       {/* El fallo de autenticación se anuncia: quien no ve la pantalla debe
           enterarse de que no entró. */}
-      <p aria-live="polite" className="text-sm text-accent-strong">
+      <p aria-live="polite" className="text-sm text-danger">
         {errorMessage}
       </p>
     </form>

@@ -5,12 +5,15 @@ import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
 import { useForm } from "react-hook-form";
 
+import { UserRole, type UserRoleValue } from "@portal/contracts";
+
 import {
   fieldErrorAttributes,
   fieldInputClassName,
   FormField,
 } from "@/components/form/form-field";
 import { logIn } from "@/lib/api-client";
+import { DEFAULT_REDIRECT_PATH } from "@/lib/redirect";
 import { loginSchema, type LoginFormValues } from "@/schemas/auth-schema";
 
 /**
@@ -38,8 +41,9 @@ export function LoginForm({ redirectTo }: { readonly redirectTo: string }) {
     setErrorMessage(null);
 
     try {
-      await logIn(values);
-      router.replace(redirectTo);
+      const user = await logIn(values);
+
+      router.replace(resolveDestination(user.role, redirectTo));
       router.refresh();
     } catch (error) {
       setErrorMessage(
@@ -99,9 +103,24 @@ export function LoginForm({ redirectTo }: { readonly redirectTo: string }) {
 
       {/* El fallo de autenticación se anuncia: quien no ve la pantalla debe
           enterarse de que no entró. */}
-      <p aria-live="polite" className="text-sm text-accent-strong">
+      <p aria-live="polite" className="text-sm text-danger">
         {errorMessage}
       </p>
     </form>
   );
+}
+
+/**
+ * A dónde llevar tras entrar.
+ *
+ * ADMIN va al panel: administra, no navega el catálogo. Pero si venía de una
+ * página concreta —porque una guarda lo mandó al login— se respeta ese
+ * destino, que es más específico que cualquier suposición sobre su rol.
+ */
+function resolveDestination(role: UserRoleValue, redirectTo: string): string {
+  if (role === UserRole.ADMIN && redirectTo === DEFAULT_REDIRECT_PATH) {
+    return "/admin";
+  }
+
+  return redirectTo;
 }

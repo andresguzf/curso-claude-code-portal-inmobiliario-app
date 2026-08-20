@@ -143,9 +143,25 @@ resultantes y nunca colores literales.
 | `ink`, `ink-muted` | Texto sobre fondo claro |
 | `on-dark`, `on-dark-muted` | Texto sobre fondo oscuro |
 | `line`, `line-strong`, `line-on-dark` | Bordes |
+| `danger` | Mensajes de error y bordes de campo inválido |
 
-La interfaz es de tema claro único: `globals.css` fija `color-scheme: light`.
-Cambiar la paleta no debe requerir tocar componentes.
+El portal público es de tema claro único. El **panel de administración**
+admite claro y oscuro: el layout de `(admin)` marca `data-theme` en `<html>`
+y `globals.css` redefine ahí los mismos tokens. Cambiar de tema no toca ni
+una clase de componente.
+
+La preferencia viaja en una cookie, no en `localStorage`, para que el
+servidor pinte el tema correcto desde el primer byte y no haya un parpadeo de
+claro antes de oscuro. El interruptor además cambia el atributo en el acto,
+para no esperar al servidor.
+
+`danger` existe aparte de `accent-strong` aunque en claro coincidan: aquel es
+el hover de los botones y debe **oscurecerse** para que el texto blanco siga
+leyéndose, mientras que el error debe **aclararse** sobre fondo oscuro.
+Servían al mismo valor por casualidad, no por diseño.
+
+Contraste verificado en ambos temas: todos los pares de texto superan 4.5:1.
+El más justo es el texto claro sobre el acento en oscuro, con 4.53.
 
 ## Estado del proyecto
 

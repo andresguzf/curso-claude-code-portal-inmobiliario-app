@@ -229,7 +229,7 @@ export function PropertyContactForm({
             aria-live="polite"
             className={cn(
               "text-sm",
-              result.kind === "error" ? "text-accent-strong" : "text-ink-muted",
+              result.kind === "error" ? "text-danger" : "text-ink-muted",
             )}
           >
             {result.kind === "idle" ? "" : result.message}

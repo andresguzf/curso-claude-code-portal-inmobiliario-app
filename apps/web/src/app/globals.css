@@ -30,6 +30,16 @@
   --accent-strong: #82492a;
   --accent-soft: #f2e5da;
 
+  /*
+   * Color de los mensajes de error.
+   *
+   * Token propio y no `--accent-strong`, aunque hoy coincidan: aquel es el
+   * hover de los botones y debe oscurecerse para que el texto blanco siga
+   * leyéndose, mientras que este debe aclararse sobre fondo oscuro. Servían
+   * al mismo valor por casualidad, no por diseño.
+   */
+  --danger: #82492a;
+
   /* Texto */
   --ink: #2b2724;
   --ink-muted: #6b635c;
@@ -40,6 +50,61 @@
   --line: #ded6cb;
   --line-strong: #c3b8aa;
   --line-on-dark: #4b5765;
+}
+
+/**
+ * Tema oscuro del panel de administración.
+ *
+ * Solo se aplica donde el layout del panel marca `data-theme="dark"` en
+ * `<html>`. El portal público no lo declara nunca, así que sigue siendo de
+ * tema claro único (spec.md, sección 18).
+ *
+ * Se redefinen los mismos tokens, no los componentes: cambiar de tema no
+ * debe obligar a tocar ni una clase.
+ *
+ * Dos inversiones que conviene entender. `--accent-strong` pasa a ser más
+ * claro que `--accent`, porque sobre fondo oscuro «más fuerte» es más
+ * luminoso, y se usa para el hover y para los mensajes de error. Y
+ * `--accent-soft` deja de ser un beige para ser un terracota apagado, que es
+ * su papel: un fondo teñido que no compite con el contenido.
+ */
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Superficies del cuerpo */
+  --page: #1a1d21;
+  --card: #23272c;
+  --muted: #2c3138;
+
+  /* Superficies que enmarcan: más hundidas que el cuerpo, no más claras */
+  --header: #141619;
+  --header-hover: #22262b;
+  --footer: #141619;
+
+  /*
+   * Acento terracota.
+   *
+   * El valor se elige para que el texto blanco encima supere 4.5:1, que es
+   * su uso dominante —botones y sección activa de la barra—. El hover se
+   * oscurece, igual que en claro, para no volver ilegible ese texto.
+   */
+  --accent: #a05e36;
+  --accent-strong: #86492a;
+  --accent-soft: #3a2a20;
+
+  /* En oscuro, el error se aclara: el fondo ya es oscuro. */
+  --danger: #e6a077;
+
+  /* Texto */
+  --ink: #e9e5df;
+  --ink-muted: #a7a099;
+  --on-dark: #f5f2ed;
+  --on-dark-muted: #b9b2aa;
+
+  /* Bordes */
+  --line: #343940;
+  --line-strong: #474e57;
+  --line-on-dark: #2c3138;
 }
 
 @theme inline {
@@ -54,6 +119,7 @@
   --color-accent: var(--accent);
   --color-accent-strong: var(--accent-strong);
   --color-accent-soft: var(--accent-soft);
+  --color-danger: var(--danger);
 
   --color-ink: var(--ink);
   --color-ink-muted: var(--ink-muted);

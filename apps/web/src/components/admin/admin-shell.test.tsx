@@ -14,7 +14,7 @@ import { AdminShell } from "./admin-shell";
 
 function renderShell() {
   return render(
-    <AdminShell adminName="Administradora del portal">
+    <AdminShell adminName="Administradora del portal" theme="light">
       <p>Contenido del panel</p>
     </AdminShell>,
   );
