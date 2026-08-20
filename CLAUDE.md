@@ -149,13 +149,15 @@ Cambiar la paleta no debe requerir tocar componentes.
 
 ## Estado del proyecto
 
-Pasos 1 a 21b de `tasks.md` completos. En funcionamiento: portada, catálogo
+Pasos 1 a 22 de `tasks.md` completos. En funcionamiento: portada, catálogo
 con búsqueda, filtros combinados, ordenamiento, estados de carga/vacío/error,
 detalle de propiedad, galería, mapa de ubicación, formulario de contacto,
-autenticación con autorización por rol y el área privada de la cuenta, con
-edición de los propios datos, favoritos y consultas guardadas.
+autenticación con autorización por rol, el área privada de la cuenta —con
+edición de los propios datos, favoritos y consultas guardadas— y el panel de
+administración con sus indicadores.
 
-Pendiente desde el paso 22: el área de administración.
+Pendiente desde el paso 23: el CRUD de propiedades y el resto del área de
+administración.
 
 ### Autenticación
 
