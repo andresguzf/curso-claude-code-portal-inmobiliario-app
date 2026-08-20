@@ -149,27 +149,37 @@ describe("SessionMenu — contador de guardadas", () => {
 });
 
 describe("SessionMenu — acceso a administración", () => {
+  const ADMIN = { ...MARIA, role: "ADMIN" } as const;
+
   it("ofrece el panel a un ADMIN", () => {
     render(
-      <SessionMenu
-        currentUser={{ ...MARIA, role: "ADMIN" }}
-        favoriteCount={0}
-        isMobile={false}
-      />,
+      <SessionMenu currentUser={ADMIN} favoriteCount={0} isMobile={false} />,
     );
 
-    expect(
-      screen.getByRole("link", { name: "Administración" }),
-    ).toHaveAttribute("href", "/admin");
+    expect(screen.getByRole("link", { name: "Ir al panel" })).toHaveAttribute(
+      "href",
+      "/admin",
+    );
   });
 
-  it("no lo menciona a un USER", () => {
+  it("no ofrece a un ADMIN nada personal", () => {
+    // No tiene favoritos ni cuenta: enseñárselos sería enseñarle puertas
+    // que van a responderle que no.
+    render(
+      <SessionMenu currentUser={ADMIN} favoriteCount={0} isMobile={false} />,
+    );
+
+    expect(screen.queryByRole("link", { name: /guardada/ })).toBeNull();
+    expect(screen.queryByRole("link", { name: /Hola/ })).toBeNull();
+  });
+
+  it("no menciona el panel a un USER", () => {
     // Esconderlo es cortesía; quien protege es la guarda del servidor.
     render(
       <SessionMenu currentUser={MARIA} favoriteCount={0} isMobile={false} />,
     );
 
-    expect(screen.queryByRole("link", { name: "Administración" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Ir al panel" })).toBeNull();
   });
 
   it("tampoco a quien no ha iniciado sesión", () => {
@@ -177,6 +187,6 @@ describe("SessionMenu — acceso a administración", () => {
       <SessionMenu currentUser={null} favoriteCount={0} isMobile={false} />,
     );
 
-    expect(screen.queryByRole("link", { name: "Administración" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Ir al panel" })).toBeNull();
   });
 });

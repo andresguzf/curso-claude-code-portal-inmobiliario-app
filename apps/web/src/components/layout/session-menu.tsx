@@ -78,6 +78,10 @@ export function SessionMenu({
         isMobile && "flex-col items-stretch",
       )}
     >
+      {/*
+        ADMIN no tiene favoritos ni cuenta: administra. Se le ofrece el panel
+        y nada más, para no enseñarle puertas que le van a responder que no.
+      */}
       {currentUser.role === UserRole.ADMIN ? (
         <Link
           href="/admin"
@@ -87,24 +91,26 @@ export function SessionMenu({
             "text-on-dark-muted hover:bg-header-hover hover:text-on-dark",
           )}
         >
-          Administración
+          Ir al panel
         </Link>
-      ) : null}
+      ) : (
+        <>
+          <FavoriteCount count={favoriteCount} onNavigate={onNavigate} />
 
-      <FavoriteCount count={favoriteCount} onNavigate={onNavigate} />
-
-      {/* El nombre es la puerta a la cuenta: es donde se busca. */}
-      <Link
-        href="/account"
-        onClick={onNavigate}
-        className={cn(
-          buttonClasses,
-          "text-on-dark-muted hover:bg-header-hover hover:text-on-dark",
-        )}
-      >
-        Hola,{" "}
-        <span className="font-medium text-on-dark">{currentUser.name}</span>
-      </Link>
+          {/* El nombre es la puerta a la cuenta: es donde se busca. */}
+          <Link
+            href="/account"
+            onClick={onNavigate}
+            className={cn(
+              buttonClasses,
+              "text-on-dark-muted hover:bg-header-hover hover:text-on-dark",
+            )}
+          >
+            Hola,{" "}
+            <span className="font-medium text-on-dark">{currentUser.name}</span>
+          </Link>
+        </>
+      )}
 
       <button
         type="button"

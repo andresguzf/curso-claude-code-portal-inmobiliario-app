@@ -1,6 +1,10 @@
 import { cookies } from "next/headers";
 
-import type { InquiryCreatedDto, UserInquiryPageDto } from "@portal/contracts";
+import {
+  UserRole,
+  type InquiryCreatedDto,
+  type UserInquiryPageDto,
+} from "@portal/contracts";
 
 import {
   HTTP_STATUS,
@@ -8,7 +12,7 @@ import {
   jsonInternalError,
   jsonOk,
 } from "@/lib/api-response";
-import { requireAuthenticatedUser } from "@/lib/auth-guard";
+import { requireStandardUser } from "@/lib/auth-guard";
 import { SESSION_COOKIE_NAME } from "@/lib/session";
 import { getAuthenticatedUser } from "@/services/auth-service";
 import { createInquiry, listUserInquiries } from "@/services/inquiry-service";
@@ -37,8 +41,12 @@ export async function POST(request: Request) {
     const sessionCookie = (await cookies()).get(SESSION_COOKIE_NAME);
     const user = await getAuthenticatedUser(sessionCookie?.value);
 
+    // Una consulta de ADMIN se guarda sin usuario: no tiene historial donde
+    // aparecería, y asociarla dejaría una fila que nadie puede consultar.
+    const authorId = user && user.role !== UserRole.ADMIN ? user.id : null;
+
     const payload: unknown = await request.json().catch(() => null);
-    const outcome = await createInquiry(payload, user?.id ?? null);
+    const outcome = await createInquiry(payload, authorId);
 
     switch (outcome.status) {
       case "created":
@@ -70,7 +78,7 @@ export async function POST(request: Request) {
  */
 export async function GET(request: Request) {
   try {
-    const session = await requireAuthenticatedUser();
+    const session = await requireStandardUser();
 
     if (!session.ok) {
       return session.response;

@@ -222,6 +222,29 @@ El botón se pinta solo si hay sesión, y esa distinción la da la propia API:
 Por eso `getFavoritePropertyIds` devuelve `undefined` frente a un conjunto
 vacío, y son cosas distintas.
 
+### Área de administración
+
+El panel tiene su **propia raíz**, no una capa sobre el portal: las rutas
+viven en `app/(admin)/` y `app/(public)/`, cada una con su `layout.tsx` con
+`<html>`. Así el panel no arrastra la cabecera ni el pie públicos.
+
+La disposición es un marco de dashboard: barra lateral colapsable a la
+izquierda —a solo iconos en escritorio, como panel deslizante en móvil— y
+cabecera propia con quién administra, la salida al portal y cerrar sesión.
+
+En la barra solo figuran las secciones que existen. Un enlace que lleva a un
+404 hace dudar de si el panel está roto o la sección aún no está hecha.
+
+**ADMIN no tiene nada personal**: ni favoritos, ni consultas, ni área de
+cuenta. Sus datos y su contraseña se editan en `/admin/profile`. No es solo
+que se oculte: `/api/favorites*` y el historial de consultas responden **403**
+a una sesión ADMIN, y `/account` la redirige al panel. Una consulta enviada
+por ADMIN se guarda sin usuario asociado, porque no tendría dónde aparecer.
+
+Sobre su propia cuenta, ADMIN no podrá eliminarse, desactivarse ni quitarse
+el rol cuando llegue el paso 29: el registro público solo crea `USER`, así
+que hacerlo dejaría el portal sin administración y sin forma de recuperarla.
+
 ### Administración de propiedades
 
 El CRUD vive en `/api/admin/properties` y lo protege `requireAdmin`. A

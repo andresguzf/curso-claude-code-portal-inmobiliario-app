@@ -11,7 +11,7 @@ import { InquiryHistory } from "@/components/account/inquiry-history";
 import { PropertyGrid } from "@/components/property/property-grid";
 import { fetchFavorites, fetchUserInquiries } from "@/lib/api-client";
 import { formatUserRole } from "@/lib/format";
-import { requireCurrentUser } from "@/lib/require-user";
+import { requireStandardUser } from "@/lib/require-user";
 
 /** La cuenta refleja la sesión vigente en cada visita. */
 export const dynamic = "force-dynamic";
@@ -37,7 +37,7 @@ const ACCOUNT_PATH = "/account";
 export default async function AccountPage({
   searchParams,
 }: PageProps<"/account">) {
-  const user = await requireCurrentUser(ACCOUNT_PATH);
+  const user = await requireStandardUser(ACCOUNT_PATH);
   const { search, page } = readHistoryParams(await searchParams);
   const cookieHeader = (await cookies()).toString();
 

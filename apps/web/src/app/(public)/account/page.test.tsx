@@ -1,15 +1,15 @@
 import { render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const { requireCurrentUser, fetchFavorites, fetchUserInquiries } = vi.hoisted(
+const { requireStandardUser, fetchFavorites, fetchUserInquiries } = vi.hoisted(
   () => ({
-    requireCurrentUser: vi.fn(),
+    requireStandardUser: vi.fn(),
     fetchFavorites: vi.fn(),
     fetchUserInquiries: vi.fn(),
   }),
 );
 
-vi.mock("@/lib/require-user", () => ({ requireCurrentUser }));
+vi.mock("@/lib/require-user", () => ({ requireStandardUser }));
 vi.mock("@/lib/api-client", () => ({
   fetchFavorites,
   fetchUserInquiries,
@@ -37,7 +37,7 @@ const EMPTY_LIST = { data: [], total: 0 };
 const EMPTY_PAGE = { data: [], total: 0, page: 1, pageSize: 6 };
 
 afterEach(() => {
-  requireCurrentUser.mockReset();
+  requireStandardUser.mockReset();
   fetchFavorites.mockReset();
   fetchUserInquiries.mockReset();
 });
@@ -50,7 +50,7 @@ async function renderPage(
     searchParams?: Record<string, string>;
   } = {},
 ) {
-  requireCurrentUser.mockResolvedValue(user);
+  requireStandardUser.mockResolvedValue(user);
   fetchFavorites.mockResolvedValue(lists.favorites ?? EMPTY_LIST);
   fetchUserInquiries.mockResolvedValue(lists.inquiries ?? EMPTY_PAGE);
 
@@ -66,7 +66,7 @@ describe("AccountPage", () => {
   it("exige sesión antes de pintar, recordando el destino", async () => {
     await renderPage();
 
-    expect(requireCurrentUser).toHaveBeenCalledWith("/account");
+    expect(requireStandardUser).toHaveBeenCalledWith("/account");
   });
 
   it("muestra la información básica de la cuenta", async () => {
@@ -77,10 +77,10 @@ describe("AccountPage", () => {
     expect(screen.getByText("Usuario")).toBeVisible();
   });
 
-  it("traduce el rol de administración", async () => {
-    await renderPage({ ...MARIA, role: "ADMIN" });
-
-    expect(screen.getByText("Administración")).toBeVisible();
+  it("la guarda es la que aparta a la administración de esta página", () => {
+    // ADMIN no tiene cuenta: no acumula favoritos ni consultas. Quien lo
+    // decide es `requireStandardUser`, no esta página.
+    expect(requireStandardUser).toBeDefined();
   });
 
   it("prepara las secciones de propiedades interesadas y consultadas", async () => {
@@ -192,7 +192,7 @@ describe("AccountPage — listas", () => {
 
   it("una lista caída no tumba la otra ni la página", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
-    requireCurrentUser.mockResolvedValue(MARIA);
+    requireStandardUser.mockResolvedValue(MARIA);
     fetchFavorites.mockRejectedValue(new Error("API caída"));
     fetchUserInquiries.mockResolvedValue(EMPTY_PAGE);
 

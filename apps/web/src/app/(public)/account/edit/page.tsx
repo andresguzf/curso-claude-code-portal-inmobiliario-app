@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { AccountForm } from "@/components/auth/account-form";
-import { requireCurrentUser } from "@/lib/require-user";
+import { requireStandardUser } from "@/lib/require-user";
 
 /** Los datos que se editan son los de la sesión vigente. */
 export const dynamic = "force-dynamic";
@@ -20,7 +20,7 @@ const EDIT_ACCOUNT_PATH = "/account/edit";
  * corregir y no volver a escribirlo todo.
  */
 export default async function EditAccountPage() {
-  const user = await requireCurrentUser(EDIT_ACCOUNT_PATH);
+  const user = await requireStandardUser(EDIT_ACCOUNT_PATH);
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-10 sm:px-6 lg:px-8">

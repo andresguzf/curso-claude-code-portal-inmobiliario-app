@@ -74,3 +74,31 @@ export async function requireAdmin(): Promise<GuardResult> {
 
   return session;
 }
+
+/**
+ * Exige una sesión que no sea de administración.
+ *
+ * Favoritos y consultas propias son de quien usa el portal. ADMIN administra
+ * y no acumula ninguna de las dos (spec.md, sección 3), así que se le
+ * responde 403 y no se le devuelve una lista vacía: vacía sugiere «todavía
+ * no tienes», y aquí es «esto no es para ti».
+ */
+export async function requireStandardUser(): Promise<GuardResult> {
+  const session = await requireAuthenticatedUser();
+
+  if (!session.ok) {
+    return session;
+  }
+
+  if (session.user.role === UserRole.ADMIN) {
+    return {
+      ok: false,
+      response: jsonError(
+        "La administración no tiene favoritos ni consultas propias.",
+        HTTP_STATUS.FORBIDDEN,
+      ),
+    };
+  }
+
+  return session;
+}

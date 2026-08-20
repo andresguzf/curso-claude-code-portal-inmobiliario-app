@@ -6,7 +6,7 @@ import { SiteHeader } from "@/components/layout/site-header";
 import { getCurrentUser } from "@/lib/current-user";
 import { getFavoritePropertyIds } from "@/lib/favorites";
 
-import "./globals.css";
+import "../globals.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,7 +37,14 @@ export const viewport: Viewport = {
 
 const MAIN_CONTENT_ID = "contenido-principal";
 
-export default async function RootLayout({ children }: LayoutProps<"/">) {
+/**
+ * Disposición del portal público.
+ *
+ * El área de administración tiene la suya, en `(admin)`: son dos raíces
+ * distintas y no una anidada dentro de otra, porque el panel no debe
+ * arrastrar la cabecera ni el pie del portal.
+ */
+export default async function PublicLayout({ children }: LayoutProps<"/">) {
   // La sesión se resuelve antes de pintar, para que el header no muestre
   // «Ingresar» un instante a quien ya inició sesión.
   const [currentUser, favoritePropertyIds] = await Promise.all([
