@@ -8,9 +8,11 @@ import {
   ADMIN_NAVIGATION_ITEMS,
   isAdminSectionActive,
 } from "@/lib/admin-navigation";
+import type { AdminTheme } from "@/lib/admin-theme";
 import { cn } from "@/lib/utils";
 
 import { AdminSignOut } from "./admin-sign-out";
+import { ThemeToggle } from "./theme-toggle";
 
 /**
  * Marco del panel de administración (spec.md, sección 18).
@@ -24,9 +26,11 @@ import { AdminSignOut } from "./admin-sign-out";
  */
 export function AdminShell({
   adminName,
+  theme,
   children,
 }: {
   readonly adminName: string;
+  readonly theme: AdminTheme;
   readonly children: ReactNode;
 }) {
   const [isExpanded, setIsExpanded] = useState(true);
@@ -69,6 +73,8 @@ export function AdminShell({
           </p>
 
           <div className="flex items-center gap-2">
+            <ThemeToggle initialTheme={theme} />
+
             <Link
               href="/"
               className="hidden rounded-md px-3 py-2 text-sm font-medium text-ink-muted transition-colors hover:bg-muted hover:text-ink sm:inline-flex"
@@ -106,7 +112,10 @@ function Sidebar({
         // `min-w-0` es imprescindible: como elemento flex, su mínimo
         // automático es el ancho de su contenido, y sin esto la barra no
         // baja de los 256px por mucho que se le pida.
-        "fixed inset-y-0 left-0 z-40 flex min-w-0 shrink-0 flex-col overflow-hidden bg-header text-on-dark transition-[width,transform] duration-200",
+        // Solo se anima `transform`, que va al compositor. Animar el ancho
+        // obliga a recalcular la disposición en cada fotograma, y las guías
+        // de interfaz lo desaconsejan: el ancho cambia de golpe.
+        "fixed inset-y-0 left-0 z-40 flex min-w-0 shrink-0 flex-col overflow-hidden bg-header text-on-dark transition-transform duration-200",
         "lg:static lg:translate-x-0",
         isMobileOpen ? "translate-x-0" : "-translate-x-full",
         isExpanded ? "w-64" : "w-64 lg:w-20",

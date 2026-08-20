@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { cookies } from "next/headers";
 
 import { AdminShell } from "@/components/admin/admin-shell";
+import { ADMIN_THEME_COOKIE, readAdminTheme } from "@/lib/admin-theme";
 import { requireAdminUser } from "@/lib/require-user";
 
 import "../globals.css";
@@ -21,9 +23,19 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export const viewport: Viewport = {
-  themeColor: "#2f3a45",
-};
+/**
+ * Tiñe la interfaz del navegador con el fondo real de la página.
+ *
+ * Se calcula por petición y no como constante porque el tema lo decide una
+ * cookie: fijarlo dejaría la barra del móvil clara con el panel en oscuro.
+ */
+export async function generateViewport(): Promise<Viewport> {
+  const theme = readAdminTheme(
+    (await cookies()).get(ADMIN_THEME_COOKIE)?.value,
+  );
+
+  return { themeColor: theme === "dark" ? "#1a1d21" : "#f5f2ed" };
+}
 
 const ADMIN_PATH = "/admin";
 
@@ -39,15 +51,25 @@ const ADMIN_PATH = "/admin";
  * comprobación dejaría un hueco.
  */
 export default async function AdminLayout({ children }: LayoutProps<"/">) {
-  const admin = await requireAdminUser(ADMIN_PATH);
+  const [admin, cookieStore] = await Promise.all([
+    requireAdminUser(ADMIN_PATH),
+    cookies(),
+  ]);
+
+  // El tema se resuelve en el servidor: así la página llega ya pintada y no
+  // hay un parpadeo de claro antes de oscuro.
+  const theme = readAdminTheme(cookieStore.get(ADMIN_THEME_COOKIE)?.value);
 
   return (
     <html
       lang="es"
+      data-theme={theme}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="h-full bg-page">
-        <AdminShell adminName={admin.name}>{children}</AdminShell>
+        <AdminShell adminName={admin.name} theme={theme}>
+          {children}
+        </AdminShell>
       </body>
     </html>
   );

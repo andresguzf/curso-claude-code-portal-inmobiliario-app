@@ -159,7 +159,7 @@ export function AccountForm({
           {isSubmitting ? "Guardando…" : "Guardar cambios"}
         </button>
 
-        <p aria-live="polite" className="text-sm text-accent-strong">
+        <p aria-live="polite" className="text-sm text-danger">
           {errorMessage}
         </p>
       </div>

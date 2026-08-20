@@ -34,7 +34,7 @@ export function FormField({
       {children}
 
       {error ? (
-        <p id={`${id}-error`} className="text-sm text-accent-strong">
+        <p id={`${id}-error`} className="text-sm text-danger">
           {error}
         </p>
       ) : null}
@@ -51,7 +51,7 @@ export function FormField({
 export function fieldInputClassName(hasError: boolean): string {
   return cn(
     "w-full rounded-lg border bg-page px-3 py-2 text-base text-ink transition-colors placeholder:text-ink-muted",
-    hasError ? "border-accent-strong" : "border-line hover:border-line-strong",
+    hasError ? "border-danger" : "border-line hover:border-line-strong",
   );
 }
 
