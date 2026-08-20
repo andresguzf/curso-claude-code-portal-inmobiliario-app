@@ -166,6 +166,17 @@ export type PropertyFilterOptionsDto = {
 };
 
 /**
+ * Orden definitivo de la galería de una propiedad (spec.md, sección 20).
+ *
+ * Lleva la lista completa, no un movimiento: enviar «sube esta una posición»
+ * obligaría al servidor a reconstruir el resto y dos peticiones seguidas se
+ * pisarían. Con la lista entera, la última que llega manda.
+ */
+export type PropertyImageOrderDto = {
+  readonly imageIds: readonly string[];
+};
+
+/**
  * Cotas de las imágenes de una propiedad (spec.md, sección 5).
  *
  * Viven en el contrato para que el navegador rechace lo mismo que el

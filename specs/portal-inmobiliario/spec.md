@@ -530,6 +530,10 @@ acotado.
 El filtro de estado es la diferencia principal con el catálogo público, que
 no tiene ninguno: allí no hay borradores que distinguir.
 
+---
+
+## 20. Administración de imágenes
+
 ADMIN puede:
 
 - subir;
@@ -540,6 +544,20 @@ ADMIN puede:
 Al eliminar una imagen se debe mantener sincronizado Cloudinary con PostgreSQL.
 
 No dejar referencias huérfanas.
+
+Primero se borra la fila y después el archivo. Al revés, si lo segundo
+fallara, la ficha mostraría una imagen rota; en este orden lo peor que queda
+es un archivo que nadie referencia, que cuesta almacenamiento pero no se le
+aparece a nadie.
+
+Una propiedad con imágenes siempre tiene una principal. Si se elimina la que
+lo era, pasa a serlo la primera de las que quedan: sin portada, la propiedad
+no se pintaría en el catálogo.
+
+Los cambios de orden, de imagen principal y las eliminaciones se guardan al
+instante, no al enviar el formulario de la propiedad. Son operaciones sobre
+un archivo que ya existe, y mezclarlas con el borrador de los demás campos
+haría que cancelar la edición dejara a medias algo ya subido.
 
 ---
 

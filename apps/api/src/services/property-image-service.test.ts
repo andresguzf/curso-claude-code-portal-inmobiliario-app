@@ -14,6 +14,11 @@ const imageRepository = vi.hoisted(() => ({
   countPropertyImages: vi.fn(),
   findNextImagePosition: vi.fn(),
   createPropertyImage: vi.fn(),
+  findPropertyImage: vi.fn(),
+  findPropertyImages: vi.fn(),
+  reorderPropertyImages: vi.fn(),
+  setPrimaryPropertyImage: vi.fn(),
+  deletePropertyImage: vi.fn(),
 }));
 
 const cloudinary = vi.hoisted(() => ({
@@ -27,7 +32,21 @@ vi.mock("@/repositories/admin-property-repository", () => propertyRepository);
 vi.mock("@/repositories/property-image-repository", () => imageRepository);
 vi.mock("@/services/cloudinary", () => cloudinary);
 
-import { addPropertyImage } from "./property-image-service";
+import {
+  addPropertyImage,
+  makeImagePrimary,
+  removeImage,
+  reorderImages,
+} from "./property-image-service";
+
+/** Galería de tres imágenes, con la primera de portada. */
+function buildGallery() {
+  return [
+    { id: "img-1", publicId: "cl/1", position: 0, isPrimary: true },
+    { id: "img-2", publicId: "cl/2", position: 1, isPrimary: false },
+    { id: "img-3", publicId: "cl/3", position: 2, isPrimary: false },
+  ];
+}
 
 const CONFIG = { cloudName: "portal", apiKey: "1", apiSecret: "s" };
 
@@ -177,5 +196,182 @@ describe("addPropertyImage", () => {
       UPLOADED.publicId,
       CONFIG,
     );
+  });
+});
+
+describe("reorderImages", () => {
+  it("guarda el orden pedido", async () => {
+    propertyRepository.findAdminPropertyById.mockResolvedValue({ id: "p" });
+    imageRepository.findPropertyImages.mockResolvedValue(buildGallery());
+
+    const outcome = await reorderImages("p", ["img-3", "img-1", "img-2"]);
+
+    expect(outcome).toEqual({ status: "ok" });
+    expect(imageRepository.reorderPropertyImages).toHaveBeenCalledWith("p", [
+      "img-3",
+      "img-1",
+      "img-2",
+    ]);
+  });
+
+  it("rechaza una lista incompleta", async () => {
+    // Dejaría posiciones a medias, y no hay forma de adivinar dónde va lo
+    // que falta.
+    propertyRepository.findAdminPropertyById.mockResolvedValue({ id: "p" });
+    imageRepository.findPropertyImages.mockResolvedValue(buildGallery());
+
+    const outcome = await reorderImages("p", ["img-1", "img-2"]);
+
+    expect(outcome.status).toBe("invalid");
+    expect(imageRepository.reorderPropertyImages).not.toHaveBeenCalled();
+  });
+
+  it("rechaza una imagen de otra propiedad", async () => {
+    propertyRepository.findAdminPropertyById.mockResolvedValue({ id: "p" });
+    imageRepository.findPropertyImages.mockResolvedValue(buildGallery());
+
+    const outcome = await reorderImages("p", ["img-1", "img-2", "ajena"]);
+
+    expect(outcome.status).toBe("invalid");
+    expect(imageRepository.reorderPropertyImages).not.toHaveBeenCalled();
+  });
+
+  it("rechaza identificadores repetidos", async () => {
+    propertyRepository.findAdminPropertyById.mockResolvedValue({ id: "p" });
+    imageRepository.findPropertyImages.mockResolvedValue(buildGallery());
+
+    const outcome = await reorderImages("p", ["img-1", "img-1", "img-2"]);
+
+    expect(outcome.status).toBe("invalid");
+    expect(imageRepository.reorderPropertyImages).not.toHaveBeenCalled();
+  });
+
+  it("responde «no encontrada» sobre una propiedad eliminada", async () => {
+    propertyRepository.findAdminPropertyById.mockResolvedValue(null);
+
+    expect(await reorderImages("p", ["img-1"])).toEqual({
+      status: "not-found",
+    });
+  });
+});
+
+describe("makeImagePrimary", () => {
+  it("marca la imagen pedida", async () => {
+    propertyRepository.findAdminPropertyById.mockResolvedValue({ id: "p" });
+    imageRepository.findPropertyImage.mockResolvedValue(buildGallery()[1]);
+
+    const outcome = await makeImagePrimary("p", "img-2");
+
+    expect(outcome).toEqual({ status: "ok" });
+    expect(imageRepository.setPrimaryPropertyImage).toHaveBeenCalledWith(
+      "p",
+      "img-2",
+    );
+  });
+
+  it("no deja marcar una imagen de otra propiedad", async () => {
+    // El repositorio acota la búsqueda a la propiedad, así que no aparece.
+    propertyRepository.findAdminPropertyById.mockResolvedValue({ id: "p" });
+    imageRepository.findPropertyImage.mockResolvedValue(null);
+
+    const outcome = await makeImagePrimary("p", "ajena");
+
+    expect(outcome).toEqual({ status: "not-found" });
+    expect(imageRepository.setPrimaryPropertyImage).not.toHaveBeenCalled();
+  });
+});
+
+describe("removeImage", () => {
+  function arrangeRemoval(image = buildGallery()[1]) {
+    propertyRepository.findAdminPropertyById.mockResolvedValue({ id: "p" });
+    imageRepository.findPropertyImage.mockResolvedValue(image);
+    imageRepository.findPropertyImages.mockResolvedValue(buildGallery());
+    cloudinary.readCloudinaryConfig.mockReturnValue(CONFIG);
+    cloudinary.destroyImage.mockResolvedValue(true);
+  }
+
+  it("borra la fila antes que el archivo", async () => {
+    // Al revés, un fallo al borrar la fila dejaría una imagen rota en la
+    // ficha; en este orden lo peor que queda es un archivo huérfano.
+    arrangeRemoval();
+
+    const order: string[] = [];
+
+    imageRepository.deletePropertyImage.mockImplementation(async () => {
+      order.push("fila");
+    });
+    cloudinary.destroyImage.mockImplementation(async () => {
+      order.push("archivo");
+
+      return true;
+    });
+
+    await removeImage("p", "img-2");
+
+    expect(order).toEqual(["fila", "archivo"]);
+  });
+
+  it("asciende a la siguiente cuando se elimina la portada", async () => {
+    // Sin principal, la propiedad no se pintaría en el catálogo.
+    arrangeRemoval(buildGallery()[0]);
+
+    await removeImage("p", "img-1");
+
+    expect(imageRepository.deletePropertyImage).toHaveBeenCalledWith(
+      "p",
+      expect.objectContaining({ id: "img-1" }),
+      "img-2",
+    );
+  });
+
+  it("no asciende a nadie al eliminar una que no era la portada", async () => {
+    arrangeRemoval();
+
+    await removeImage("p", "img-2");
+
+    expect(imageRepository.deletePropertyImage).toHaveBeenCalledWith(
+      "p",
+      expect.objectContaining({ id: "img-2" }),
+      "img-1",
+    );
+  });
+
+  it("no busca sucesora si era la única imagen", async () => {
+    arrangeRemoval(buildGallery()[0]);
+    imageRepository.findPropertyImages.mockResolvedValue([buildGallery()[0]]);
+
+    await removeImage("p", "img-1");
+
+    expect(imageRepository.deletePropertyImage).toHaveBeenCalledWith(
+      "p",
+      expect.objectContaining({ id: "img-1" }),
+      null,
+    );
+  });
+
+  it("da la operación por buena aunque Cloudinary falle", async () => {
+    // Para quien administra, la imagen ya no está: es lo que pidió. El
+    // archivo huérfano queda anotado en el log del servidor.
+    arrangeRemoval();
+    cloudinary.destroyImage.mockResolvedValue(false);
+
+    expect(await removeImage("p", "img-2")).toEqual({ status: "ok" });
+  });
+
+  it("elimina la fila aunque el entorno no tenga credenciales", async () => {
+    arrangeRemoval();
+    cloudinary.readCloudinaryConfig.mockReturnValue(null);
+
+    expect(await removeImage("p", "img-2")).toEqual({ status: "ok" });
+    expect(imageRepository.deletePropertyImage).toHaveBeenCalled();
+    expect(cloudinary.destroyImage).not.toHaveBeenCalled();
+  });
+
+  it("responde «no encontrada» ante una imagen que no es de la propiedad", async () => {
+    propertyRepository.findAdminPropertyById.mockResolvedValue({ id: "p" });
+    imageRepository.findPropertyImage.mockResolvedValue(null);
+
+    expect(await removeImage("p", "ajena")).toEqual({ status: "not-found" });
+    expect(imageRepository.deletePropertyImage).not.toHaveBeenCalled();
   });
 });

@@ -190,7 +190,7 @@
   - Validar tipo y tamaño.
   - Guardar URL y `publicId`.
 
-- [ ] **Paso 27 — Administración de imágenes**
+- [x] **Paso 27 — Administración de imágenes**
   - Múltiples imágenes.
   - Eliminar.
   - Seleccionar principal.

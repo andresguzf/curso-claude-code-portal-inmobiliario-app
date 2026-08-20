@@ -28,7 +28,8 @@ export default async function NewPropertyPage() {
     <div className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
       <h1 className="text-2xl font-semibold tracking-tight">Nueva propiedad</h1>
       <p className="mt-2 text-sm text-ink-muted">
-        Las imágenes se administran después de crearla.
+        Las imágenes se añaden al editarla: necesitan una propiedad a la que
+        pertenecer.
       </p>
 
       <div className="mt-6 rounded-xl border border-line bg-card p-6">

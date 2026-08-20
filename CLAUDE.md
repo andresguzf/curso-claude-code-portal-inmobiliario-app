@@ -165,15 +165,15 @@ El más justo es el texto claro sobre el acento en oscuro, con 4.53.
 
 ## Estado del proyecto
 
-Pasos 1 a 26 de `tasks.md` completos. En funcionamiento: portada, catálogo
+Pasos 1 a 27 de `tasks.md` completos. En funcionamiento: portada, catálogo
 con búsqueda, filtros combinados, ordenamiento, estados de carga/vacío/error,
 detalle de propiedad, galería, mapa de ubicación, formulario de contacto,
 autenticación con autorización por rol, el área privada de la cuenta —con
 edición de los propios datos, favoritos y consultas guardadas— y el panel de
 administración con sus indicadores y el alta, edición y baja de propiedades.
 
-Pendiente desde el paso 27: la administración de imágenes en la interfaz y
-la gestión de características, usuarios y consultas.
+Pendiente desde el paso 28: la gestión de características, usuarios y
+consultas.
 
 ### Autenticación
 
@@ -369,8 +369,35 @@ recurso recién subido. Un archivo que nada referencia es un huérfano que
 nadie sabría que sobra.
 
 La primera imagen de una propiedad queda como principal: sin portada no se
-pintaría en el catálogo. Reordenar, cambiar la principal y eliminar llegan en
-el paso 27.
+pintaría en el catálogo.
+
+La galería se administra desde la ficha de edición, en su propia sección:
+
+| Verbo | Ruta | Qué hace |
+|---|---|---|
+| `PUT` | `…/images` | Fija el orden con la lista **completa** de identificadores |
+| `PATCH` | `…/images/{id}` | Marca esa imagen como portada |
+| `DELETE` | `…/images/{id}` | La quita de la propiedad y de Cloudinary |
+
+`PUT` exige la lista entera, como el `PUT` de la propiedad exige la lista
+definitiva de características: una parcial dejaría posiciones a medias, y dos
+peticiones seguidas con movimientos relativos se pisarían.
+
+Al eliminar se borra **primero la fila y después el archivo**. Al revés, un
+fallo en el segundo paso dejaría una imagen rota en la ficha; en este orden
+lo peor que queda es un archivo huérfano, que cuesta almacenamiento pero no
+se le aparece a nadie. Por eso un fallo de Cloudinary no se propaga: para
+quien administra la imagen ya no está, que es lo que pidió, y el huérfano
+queda anotado en el log.
+
+Si se elimina la portada, asciende la primera de las que quedan. Reordenar,
+cambiar la portada y ese ascenso van en transacción: a medio hacer dejarían
+dos portadas o dos imágenes en la misma posición.
+
+Estos cambios **no** esperan al botón de guardar del formulario: operan sobre
+un archivo que ya está subido, y mezclarlos con el borrador de los demás
+campos haría que cancelar la edición dejara a medias algo que ya ocupa sitio
+en Cloudinary.
 
 ### Autorización
 
