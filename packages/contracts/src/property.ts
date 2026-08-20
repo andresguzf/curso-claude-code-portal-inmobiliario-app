@@ -165,6 +165,32 @@ export type PropertyFilterOptionsDto = {
   readonly regions: readonly string[];
 };
 
+/**
+ * Cotas de las imágenes de una propiedad (spec.md, sección 5).
+ *
+ * Viven en el contrato para que el navegador rechace lo mismo que el
+ * backend: así quien elige un archivo de 20 MB lo sabe antes de esperar la
+ * subida entera. La comprobación que protege es la del servidor.
+ */
+export const IMAGE_LIMITS = {
+  /** Cinco megabytes. Una fotografía de portada bien exportada no llega. */
+  maxBytes: 5 * 1024 * 1024,
+  /**
+   * Formatos admitidos.
+   *
+   * Se declaran uno a uno en lugar de aceptar cualquier `image/*`: `image/svg+xml`
+   * también es una imagen, y admite scripts.
+   */
+  allowedMimeTypes: [
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "image/avif",
+  ] as readonly string[],
+  /** Tope por propiedad, para que una galería siga siendo hojeable. */
+  maxImagesPerProperty: 12,
+} as const;
+
 /** Largo máximo aceptado en la búsqueda textual. */
 export const MAX_SEARCH_LENGTH = 120;
 

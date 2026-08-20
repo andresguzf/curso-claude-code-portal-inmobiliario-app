@@ -330,11 +330,48 @@ Cloudinary
 PostgreSQL
 ```
 
+Endpoint:
+
+```text
+POST /api/admin/properties/{id}/images
+```
+
+El cuerpo es `multipart/form-data` con un campo `file`, porque lo que viaja
+es un archivo y no un JSON. Devuelve la imagen ya guardada: `url`, `publicId`,
+posición e indicador de principal.
+
+El archivo pasa por la API camino de Cloudinary en vez de ir directo desde el
+navegador: la firma exige el secreto de la cuenta, y ese secreto no sale del
+servidor.
+
+Se habla con la API REST de Cloudinary directamente, sin su SDK: la operación
+son dos llamadas y una firma SHA-1. Es el mismo criterio que con Geocoding y
+Web3Forms.
+
+Las imágenes aterrizan todas en la carpeta `propiedades-claude`. Tenerlas
+agrupadas permite revisarlas o borrarlas en bloque sin tocar el resto de la
+cuenta.
+
 Validar:
 
-- tipo;
+- tipo —solo JPG, PNG, WebP y AVIF: `image/svg+xml` también es una imagen y
+  admite scripts—;
 - tamaño;
 - autorización.
+
+El tipo y el tamaño se comprueban **antes** de subir: al revés, un archivo
+rechazado habría gastado igualmente una llamada a Cloudinary. El tipo lo
+declara el navegador, así que esta es la primera barrera y no la única;
+Cloudinary rechaza por su cuenta lo que no sea una imagen.
+
+Códigos: 400 para un formato inadmisible, 413 para el exceso de tamaño, 404
+si la propiedad no existe, 503 si el entorno no tiene credenciales y 502 si
+Cloudinary falla. Los dos últimos son distintos a propósito: uno no tiene
+nada que reintentar y el otro sí.
+
+Si la subida sale bien pero la fila no llega a guardarse, se elimina el
+recurso recién subido: quedaría un archivo que nada referencia y que nadie
+sabría que sobra.
 
 La eliminación debe mantener sincronizados Cloudinary y PostgreSQL.
 

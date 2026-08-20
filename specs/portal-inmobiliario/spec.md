@@ -160,7 +160,11 @@ Debe ser posible:
 - ordenar imágenes;
 - eliminar imágenes.
 
-Las imágenes se almacenan en Cloudinary.
+Las imágenes se almacenan en Cloudinary, en la carpeta `propiedades-claude`.
+
+Se admiten JPG, PNG, WebP y AVIF, hasta 5 MB por archivo y 12 imágenes por
+propiedad. La primera que se sube queda como principal: una propiedad sin
+portada no se pintaría en el catálogo.
 
 PostgreSQL almacena solamente la información necesaria para relacionarlas y administrarlas:
 
