@@ -60,10 +60,11 @@ describe("buildAdminUserWhere", () => {
     expect(buildAdminUserWhere({})).toEqual({});
   });
 
-  it("busca en nombre y email", () => {
-    const where = buildAdminUserWhere({ search: "ana" });
-
-    expect(where.OR).toHaveLength(2);
+  it("busca contra el texto normalizado, sin acentos", () => {
+    // «peres» no encuentra a «Pérez», pero «perez» sí.
+    expect(buildAdminUserWhere({ search: "Pérez" })).toEqual({
+      searchText: { contains: "perez" },
+    });
   });
 
   it("ignora una búsqueda de solo espacios", () => {
@@ -92,6 +93,10 @@ describe("buildAdminUserWhere", () => {
       status: "active",
     });
 
-    expect(Object.keys(where).sort()).toEqual(["OR", "isActive", "role"]);
+    expect(Object.keys(where).sort()).toEqual([
+      "isActive",
+      "role",
+      "searchText",
+    ]);
   });
 });

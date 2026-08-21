@@ -1,5 +1,7 @@
 import "server-only";
 
+import { buildSearchText, normalizeSearchText } from "@portal/contracts";
+
 import { prisma } from "@/lib/prisma";
 import { PUBLIC_PROPERTY_SCOPE } from "@/repositories/property-scope";
 
@@ -18,7 +20,13 @@ export function createInquiry(inquiry: {
   readonly phone: string | null;
   readonly message: string;
 }) {
-  return prisma.inquiry.create({ data: inquiry, select: { id: true } });
+  return prisma.inquiry.create({
+    data: {
+      ...inquiry,
+      searchText: buildSearchText(inquiry.name, inquiry.email, inquiry.message),
+    },
+    select: { id: true },
+  });
 }
 
 /**
@@ -45,23 +53,17 @@ export async function findUserInquiries(
     userId,
     hiddenByUserAt: null,
     property: PUBLIC_PROPERTY_SCOPE,
-    ...(options.search
+    ...(options.search.trim()
       ? {
+          // Contra las copias normalizadas, para que «montana» encuentre
+          // tanto el mensaje como la propiedad que se llama «montaña».
           OR: [
             {
               property: {
-                title: {
-                  contains: options.search,
-                  mode: "insensitive" as const,
-                },
+                searchText: { contains: normalizeSearchText(options.search) },
               },
             },
-            {
-              message: {
-                contains: options.search,
-                mode: "insensitive" as const,
-              },
-            },
+            { searchText: { contains: normalizeSearchText(options.search) } },
           ],
         }
       : {}),

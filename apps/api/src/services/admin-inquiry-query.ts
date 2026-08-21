@@ -1,6 +1,7 @@
 import {
   ADMIN_INQUIRY_QUERY_PARAM_NAMES,
   MAX_SEARCH_LENGTH,
+  normalizeSearchText,
   type AdminInquiryListQuery,
 } from "@portal/contracts";
 
@@ -75,14 +76,12 @@ export function buildAdminInquiryWhere(query: AdminInquiryListQuery) {
     return {};
   }
 
-  const contains = { contains: search, mode: "insensitive" as const };
+  const contains = { contains: normalizeSearchText(search) };
 
+  // Cada fila guarda su propio texto normalizado; el de la propiedad viaja
+  // por la relación. Así «montana» encuentra tanto a quien lo escribió en el
+  // mensaje como la propiedad que se llama «montaña».
   return {
-    OR: [
-      { name: contains },
-      { email: contains },
-      { message: contains },
-      { property: { title: contains } },
-    ],
+    OR: [{ searchText: contains }, { property: { searchText: contains } }],
   };
 }

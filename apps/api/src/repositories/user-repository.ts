@@ -1,5 +1,7 @@
 import "server-only";
 
+import { buildSearchText } from "@portal/contracts";
+
 import { prisma } from "@/lib/prisma";
 
 /**
@@ -31,7 +33,11 @@ export function createUser(user: {
   readonly passwordHash: string;
 }) {
   return prisma.user.create({
-    data: { ...user, email: normalizeEmail(user.email) },
+    data: {
+      ...user,
+      email: normalizeEmail(user.email),
+      searchText: buildSearchText(user.name, user.email),
+    },
   });
 }
 
@@ -51,7 +57,11 @@ export function updateUser(
 ) {
   return prisma.user.update({
     where: { id },
-    data: { ...changes, email: normalizeEmail(changes.email) },
+    data: {
+      ...changes,
+      email: normalizeEmail(changes.email),
+      searchText: buildSearchText(changes.name, changes.email),
+    },
   });
 }
 
@@ -113,7 +123,11 @@ export function createUserAsAdmin(user: {
   readonly isActive: boolean;
 }) {
   return prisma.user.create({
-    data: { ...user, email: normalizeEmail(user.email) },
+    data: {
+      ...user,
+      email: normalizeEmail(user.email),
+      searchText: buildSearchText(user.name, user.email),
+    },
     select: adminUserSelection,
   });
 }
@@ -134,6 +148,14 @@ export function updateUserAsAdmin(
     readonly role?: "USER" | "ADMIN";
     readonly isActive?: boolean;
   },
+  /**
+   * Nombre y email vigentes.
+   *
+   * Son obligatorios porque el texto de búsqueda se compone de los dos, y un
+   * `PATCH` puede traer solo uno: sin el otro, cambiar el nombre borraría el
+   * email del índice. Exigirlos en la firma impide olvidarlo.
+   */
+  current: { readonly name: string; readonly email: string },
 ) {
   return prisma.user.update({
     where: { id },
@@ -142,6 +164,10 @@ export function updateUserAsAdmin(
       ...(changes.email === undefined
         ? {}
         : { email: normalizeEmail(changes.email) }),
+      searchText: buildSearchText(
+        changes.name ?? current.name,
+        changes.email ?? current.email,
+      ),
     },
     select: adminUserSelection,
   });

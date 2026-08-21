@@ -52,11 +52,15 @@ describe("buildAdminInquiryWhere", () => {
     expect(buildAdminInquiryWhere({ search: "   " })).toEqual({});
   });
 
-  it("busca en las cuatro formas de recordar una consulta", () => {
-    // Quién escribió, con qué email, qué dijo y sobre qué propiedad.
-    const where = buildAdminInquiryWhere({ search: "ana" });
-
-    expect(where.OR).toHaveLength(4);
+  it("busca en la consulta y en la propiedad, sin acentos", () => {
+    // Quién escribió, con qué email y qué dijo van en el texto de la
+    // consulta; el título viaja por la relación.
+    expect(buildAdminInquiryWhere({ search: "Montaña" })).toEqual({
+      OR: [
+        { searchText: { contains: "montana" } },
+        { property: { searchText: { contains: "montana" } } },
+      ],
+    });
   });
 
   it("no filtra las que su autor ocultó", () => {

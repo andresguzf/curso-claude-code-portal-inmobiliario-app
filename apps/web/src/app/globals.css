@@ -54,16 +54,20 @@
   /*
    * Barra lateral del panel de administración.
    *
-   * Tokens propios y no los del header: en claro la barra es una superficie
-   * clara, como el resto del panel, mientras que el header del portal
-   * público sigue siendo oscuro. Compartirlos ataba dos decisiones que no
-   * tienen por qué ir juntas.
+   * Tokens propios y no los del header: en claro la barra es un azul grisáceo
+   * pastel —la versión clara del azul del header público, que es oscuro por
+   * diseño—, mientras que en oscuro es la superficie más hundida del panel.
+   * Compartir los tokens ataba dos decisiones que no tienen por qué ir
+   * juntas.
+   *
+   * El texto también vira a frío: sobre un fondo azulado, el pardo cálido del
+   * cuerpo se veía sucio.
    */
-  --sidebar: #ffffff;
-  --sidebar-hover: #ebe5dc;
-  --sidebar-ink: #2b2724;
-  --sidebar-ink-muted: #6b635c;
-  --sidebar-line: #ded6cb;
+  --sidebar: #e3e9ef;
+  --sidebar-hover: #d3dce5;
+  --sidebar-ink: #22303c;
+  --sidebar-ink-muted: #4f5c68;
+  --sidebar-line: #c6d2de;
 }
 
 /**

@@ -497,6 +497,31 @@ Los filtros de esta pantalla son enlaces y no un formulario: con dos filtros
 de tres opciones, un panel plegable sería más maquinaria de la necesaria, y
 así se pueden abrir en otra pestaña.
 
+### Búsqueda sin acentos
+
+`montana` encuentra «montaña» y `nunoa` encuentra «Ñuñoa», en el catálogo, en
+los filtros de ubicación y en los tres buscadores del panel.
+
+Cada fila guarda una **copia normalizada** de los campos por los que se busca
+—`search_text`, y en las propiedades además `commune_normalized`,
+`city_normalized` y `region_normalized`—, y las consultas comparan contra
+ella. La alternativa, `unaccent()` dentro de cada consulta, obligaba a SQL en
+crudo en todos los buscadores.
+
+La regla vive en `normalizeSearchText` (`@portal/contracts`) y se aplica dos
+veces: al **guardar** cada fila y al **preparar** lo que se teclea. Si
+divergieran, lo guardado y lo buscado dejarían de encontrarse.
+
+Las columnas las escribe la aplicación, no PostgreSQL. Una columna generada
+sería más difícil de olvidar, pero Prisma no las modela y cada migración
+futura propondría un `ALTER` espurio que además fallaría al aplicarse.
+
+El relleno de la migración **no** usa `unaccent`: esa extensión también toca
+la puntuación —convierte «¿» en «?»— y lo rellenado no habría coincidido con
+lo que escribe la aplicación. Usa `normalize(…, NFD)` y descarta las marcas
+combinantes, que es exactamente lo que hace el normalizador de TypeScript.
+Comprobado fila a fila: las 47 de la base coinciden.
+
 ### Autorización
 
 La decisión siempre la toma el backend. Hay tres piezas:
@@ -532,9 +557,6 @@ mínimo de ocho caracteres que exige el backend.
 
 ### Limitaciones conocidas
 
-- La búsqueda y los filtros de ubicación distinguen acentos: `nunoa` no
-  encuentra `Ñuñoa`. Resolverlo requiere la extensión `unaccent` de
-  PostgreSQL (previsto para el paso 32).
 - Las imágenes del seed siguen siendo de `picsum.photos`: el seed no sube
   nada a Cloudinary, para no gastar la cuota de la cuenta en datos de
   desarrollo que se recrean a menudo.

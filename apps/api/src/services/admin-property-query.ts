@@ -6,6 +6,7 @@ import {
   isAdminPropertyStatus,
   isOperationType,
   isPropertyType,
+  normalizeSearchText,
   type AdminPropertyListQuery,
   type OperationTypeValue,
   type PropertyTypeValue,
@@ -204,13 +205,9 @@ export function buildAdminPropertyWhere(query: AdminPropertyListQuery) {
   const search = (query.search ?? "").trim();
 
   if (search) {
-    const contains = { contains: search, mode: "insensitive" as const };
-
-    conditions.OR = [
-      { title: contains },
-      { commune: contains },
-      { city: contains },
-    ];
+    // Contra la copia normalizada, para que «nunoa» encuentre Ñuñoa. Ahí
+    // están reunidos título, ubicación y descripción sin acentos.
+    conditions.searchText = { contains: normalizeSearchText(search) };
   }
 
   const price = buildRange(query.minPrice, query.maxPrice);

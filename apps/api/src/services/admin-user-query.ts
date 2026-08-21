@@ -4,6 +4,7 @@ import {
   MAX_SEARCH_LENGTH,
   UserRole,
   isAdminUserStatus,
+  normalizeSearchText,
   type AdminUserListQuery,
   type UserRoleValue,
 } from "@portal/contracts";
@@ -94,10 +95,9 @@ export function buildAdminUserWhere(query: AdminUserListQuery) {
   const search = (query.search ?? "").trim();
 
   if (search) {
-    const contains = { contains: search, mode: "insensitive" as const };
-
-    // Nombre y email: las dos formas de buscar a una persona concreta.
-    conditions.OR = [{ name: contains }, { email: contains }];
+    // Nombre y email, ambos en la copia normalizada: «peres» encuentra a
+    // «Pérez».
+    conditions.searchText = { contains: normalizeSearchText(search) };
   }
 
   if (query.role) {

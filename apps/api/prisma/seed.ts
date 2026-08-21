@@ -1,5 +1,7 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 
+import { buildSearchText, normalizeSearchText } from "@portal/contracts";
+
 import { PrismaClient } from "../src/generated/prisma/client";
 import { hashPassword } from "../src/lib/password";
 import {
@@ -36,6 +38,17 @@ function toPropertyFields(property: SeedProperty, index: number) {
     isPublished: property.isPublished,
     isFeatured: property.isFeatured,
     publishedAt: toPublicationDate(property, index),
+    searchText: buildSearchText(
+      property.title,
+      property.commune,
+      property.city,
+      property.region,
+      property.address,
+      property.description,
+    ),
+    communeNormalized: normalizeSearchText(property.commune),
+    cityNormalized: normalizeSearchText(property.city),
+    regionNormalized: normalizeSearchText(property.region),
   };
 }
 
@@ -86,6 +99,10 @@ async function main(): Promise<void> {
         role: user.role,
         isActive: user.isActive,
         passwordHash,
+        // El seed escribe por su cuenta, sin pasar por el repositorio, así
+        // que le toca mantener también la copia normalizada. Sin ella, la
+        // cuenta existiría pero el buscador no la encontraría.
+        searchText: buildSearchText(user.name, user.email),
       };
 
       await prisma.user.upsert({

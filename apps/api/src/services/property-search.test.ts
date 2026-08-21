@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  SEARCHABLE_FIELDS,
-  buildSearchConditions,
-  parseSearchTerms,
-} from "./property-search";
+import { buildSearchConditions, parseSearchTerms } from "./property-search";
 
 describe("parseSearchTerms", () => {
   it("devuelve una lista vacía cuando no hay búsqueda", () => {
@@ -29,6 +25,12 @@ describe("parseSearchTerms", () => {
     expect(parseSearchTerms("  casa    condes ")).toEqual(["casa", "condes"]);
   });
 
+  it("normaliza cada término como se guardó el texto", () => {
+    // Si divergieran, lo escrito y lo buscado no se encontrarían.
+    expect(parseSearchTerms("Ñuñoa Concón")).toEqual(["nunoa", "concon"]);
+    expect(parseSearchTerms("LAS CONDES")).toEqual(["las", "condes"]);
+  });
+
   it("acota el número de términos", () => {
     const terms = parseSearchTerms("a b c d e f g h i j k l");
 
@@ -41,40 +43,24 @@ describe("buildSearchConditions", () => {
     expect(buildSearchConditions([])).toEqual([]);
   });
 
-  it("busca en los cinco campos que exige la especificación", () => {
-    const [condition] = buildSearchConditions(["providencia"]);
-    const fields = condition?.OR.flatMap((entry) => Object.keys(entry));
-
-    expect(fields).toEqual([
-      "title",
-      "commune",
-      "city",
-      "region",
-      "description",
+  it("busca contra el texto normalizado de la propiedad", () => {
+    // Ahí están reunidos título, ubicación y descripción sin acentos.
+    expect(buildSearchConditions(["providencia"])).toEqual([
+      { searchText: { contains: "providencia" } },
     ]);
-    expect(SEARCHABLE_FIELDS).toHaveLength(5);
   });
 
-  it("busca sin distinguir mayúsculas", () => {
-    const [condition] = buildSearchConditions(["Providencia"]);
+  it("no necesita comparar ignorando mayúsculas", () => {
+    // Lo guardado y lo buscado ya están en minúsculas.
+    const [condition] = buildSearchConditions(["providencia"]);
 
-    for (const entry of condition?.OR ?? []) {
-      expect(Object.values(entry)[0]).toEqual({
-        contains: "Providencia",
-        mode: "insensitive",
-      });
-    }
+    expect(condition?.searchText).not.toHaveProperty("mode");
   });
 
   it("produce una condición por término, para acotar al agregar palabras", () => {
-    const conditions = buildSearchConditions(["casa", "condes"]);
-
-    expect(conditions).toHaveLength(2);
-    expect(conditions[0]?.OR[0]).toEqual({
-      title: { contains: "casa", mode: "insensitive" },
-    });
-    expect(conditions[1]?.OR[0]).toEqual({
-      title: { contains: "condes", mode: "insensitive" },
-    });
+    expect(buildSearchConditions(["casa", "condes"])).toEqual([
+      { searchText: { contains: "casa" } },
+      { searchText: { contains: "condes" } },
+    ]);
   });
 });

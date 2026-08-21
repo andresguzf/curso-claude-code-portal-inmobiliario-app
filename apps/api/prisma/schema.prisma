@@ -60,6 +60,10 @@ model User {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  /// Nombre y email sin acentos ni mayúsculas. Columna generada; ver
+  /// `Property.searchText`.
+  searchText String? @map("search_text")
+
   favorites Favorite[]
   inquiries Inquiry[]
 
@@ -113,6 +117,15 @@ model Property {
   /// está publicada ahora (spec.md, sección 3).
   publishedAt DateTime? @map("published_at")
 
+  /// Texto de búsqueda sin acentos ni mayúsculas, para que «montana»
+  /// encuentre «montaña». Lo mantiene PostgreSQL como columna generada: no
+  /// hay que acordarse de escribirlo al crear ni al actualizar, que es justo
+  /// lo que se olvida. Nunca se escribe desde la aplicación.
+  searchText         String? @map("search_text")
+  communeNormalized  String? @map("commune_normalized")
+  cityNormalized     String? @map("city_normalized")
+  regionNormalized   String? @map("region_normalized")
+
   /// Cuándo se eliminó. Es un borrado lógico: la propiedad deja de existir
   /// para todo el mundo, pero la fila se conserva para no destruir las
   /// consultas que arrastra, que son contactos comerciales (spec.md,
@@ -133,6 +146,9 @@ model Property {
   @@index([isPublished, isFeatured])
   @@index([isPublished, price])
   @@index([isPublished, commune])
+  @@index([communeNormalized])
+  @@index([cityNormalized])
+  @@index([regionNormalized])
   @@map("properties")
 }
 
@@ -232,6 +248,10 @@ model Inquiry {
   /// conserva para ADMIN: es el contacto que la inmobiliaria debe responder
   /// y quien escribió no puede hacerlo desaparecer (spec.md, sección 17).
   hiddenByUserAt DateTime? @map("hidden_by_user_at")
+
+  /// Nombre, email y mensaje sin acentos ni mayúsculas. Columna generada;
+  /// ver `Property.searchText`.
+  searchText String? @map("search_text")
 
   @@index([propertyId, createdAt])
   @@index([userId, hiddenByUserAt, createdAt])
