@@ -538,6 +538,11 @@ El panel empieza abierto y se puede contraer; contraído indica cuántos
 filtros están aplicados, para que nadie olvide que está viendo un listado
 acotado.
 
+En escritorio se contrae en horizontal, hasta quedar en una pestaña estrecha,
+y el listado ocupa el ancho que deja libre. En móvil se contrae en vertical,
+porque allí el panel va apilado sobre el listado y una pestaña lateral no le
+devolvería espacio a nadie.
+
 El filtro de estado es la diferencia principal con el catálogo público, que
 no tiene ninguno: allí no hay borradores que distinguir.
 

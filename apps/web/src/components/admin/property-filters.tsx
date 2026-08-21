@@ -21,6 +21,13 @@ import { cn } from "@/lib/utils";
  * Panel colapsable a la derecha: a la izquierda ya está la barra de
  * secciones, y dos barras enfrentadas dejarían la tabla sin sitio.
  *
+ * En escritorio se contrae **en horizontal**, hasta quedar en una pestaña
+ * estrecha, y la tabla ocupa el ancho que deja libre. Contraerlo en vertical
+ * no devolvía ese espacio: la columna seguía reservada y vacía.
+ *
+ * En móvil se contrae en vertical, porque ahí el panel va apilado sobre la
+ * tabla y una pestaña lateral no le quitaría sitio a nadie.
+ *
  * Es un único formulario GET, así que todos los filtros se combinan en la
  * misma URL y el resultado es compartible. Sin JavaScript se envía de forma
  * nativa y funciona igual; con JavaScript se intercepta para omitir los
@@ -122,7 +129,15 @@ export function PropertyFilters({
   }
 
   return (
-    <aside className="lg:w-72 lg:shrink-0">
+    <aside
+      className={cn(
+        "shrink-0",
+        // Contraído deja una pestaña de tres cuartos de pulgada; abierto,
+        // la anchura de siempre. Es un cambio de ancho sin transición: el
+        // navegador recalcularía la disposición en cada fotograma.
+        isOpen ? "lg:w-72" : "lg:w-12",
+      )}
+    >
       <div className="rounded-xl border border-line bg-card">
         <h2>
           <button
@@ -133,9 +148,26 @@ export function PropertyFilters({
             // El nombre accesible dice cuántos hay puestos. La cifra sola, al
             // lado del texto, se leería pegada: «Filtros2».
             aria-label={describeFilterCount(activeCount)}
-            className="flex min-h-11 w-full items-center gap-2 px-4 py-3 text-left text-sm font-semibold text-ink"
+            className={cn(
+              "flex min-h-11 w-full items-center gap-2 px-4 py-3 text-left text-sm font-semibold text-ink",
+              // Contraído, la pestaña es estrecha y su contenido se apila.
+              isOpen ? "" : "lg:flex-col lg:gap-3 lg:px-0",
+            )}
           >
-            Filtros
+            <span className={cn(isOpen ? "" : "lg:hidden")}>Filtros</span>
+
+            {/* Contraído el texto va en vertical, que es lo que cabe en una
+                pestaña de esta anchura. */}
+            <span
+              aria-hidden="true"
+              className={cn(
+                "text-xs tracking-wide uppercase [writing-mode:vertical-rl]",
+                isOpen ? "hidden" : "hidden lg:inline",
+              )}
+            >
+              Filtros
+            </span>
+
             {activeCount > 0 ? (
               <span
                 aria-hidden="true"
@@ -144,7 +176,12 @@ export function PropertyFilters({
                 {activeCount}
               </span>
             ) : null}
-            <ChevronIcon className="ml-auto" isPointingUp={isOpen} />
+
+            <ChevronIcon
+              className={cn(isOpen ? "ml-auto" : "lg:ml-0")}
+              isPointingUp={isOpen}
+              isHorizontal={!isOpen}
+            />
           </button>
         </h2>
 
@@ -375,13 +412,23 @@ function RangeField({
   );
 }
 
+/**
+ * Punta de flecha del control.
+ *
+ * Apunta a donde va el panel: hacia arriba para plegarse en móvil, y hacia
+ * la izquierda —contra la tabla— cuando en escritorio se abre en horizontal.
+ */
 function ChevronIcon({
   isPointingUp,
+  isHorizontal = false,
   className,
 }: {
   readonly isPointingUp: boolean;
+  readonly isHorizontal?: boolean;
   readonly className?: string;
 }) {
+  const vertical = isPointingUp ? "M6 15l6-6 6 6" : "M6 9l6 6 6-6";
+
   return (
     <svg
       aria-hidden="true"
@@ -394,7 +441,12 @@ function ChevronIcon({
       strokeLinejoin="round"
       className={cn("size-5 shrink-0 text-ink-muted", className)}
     >
-      <path d={isPointingUp ? "M6 15l6-6 6 6" : "M6 9l6 6 6-6"} />
+      {/* En móvil siempre es vertical; la horizontal solo aparece en la
+          pestaña estrecha de escritorio. */}
+      <path className={cn(isHorizontal ? "lg:hidden" : "")} d={vertical} />
+      {isHorizontal ? (
+        <path className="hidden lg:inline" d="M15 6l-6 6 6 6" />
+      ) : null}
     </svg>
   );
 }

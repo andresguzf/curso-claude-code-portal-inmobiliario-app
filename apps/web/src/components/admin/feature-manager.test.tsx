@@ -48,7 +48,14 @@ describe("FeatureManager", () => {
     renderManager();
 
     expect(screen.getByText("piscina")).toBeVisible();
-    expect(screen.getByText("3")).toBeVisible();
+    expect(screen.getByText("3 propiedades")).toBeVisible();
+    expect(screen.getByText("0 propiedades")).toBeVisible();
+  });
+
+  it("concuerda el recuento cuando solo la usa una", () => {
+    renderManager([{ ...FEATURES[0], propertyCount: 1 }]);
+
+    expect(screen.getByText("1 propiedad")).toBeVisible();
   });
 
   it("avisa cuando no hay ninguna", () => {
@@ -178,6 +185,52 @@ describe("FeatureManager", () => {
     await user.click(screen.getByRole("button", { name: "Sí, eliminarla" }));
 
     await waitFor(() => expect(deleteAdminFeature).toHaveBeenCalledWith("f1"));
+  });
+
+  it("deja la fila abierta y el texto puesto si el guardado falla", async () => {
+    const user = userEvent.setup();
+
+    // Cerrarla perdería lo escrito, y el aviso quedaría lejos de donde se
+    // estaba mirando.
+    renameAdminFeature.mockRejectedValue(new Error("«Quincho» ya existe."));
+
+    renderManager();
+    await user.click(screen.getByRole("button", { name: "Renombrar Piscina" }));
+
+    const campo = screen.getByLabelText("Nombre de Piscina");
+
+    await user.clear(campo);
+    await user.type(campo, "Quincho");
+    await user.click(screen.getByRole("button", { name: "Guardar" }));
+
+    expect(await screen.findByText("«Quincho» ya existe.")).toBeVisible();
+    expect(screen.getByLabelText("Nombre de Piscina")).toHaveValue("Quincho");
+  });
+
+  it("cierra la fila cuando el guardado sale bien", async () => {
+    const user = userEvent.setup();
+
+    renameAdminFeature.mockResolvedValue(FEATURES[0]);
+
+    renderManager();
+    await user.click(screen.getByRole("button", { name: "Renombrar Piscina" }));
+    await user.click(screen.getByRole("button", { name: "Guardar" }));
+
+    await waitFor(() =>
+      expect(screen.queryByLabelText("Nombre de Piscina")).toBeNull(),
+    );
+  });
+
+  it("selecciona el texto al abrir, para poder reemplazarlo de una vez", async () => {
+    const user = userEvent.setup();
+
+    renderManager();
+    await user.click(screen.getByRole("button", { name: "Renombrar Piscina" }));
+
+    const campo = screen.getByLabelText<HTMLInputElement>("Nombre de Piscina");
+
+    expect(campo.selectionStart).toBe(0);
+    expect(campo.selectionEnd).toBe("Piscina".length);
   });
 
   it("muestra el motivo que da el servidor", async () => {

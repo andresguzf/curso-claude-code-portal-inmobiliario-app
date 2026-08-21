@@ -314,6 +314,11 @@ en un panel colapsable **a la derecha**: a la izquierda ya está la barra de
 secciones, y dos barras enfrentadas dejarían la tabla sin sitio. Contraído
 dice cuántos hay puestos, para que nadie olvide que ve un listado acotado.
 
+En escritorio se contrae **en horizontal**, de 288 a 48 píxeles, y la tabla
+gana esos 255. Contraerlo en vertical no devolvía nada: la columna seguía
+reservada y vacía. En móvil se contrae en vertical, porque allí va apilado
+sobre la tabla y una pestaña lateral no le quitaría sitio a nadie.
+
 Un filtro inválido escrito a mano en la URL produce un 400 con su motivo, y
 la página lo dice. El cliente REST reenvía los parámetros **sin
 interpretarlos**: descartarlos en silencio mostraría un listado que no
@@ -353,6 +358,18 @@ mayúsculas y acentos, porque «Lavanderia» y «Lavandería» darían el mismo
 Al eliminar, las propiedades que la declaraban dejan de hacerlo y no pierden
 nada más. El diálogo dice a cuántas afecta con el número delante: «dejará de
 figurar» a secas ocultaría que toca fichas ya publicadas.
+
+Se pinta como lista y no como tabla: son cuatro datos por fila y ninguno se
+compara entre filas. Con tabla, a poca anchura los botones quedaban fuera del
+área visible y la sección parecía no tener acciones.
+
+Si el renombrado falla, la fila **sigue abierta** con lo escrito dentro y el
+aviso aparece en la propia fila. Cerrarla perdía el texto y dejaba el mensaje
+al pie de la página, fuera de la pantalla: la operación parecía no hacer nada.
+
+El foco y la selección del texto se piden en un efecto, no con `autoFocus`:
+ese atributo enfoca antes de que React tenga puesto su escuchador, así que un
+`onFocus` que seleccione no llega a ejecutarse.
 
 Un campo numérico vacío viaja como `null`, no como cero: una propiedad por
 estrenar tiene cero años de antigüedad, y un terreno no declara dormitorios;

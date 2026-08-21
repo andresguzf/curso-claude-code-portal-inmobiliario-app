@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useId, useRef, useState, useTransition } from "react";
+import { useEffect, useId, useRef, useState, useTransition } from "react";
 
 import { FEATURE_LIMITS, type AdminFeatureDto } from "@portal/contracts";
 
@@ -20,34 +20,63 @@ import {
  * tocar el esquema: `Property` no tiene una columna por característica, y esa
  * es justamente la propiedad del modelo que esta pantalla protege.
  *
- * Cada acción se guarda al instante. No hay borrador que perder: son nombres
- * sueltos, no una ficha con quince campos.
+ * Se pinta como lista y no como tabla: son cuatro datos por fila y ninguno
+ * se compara entre filas. Una tabla obligaba a desplazarse en horizontal a
+ * poca anchura, y los botones quedaban fuera de la parte visible.
  */
+
+/**
+ * Dónde mostrar un fallo.
+ *
+ * El aviso vive junto al control que lo provocó, no al final de la página:
+ * con catorce características, un mensaje al pie queda fuera de la pantalla
+ * y la operación parece no haber hecho nada.
+ */
+type FeatureError = {
+  /** `"create"` o el identificador de la característica afectada. */
+  readonly scope: string;
+  readonly message: string;
+};
+
 export function FeatureManager({
   features,
 }: {
   readonly features: readonly AdminFeatureDto[];
 }) {
   const router = useRouter();
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [error, setError] = useState<FeatureError | null>(null);
   const [isPending, startTransition] = useTransition();
   const [featureToRemove, setFeatureToRemove] =
     useState<AdminFeatureDto | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  /** Envuelve una acción: limpia el aviso, refresca y traduce el fallo. */
-  function run(action: () => Promise<void>, fallbackMessage: string) {
-    setErrorMessage(null);
+  /**
+   * Ejecuta una acción y avisa de si salió bien.
+   *
+   * Devuelve una promesa para que quien llama decida qué hacer después: al
+   * renombrar, la fila solo debe cerrarse si se guardó.
+   */
+  function run(
+    scope: string,
+    action: () => Promise<void>,
+    fallbackMessage: string,
+  ): Promise<boolean> {
+    setError(null);
 
-    startTransition(async () => {
-      try {
-        await action();
-        router.refresh();
-      } catch (error) {
-        setErrorMessage(
-          error instanceof Error ? error.message : fallbackMessage,
-        );
-      }
+    return new Promise((resolve) => {
+      startTransition(async () => {
+        try {
+          await action();
+          router.refresh();
+          resolve(true);
+        } catch (caught) {
+          setError({
+            scope,
+            message: caught instanceof Error ? caught.message : fallbackMessage,
+          });
+          resolve(false);
+        }
+      });
     });
   }
 
@@ -55,8 +84,10 @@ export function FeatureManager({
     <div className="flex flex-col gap-6">
       <CreateForm
         isPending={isPending}
+        errorMessage={error?.scope === "create" ? error.message : null}
         onCreate={(name) =>
           run(
+            "create",
             () => createAdminFeature(name).then(() => undefined),
             "No pudimos crear la característica.",
           )
@@ -68,58 +99,43 @@ export function FeatureManager({
           Todavía no hay características. Crea la primera.
         </p>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-line bg-card">
-          <table className="w-full min-w-[36rem] border-collapse text-left text-sm">
-            <thead className="border-b border-line text-xs tracking-wide text-ink-muted uppercase">
-              <tr>
-                <th scope="col" className="px-4 py-3 font-medium">
-                  Nombre
-                </th>
-                <th scope="col" className="px-4 py-3 font-medium">
-                  Identificador
-                </th>
-                <th scope="col" className="px-4 py-3 font-medium">
-                  Propiedades
-                </th>
-                <th scope="col" className="px-4 py-3 font-medium">
-                  <span className="sr-only">Acciones</span>
-                </th>
-              </tr>
-            </thead>
+        <ul className="flex flex-col gap-2">
+          {features.map((feature) => (
+            <li key={feature.id}>
+              <FeatureRow
+                feature={feature}
+                isEditing={editingId === feature.id}
+                isPending={isPending}
+                errorMessage={
+                  error?.scope === feature.id ? error.message : null
+                }
+                onEdit={() => {
+                  setError(null);
+                  setEditingId(feature.id);
+                }}
+                onCancelEdit={() => setEditingId(null)}
+                onRename={async (name) => {
+                  const saved = await run(
+                    feature.id,
+                    () =>
+                      renameAdminFeature(feature.id, name).then(
+                        () => undefined,
+                      ),
+                    "No pudimos guardar el nombre.",
+                  );
 
-            <tbody>
-              {features.map((feature) => (
-                <FeatureRow
-                  key={feature.id}
-                  feature={feature}
-                  isEditing={editingId === feature.id}
-                  isPending={isPending}
-                  onEdit={() => {
-                    setErrorMessage(null);
-                    setEditingId(feature.id);
-                  }}
-                  onCancelEdit={() => setEditingId(null)}
-                  onRename={(name) => {
+                  // Solo se cierra si se guardó: si falla, lo escrito sigue
+                  // ahí para corregirlo, en vez de perderse.
+                  if (saved) {
                     setEditingId(null);
-                    run(
-                      () =>
-                        renameAdminFeature(feature.id, name).then(
-                          () => undefined,
-                        ),
-                      "No pudimos guardar el nombre.",
-                    );
-                  }}
-                  onRemove={() => setFeatureToRemove(feature)}
-                />
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  }
+                }}
+                onRemove={() => setFeatureToRemove(feature)}
+              />
+            </li>
+          ))}
+        </ul>
       )}
-
-      <p aria-live="polite" className="text-sm text-danger">
-        {errorMessage}
-      </p>
 
       <ConfirmDialog
         isOpen={featureToRemove !== null}
@@ -137,7 +153,8 @@ export function FeatureManager({
           }
 
           setFeatureToRemove(null);
-          run(
+          void run(
+            target.id,
             () => deleteAdminFeature(target.id),
             "No pudimos eliminar la característica.",
           );
@@ -173,9 +190,11 @@ function describeRemoval(feature: AdminFeatureDto | null): string {
 
 function CreateForm({
   isPending,
+  errorMessage,
   onCreate,
 }: {
   readonly isPending: boolean;
+  readonly errorMessage: string | null;
   readonly onCreate: (name: string) => void;
 }) {
   const fieldId = useId();
@@ -199,30 +218,118 @@ function CreateForm({
           inputRef.current.value = "";
         }
       }}
-      className="flex flex-wrap items-end gap-3"
+      className="flex flex-col gap-2"
     >
-      <div className="flex min-w-56 flex-1 flex-col gap-2">
-        <label htmlFor={fieldId} className="text-sm font-medium text-ink">
-          Nueva característica
-        </label>
-        <input
-          ref={inputRef}
-          id={fieldId}
-          type="text"
-          name="name"
-          autoComplete="off"
-          maxLength={FEATURE_LIMITS.maxNameLength}
-          placeholder="Piscina temperada, sala de juegos…"
-          className={fieldInputClassName(false)}
-        />
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="flex min-w-56 flex-1 flex-col gap-2">
+          <label htmlFor={fieldId} className="text-sm font-medium text-ink">
+            Nueva característica
+          </label>
+          <input
+            ref={inputRef}
+            id={fieldId}
+            type="text"
+            name="name"
+            autoComplete="off"
+            maxLength={FEATURE_LIMITS.maxNameLength}
+            placeholder="Piscina temperada, sala de juegos…"
+            className={fieldInputClassName(Boolean(errorMessage))}
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={isPending}
+          className="inline-flex min-h-11 items-center justify-center rounded-lg bg-accent px-5 text-sm font-semibold text-on-dark transition-colors hover:bg-accent-strong disabled:cursor-progress disabled:opacity-70"
+        >
+          Añadir
+        </button>
       </div>
+
+      <p aria-live="polite" className="text-sm text-danger">
+        {errorMessage}
+      </p>
+    </form>
+  );
+}
+
+/**
+ * Campo para escribir el nombre nuevo.
+ *
+ * El foco y la selección se piden a mano en un efecto, no con `autoFocus`:
+ * ese atributo enfoca antes de que React tenga puesto su escuchador, así que
+ * un `onFocus` que seleccione el texto no llega a ejecutarse. Comprobado en
+ * el navegador, donde el cursor quedaba al final en vez de sobre el texto.
+ */
+function RenameForm({
+  fieldId,
+  feature,
+  isPending,
+  hasError,
+  onRename,
+  onCancel,
+}: {
+  readonly fieldId: string;
+  readonly feature: AdminFeatureDto;
+  readonly isPending: boolean;
+  readonly hasError: boolean;
+  readonly onRename: (name: string) => void;
+  readonly onCancel: () => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const input = inputRef.current;
+
+    if (!input) {
+      return;
+    }
+
+    input.focus();
+    // Lo habitual al renombrar es reemplazar, no añadir al final.
+    input.select();
+  }, []);
+
+  return (
+    <form
+      onSubmit={(event) => {
+        event.preventDefault();
+
+        const value = new FormData(event.currentTarget).get("name");
+
+        if (typeof value === "string" && value.trim()) {
+          onRename(value.trim());
+        }
+      }}
+      className="flex min-w-56 flex-1 flex-wrap items-center gap-2"
+    >
+      <label htmlFor={fieldId} className="sr-only">
+        Nombre de {feature.name}
+      </label>
+      <input
+        ref={inputRef}
+        id={fieldId}
+        name="name"
+        type="text"
+        autoComplete="off"
+        defaultValue={feature.name}
+        maxLength={FEATURE_LIMITS.maxNameLength}
+        className={`${fieldInputClassName(hasError)} flex-1 text-sm`}
+      />
 
       <button
         type="submit"
         disabled={isPending}
-        className="inline-flex min-h-11 items-center justify-center rounded-lg bg-accent px-5 text-sm font-semibold text-on-dark transition-colors hover:bg-accent-strong disabled:cursor-progress disabled:opacity-70"
+        className="inline-flex min-h-11 items-center justify-center rounded-lg bg-accent px-4 text-sm font-semibold text-on-dark transition-colors hover:bg-accent-strong disabled:cursor-progress"
       >
-        Añadir
+        Guardar
+      </button>
+      <button
+        type="button"
+        onClick={onCancel}
+        className="inline-flex min-h-11 items-center justify-center rounded-lg border border-line px-4 text-sm font-medium text-ink transition-colors hover:bg-muted"
+      >
+        Cancelar
       </button>
     </form>
   );
@@ -232,6 +339,7 @@ function FeatureRow({
   feature,
   isEditing,
   isPending,
+  errorMessage,
   onEdit,
   onCancelEdit,
   onRename,
@@ -240,6 +348,7 @@ function FeatureRow({
   readonly feature: AdminFeatureDto;
   readonly isEditing: boolean;
   readonly isPending: boolean;
+  readonly errorMessage: string | null;
   readonly onEdit: () => void;
   readonly onCancelEdit: () => void;
   readonly onRename: (name: string) => void;
@@ -248,72 +357,31 @@ function FeatureRow({
   const fieldId = useId();
 
   return (
-    <tr className="border-b border-line last:border-b-0">
-      <td className="px-4 py-3">
+    <article className="flex flex-col gap-2 rounded-xl border border-line bg-card p-3">
+      <div className="flex flex-wrap items-center gap-3">
         {isEditing ? (
-          <form
-            id={`${fieldId}-form`}
-            onSubmit={(event) => {
-              event.preventDefault();
-
-              const value = new FormData(event.currentTarget).get("name");
-
-              if (typeof value === "string" && value.trim()) {
-                onRename(value.trim());
-              }
-            }}
-          >
-            <label htmlFor={fieldId} className="sr-only">
-              Nombre de {feature.name}
-            </label>
-            <input
-              id={fieldId}
-              name="name"
-              type="text"
-              autoComplete="off"
-              defaultValue={feature.name}
-              maxLength={FEATURE_LIMITS.maxNameLength}
-              // Quien pulsó «Renombrar» quiere escribir aquí, y sin esto
-              // tendría que buscar el campo que él mismo acaba de abrir.
-              autoFocus
-              className={`${fieldInputClassName(false)} text-sm`}
-            />
-          </form>
+          <RenameForm
+            fieldId={fieldId}
+            feature={feature}
+            isPending={isPending}
+            hasError={Boolean(errorMessage)}
+            onRename={onRename}
+            onCancel={onCancelEdit}
+          />
         ) : (
-          <span className="font-medium text-ink">{feature.name}</span>
-        )}
-      </td>
+          <>
+            <div className="flex min-w-48 flex-1 flex-col">
+              <span className="font-medium text-ink">{feature.name}</span>
+              <code className="text-xs text-ink-muted">{feature.slug}</code>
+            </div>
 
-      <td className="px-4 py-3">
-        <code className="text-xs text-ink-muted">{feature.slug}</code>
-      </td>
+            <p className="text-sm whitespace-nowrap text-ink-muted tabular-nums">
+              {feature.propertyCount === 1
+                ? "1 propiedad"
+                : `${feature.propertyCount} propiedades`}
+            </p>
 
-      <td className="px-4 py-3 text-ink-muted tabular-nums">
-        {feature.propertyCount}
-      </td>
-
-      <td className="px-4 py-3">
-        <div className="flex flex-wrap justify-end gap-2">
-          {isEditing ? (
-            <>
-              <button
-                type="submit"
-                form={`${fieldId}-form`}
-                disabled={isPending}
-                className="inline-flex min-h-11 items-center justify-center rounded-lg bg-accent px-3 text-sm font-semibold text-on-dark transition-colors hover:bg-accent-strong disabled:cursor-progress"
-              >
-                Guardar
-              </button>
-              <button
-                type="button"
-                onClick={onCancelEdit}
-                className="inline-flex min-h-11 items-center justify-center rounded-lg border border-line px-3 text-sm font-medium text-ink transition-colors hover:bg-muted"
-              >
-                Cancelar
-              </button>
-            </>
-          ) : (
-            <>
+            <div className="flex gap-2">
               <button
                 type="button"
                 onClick={onEdit}
@@ -332,10 +400,16 @@ function FeatureRow({
                 <span aria-hidden="true">Eliminar</span>
                 <span className="sr-only">Eliminar {feature.name}</span>
               </button>
-            </>
-          )}
-        </div>
-      </td>
-    </tr>
+            </div>
+          </>
+        )}
+      </div>
+
+      {errorMessage ? (
+        <p aria-live="polite" className="text-sm text-danger">
+          {errorMessage}
+        </p>
+      ) : null}
+    </article>
   );
 }
