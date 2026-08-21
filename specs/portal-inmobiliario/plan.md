@@ -273,6 +273,20 @@ ser ADMIN responden 403.
 A diferencia de `PATCH /api/auth/me`, aquí no se pide la contraseña actual:
 quien administra no la conoce. Es la contrapartida del rol.
 
+Consultas:
+
+```text
+GET /api/admin/inquiries
+```
+
+Devuelve **todas**, de más reciente a más antigua, paginadas y con búsqueda
+sobre nombre, email, texto del mensaje y título de la propiedad.
+
+Sin filtro por `hiddenByUserAt` ni por el estado de la propiedad: aquí se ven
+también las que su autor quitó de su historial y las de propiedades
+despublicadas o eliminadas. Es lo contrario del historial propio, y el motivo
+por el que ambos borrados son lógicos.
+
 El formulario las ofrece como casillas y el backend rechaza con 400 un
 identificador que no exista, en lugar de dejar que el ORM falle al conectarlo
 y responder un 500 sin explicación.

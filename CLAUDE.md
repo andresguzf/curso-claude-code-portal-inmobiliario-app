@@ -165,14 +165,14 @@ El más justo es el texto claro sobre el acento en oscuro, con 4.53.
 
 ## Estado del proyecto
 
-Pasos 1 a 29 de `tasks.md` completos. En funcionamiento: portada, catálogo
+Pasos 1 a 30 de `tasks.md` completos. En funcionamiento: portada, catálogo
 con búsqueda, filtros combinados, ordenamiento, estados de carga/vacío/error,
 detalle de propiedad, galería, mapa de ubicación, formulario de contacto,
 autenticación con autorización por rol, el área privada de la cuenta —con
 edición de los propios datos, favoritos y consultas guardadas— y el panel de
 administración con sus indicadores y el alta, edición y baja de propiedades.
 
-Pendiente desde el paso 30: la gestión de consultas.
+Pendiente desde el paso 31: SEO, optimización y los pasos de cierre.
 
 ### Autenticación
 
@@ -434,6 +434,29 @@ Estos cambios **no** esperan al botón de guardar del formulario: operan sobre
 un archivo que ya está subido, y mezclarlos con el borrador de los demás
 campos haría que cancelar la edición dejara a medias algo que ya ocupa sitio
 en Cloudinary.
+
+### Administración de consultas
+
+`/admin/inquiries` muestra **todas**: propiedad, contacto, mensaje y fecha,
+de lo más reciente a lo más antiguo, paginadas de diez en diez y con
+búsqueda sobre nombre, email, texto del mensaje y título de la propiedad.
+
+Aquí se ven también las que su autor quitó de su historial y las de
+propiedades despublicadas o eliminadas. Esta pantalla es el motivo por el que
+aquellos dos borrados son lógicos: sin ella, eliminar una propiedad o vaciar
+el historial propio destruiría contactos comerciales.
+
+Cada tarjeta enlaza a la **ficha de edición** de la propiedad, no a su página
+pública: es donde se ve todo y se puede actuar, y funciona también con un
+borrador, que públicamente responde 404. Una propiedad eliminada se nombra
+sin enlace, porque no hay a dónde llevar.
+
+El email y el teléfono son enlaces `mailto:` y `tel:`: responder es lo único
+que se hace desde aquí, y no hay ningún control que editar.
+
+El nombre y el email son los que se escribieron en el formulario, que no
+tienen por qué coincidir con los de la cuenta. Cuando hay cuenta y difieren,
+se dicen los dos.
 
 ### Administración de usuarios
 

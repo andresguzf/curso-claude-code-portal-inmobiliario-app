@@ -208,7 +208,7 @@
   - Activar/desactivar.
   - Modificar rol cuando corresponda.
 
-- [ ] **Paso 30 — Consultas**
+- [x] **Paso 30 — Consultas**
   - Crear `/admin/inquiries`.
   - Mostrar propiedad, usuario, contacto, mensaje y fecha.
   - Enlazar propiedad asociada.

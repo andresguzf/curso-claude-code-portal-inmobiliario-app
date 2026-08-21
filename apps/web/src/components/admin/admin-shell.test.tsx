@@ -37,6 +37,13 @@ describe("AdminShell", () => {
       within(barra).getByRole("link", { name: "Propiedades" }),
     ).toBeVisible();
     expect(
+      within(barra).getByRole("link", { name: "Características" }),
+    ).toBeVisible();
+    expect(within(barra).getByRole("link", { name: "Usuarios" })).toBeVisible();
+    expect(
+      within(barra).getByRole("link", { name: "Consultas" }),
+    ).toBeVisible();
+    expect(
       within(barra).getByRole("link", { name: "Mi perfil" }),
     ).toBeVisible();
   });

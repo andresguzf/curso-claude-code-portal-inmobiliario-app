@@ -66,3 +66,57 @@ export type UserInquiryPageDto = {
 
 /** Solicitudes por página en el historial (spec.md, sección 17). */
 export const INQUIRIES_PER_PAGE = 6;
+
+/**
+ * Una consulta vista desde la administración (spec.md, sección 22).
+ *
+ * A diferencia del historial propio, aquí figuran **todas**: también las que
+ * quien las escribió quitó de su historial, y las de propiedades
+ * despublicadas o eliminadas. Ese es el motivo por el que aquel borrado es
+ * lógico: la consulta es un contacto comercial que la inmobiliaria tiene que
+ * poder responder.
+ */
+export type AdminInquiryDto = {
+  readonly id: string;
+  /** Quien escribió, tal como lo puso en el formulario. */
+  readonly name: string;
+  readonly email: string;
+  readonly phone: string | null;
+  readonly message: string;
+  readonly createdAt: string;
+  readonly property: {
+    readonly id: string;
+    readonly title: string;
+    readonly isPublished: boolean;
+    /** Una propiedad eliminada ya no tiene ficha que abrir. */
+    readonly isDeleted: boolean;
+  };
+  /** Nulo cuando la envió un visitante sin cuenta. */
+  readonly user: {
+    readonly id: string;
+    readonly name: string;
+    readonly email: string;
+  } | null;
+  /** Quien la escribió la quitó de su historial. Aquí sigue estando. */
+  readonly isHiddenByUser: boolean;
+};
+
+export type AdminInquiryPageDto = {
+  readonly data: readonly AdminInquiryDto[];
+  readonly total: number;
+  readonly page: number;
+  readonly pageSize: number;
+};
+
+/** Filtros del listado de consultas. Viven en la URL, como en el catálogo. */
+export type AdminInquiryListQuery = {
+  readonly search?: string | undefined;
+  readonly page?: number | undefined;
+};
+
+export const ADMIN_INQUIRY_QUERY_PARAM_NAMES = {
+  search: "search",
+  page: "page",
+} as const satisfies Record<keyof AdminInquiryListQuery, string>;
+
+export const ADMIN_INQUIRIES_PER_PAGE = 10;
