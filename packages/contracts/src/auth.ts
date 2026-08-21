@@ -68,3 +68,82 @@ export const AUTH_LIMITS = {
    */
   maxPasswordLength: 200,
 } as const;
+
+/**
+ * Un usuario visto desde la administración (spec.md, sección 21).
+ *
+ * No lleva el hash de la contraseña ni ningún dato que ADMIN no necesite
+ * para decidir: quién es, qué rol tiene, si puede entrar y desde cuándo.
+ */
+export type AdminUserDto = {
+  readonly id: string;
+  readonly name: string;
+  readonly email: string;
+  readonly role: UserRoleValue;
+  readonly isActive: boolean;
+  readonly createdAt: string;
+  /** Cuántas propiedades ha guardado. Ayuda a saber si la cuenta se usa. */
+  readonly favoriteCount: number;
+  /** Cuántas consultas ha enviado, incluidas las que ocultó de su historial. */
+  readonly inquiryCount: number;
+};
+
+export type AdminUserPageDto = {
+  readonly data: readonly AdminUserDto[];
+  readonly total: number;
+  readonly page: number;
+  readonly pageSize: number;
+};
+
+/** Estado por el que se puede acotar el listado de usuarios. */
+export const AdminUserStatus = {
+  ALL: "all",
+  ACTIVE: "active",
+  INACTIVE: "inactive",
+} as const;
+
+export type AdminUserStatusValue =
+  (typeof AdminUserStatus)[keyof typeof AdminUserStatus];
+
+export function isAdminUserStatus(
+  value: unknown,
+): value is AdminUserStatusValue {
+  return (
+    typeof value === "string" &&
+    Object.values<string>(AdminUserStatus).includes(value)
+  );
+}
+
+/** Filtros del listado de usuarios. Viven en la URL, como en el catálogo. */
+export type AdminUserListQuery = {
+  readonly search?: string | undefined;
+  readonly page?: number | undefined;
+  readonly role?: UserRoleValue | undefined;
+  readonly status?: AdminUserStatusValue | undefined;
+};
+
+export const ADMIN_USER_QUERY_PARAM_NAMES = {
+  search: "search",
+  page: "page",
+  role: "role",
+  status: "status",
+} as const satisfies Record<keyof AdminUserListQuery, string>;
+
+export const ADMIN_USERS_PER_PAGE = 10;
+
+/**
+ * Cambios que ADMIN hace sobre la cuenta de otra persona.
+ *
+ * Todos son opcionales: es un `PATCH`, y lo que no viaja no se toca.
+ *
+ * No se pide la contraseña actual, a diferencia de `UpdateAccountRequestDto`:
+ * quien administra no la conoce. Es la contrapartida del rol, y por eso las
+ * reglas que protegen la propia cuenta viven en el backend.
+ */
+export type AdminUpdateUserRequestDto = {
+  readonly name?: string;
+  readonly email?: string;
+  readonly newPassword?: string;
+  readonly role?: UserRoleValue;
+  readonly isActive?: boolean;
+};

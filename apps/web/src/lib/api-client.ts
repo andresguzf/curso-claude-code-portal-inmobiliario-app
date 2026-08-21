@@ -1,10 +1,14 @@
 import {
   ADMIN_QUERY_PARAM_NAMES,
+  ADMIN_USER_QUERY_PARAM_NAMES,
   QUERY_PARAM_NAMES,
   type AdminOverviewDto,
   type AdminPropertyDto,
   type AdminFeatureDto,
   type AdminPropertyPageDto,
+  type AdminUpdateUserRequestDto,
+  type AdminUserDto,
+  type AdminUserPageDto,
   type FeatureInputDto,
   type FeatureListDto,
   type PropertyInputDto,
@@ -675,4 +679,62 @@ export async function deleteAdminFeature(featureId: string): Promise<void> {
   );
 
   await readOrThrow(response, "No pudimos eliminar la característica.");
+}
+
+/**
+ * Administración de usuarios (spec.md, sección 21).
+ *
+ * Quién hace la petición lo deduce el backend de la sesión: no hay ningún
+ * parámetro con el identificador de quien administra, y por tanto nada que
+ * manipular para saltarse las reglas que protegen la propia cuenta.
+ */
+
+export function buildAdminUserQueryString(
+  searchParams: URLSearchParams,
+): string {
+  const parameters = new URLSearchParams();
+
+  for (const name of Object.values(ADMIN_USER_QUERY_PARAM_NAMES)) {
+    const value = searchParams.get(name);
+
+    if (value !== null && value.trim() !== "") {
+      parameters.set(name, value);
+    }
+  }
+
+  const query = parameters.toString();
+
+  return query ? `?${query}` : "";
+}
+
+export async function fetchAdminUsers(
+  searchParams: URLSearchParams,
+  cookieHeader?: string,
+): Promise<AdminUserPageDto> {
+  const response = await fetch(
+    buildApiUrl(`/api/admin/users${buildAdminUserQueryString(searchParams)}`),
+    {
+      cache: "no-store",
+      headers: cookieHeader ? { Cookie: cookieHeader } : undefined,
+    },
+  );
+
+  return readOrThrow(response, "No pudimos cargar los usuarios.");
+}
+
+/** `PATCH`: lo que no se envía no se toca. */
+export async function updateAdminUser(
+  userId: string,
+  changes: AdminUpdateUserRequestDto,
+): Promise<AdminUserDto> {
+  const response = await fetch(
+    buildApiUrl(`/api/admin/users/${encodeURIComponent(userId)}`),
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(changes),
+    },
+  );
+
+  return readOrThrow(response, "No pudimos guardar los cambios.");
 }
