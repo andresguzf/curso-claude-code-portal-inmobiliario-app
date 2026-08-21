@@ -99,6 +99,26 @@ export function findAdminUserById(id: string) {
 }
 
 /**
+ * Da de alta una cuenta desde la administración.
+ *
+ * A diferencia de `createUser`, que sirve al registro público, esta firma sí
+ * admite `role` e `isActive`. Quién puede usarla lo decide la guarda del
+ * Route Handler.
+ */
+export function createUserAsAdmin(user: {
+  readonly name: string;
+  readonly email: string;
+  readonly passwordHash: string;
+  readonly role: "USER" | "ADMIN";
+  readonly isActive: boolean;
+}) {
+  return prisma.user.create({
+    data: { ...user, email: normalizeEmail(user.email) },
+    select: adminUserSelection,
+  });
+}
+
+/**
  * Aplica los cambios que hace la administración sobre una cuenta.
  *
  * A diferencia de `updateUser`, esta firma sí admite `role` e `isActive`.

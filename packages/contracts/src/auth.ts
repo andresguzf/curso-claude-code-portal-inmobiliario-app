@@ -132,6 +132,26 @@ export const ADMIN_USER_QUERY_PARAM_NAMES = {
 export const ADMIN_USERS_PER_PAGE = 10;
 
 /**
+ * Alta de una cuenta desde la administración (spec.md, sección 21).
+ *
+ * Lleva contraseña inicial porque no hay a quién pedírsela: la fija quien
+ * crea la cuenta y la comunica a su destinatario, que podrá cambiarla desde
+ * su propia área.
+ *
+ * Admite `role`, y es la única vía dentro de la aplicación para dar de alta
+ * un segundo `ADMIN`: el registro público solo crea `USER`.
+ */
+export type AdminCreateUserRequestDto = {
+  readonly name: string;
+  readonly email: string;
+  readonly password: string;
+  /** Por omisión, `USER`. */
+  readonly role?: UserRoleValue;
+  /** Por omisión, activa: una cuenta que nace sin poder entrar no sirve. */
+  readonly isActive?: boolean;
+};
+
+/**
  * Cambios que ADMIN hace sobre la cuenta de otra persona.
  *
  * Todos son opcionales: es un `PATCH`, y lo que no viaja no se toca.

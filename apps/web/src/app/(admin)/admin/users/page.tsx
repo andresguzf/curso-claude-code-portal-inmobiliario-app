@@ -7,6 +7,7 @@ import {
   type AdminUserPageDto,
 } from "@portal/contracts";
 
+import { NewUserForm } from "@/components/admin/new-user-form";
 import { UserManager } from "@/components/admin/user-manager";
 import { Pagination } from "@/components/ui/pagination";
 import { SearchForm } from "@/components/ui/search-form";
@@ -54,6 +55,10 @@ export default async function AdminUsersPage({
         Las cuentas del portal. Puedes editarlas, cambiarles el rol y dejarlas
         dentro o fuera.
       </p>
+
+      <div className="mt-6">
+        <NewUserForm />
+      </div>
 
       <SearchForm
         basePath={USERS_PATH}

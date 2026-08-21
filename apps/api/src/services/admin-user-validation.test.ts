@@ -2,7 +2,36 @@ import { describe, expect, it } from "vitest";
 
 import { AUTH_LIMITS } from "@portal/contracts";
 
-import { validateAdminUserUpdate } from "./admin-user-validation";
+import {
+  validateAdminUserCreation,
+  validateAdminUserUpdate,
+} from "./admin-user-validation";
+
+function creationOf(payload: unknown) {
+  const result = validateAdminUserCreation(payload);
+
+  if (!result.ok) {
+    throw new Error(`Se esperaba un alta válida: ${result.message}`);
+  }
+
+  return result.user;
+}
+
+function creationRejectionOf(payload: unknown): string {
+  const result = validateAdminUserCreation(payload);
+
+  if (result.ok) {
+    throw new Error("Se esperaba un rechazo.");
+  }
+
+  return result.message;
+}
+
+const ALTA_VALIDA = {
+  name: "  Ana Pérez  ",
+  email: "ana.nueva@example.com",
+  password: "contrasena-larga",
+};
 
 function acceptedOf(payload: unknown) {
   const result = validateAdminUserUpdate(payload);
@@ -75,5 +104,57 @@ describe("validateAdminUserUpdate", () => {
 
   it("exige que el estado sea booleano, no la cadena «false»", () => {
     expect(rejectionOf({ isActive: "false" })).toMatch(/verdadero o falso/);
+  });
+});
+
+describe("validateAdminUserCreation", () => {
+  it("da de alta con rol USER y activa por omisión", () => {
+    // Una cuenta que nace sin poder entrar no le sirve a nadie.
+    expect(creationOf(ALTA_VALIDA)).toEqual({
+      name: "Ana Pérez",
+      email: "ana.nueva@example.com",
+      password: "contrasena-larga",
+      role: "USER",
+      isActive: true,
+    });
+  });
+
+  it("admite crear otra administración", () => {
+    // Es la única vía dentro de la aplicación: el registro público solo crea
+    // cuentas USER.
+    expect(creationOf({ ...ALTA_VALIDA, role: "ADMIN" }).role).toBe("ADMIN");
+  });
+
+  it("exige nombre, email y contraseña", () => {
+    expect(creationRejectionOf({ ...ALTA_VALIDA, name: "  " })).toBe(
+      "El nombre es obligatorio.",
+    );
+    expect(creationRejectionOf({ ...ALTA_VALIDA, email: "" })).toBe(
+      "El email es obligatorio.",
+    );
+    expect(creationRejectionOf({ ...ALTA_VALIDA, password: "" })).toMatch(
+      /al menos/,
+    );
+  });
+
+  it("rechaza una contraseña corta, como el registro público", () => {
+    expect(creationRejectionOf({ ...ALTA_VALIDA, password: "corta" })).toMatch(
+      /al menos 8/,
+    );
+  });
+
+  it("rechaza un email mal formado y un rol inventado", () => {
+    expect(creationRejectionOf({ ...ALTA_VALIDA, email: "sin-arroba" })).toBe(
+      "El email no es válido.",
+    );
+    expect(creationRejectionOf({ ...ALTA_VALIDA, role: "SUPERADMIN" })).toBe(
+      "El rol no es válido.",
+    );
+  });
+
+  it("rechaza un cuerpo que no es un objeto", () => {
+    expect(creationRejectionOf(null)).toBe(
+      "El cuerpo de la solicitud es inválido.",
+    );
   });
 });

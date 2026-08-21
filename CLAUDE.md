@@ -441,6 +441,12 @@ en Cloudinary.
 por rol y estado. Cada fila dice cuántos favoritos y cuántas consultas tiene,
 que es la forma rápida de saber si la cuenta se usa.
 
+`POST /api/admin/users` da de alta una cuenta con su contraseña inicial y
+con el rol que se pida. Es la **única vía dentro de la aplicación** para
+crear un segundo ADMIN: el registro público solo crea `USER`. La contraseña
+la fija quien crea la cuenta y hay que comunicársela a su destinatario; no
+se puede recuperar después, solo reemplazar.
+
 `PATCH /api/admin/users/{id}` cambia nombre, email, contraseña, rol o estado:
 lo que no viaja no se toca. **Quién** hace la petición sale de la sesión,
 nunca del cuerpo, y es lo que hace imposible saltarse las reglas de la propia
@@ -453,6 +459,10 @@ comunique la nueva.
 
 Desactivar surte efecto en el acto —comprobado: el login pasa a responder
 401— porque el estado se relee de PostgreSQL en cada petición.
+
+El listado va paginado de diez en diez, como el de propiedades. El control no
+se pinta cuando solo hay una página: unos botones inertes ocupan sitio y
+hacen dudar de si algo falló.
 
 Los filtros de esta pantalla son enlaces y no un formulario: con dos filtros
 de tres opciones, un panel plegable sería más maquinaria de la necesaria, y
@@ -499,8 +509,8 @@ mínimo de ocho caracteres que exige el backend.
 - Las imágenes del seed siguen siendo de `picsum.photos`: el seed no sube
   nada a Cloudinary, para no gastar la cuota de la cuenta en datos de
   desarrollo que se recrean a menudo.
-- El registro público solo da de alta cuentas con rol `USER`. El `ADMIN`
-  llega por el seed.
+- El registro público solo da de alta cuentas con rol `USER`. Un `ADMIN`
+  llega por el seed o lo crea otro `ADMIN` desde `/admin/users`.
 - El formulario de contacto necesita `NEXT_PUBLIC_WEB3FORMS_ACCESS_KEY` en
   `apps/web/.env`. Sin ella el formulario lo dice, en vez de dar por enviada
   una consulta que no salió. La clave está en el frontend porque el plan

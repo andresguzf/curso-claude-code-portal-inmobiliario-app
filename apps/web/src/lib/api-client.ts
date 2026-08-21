@@ -6,6 +6,7 @@ import {
   type AdminPropertyDto,
   type AdminFeatureDto,
   type AdminPropertyPageDto,
+  type AdminCreateUserRequestDto,
   type AdminUpdateUserRequestDto,
   type AdminUserDto,
   type AdminUserPageDto,
@@ -737,4 +738,22 @@ export async function updateAdminUser(
   );
 
   return readOrThrow(response, "No pudimos guardar los cambios.");
+}
+
+/**
+ * Da de alta una cuenta.
+ *
+ * Es la única vía dentro de la aplicación para crear otra administración: el
+ * registro público solo crea cuentas `USER`.
+ */
+export async function createAdminUser(
+  user: AdminCreateUserRequestDto,
+): Promise<AdminUserDto> {
+  const response = await fetch(buildApiUrl("/api/admin/users"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(user),
+  });
+
+  return readOrThrow(response, "No pudimos crear la cuenta.");
 }

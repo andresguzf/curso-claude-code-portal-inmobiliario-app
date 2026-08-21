@@ -10,13 +10,17 @@ import {
 
 import { hashPassword } from "@/lib/password";
 import {
+  createUserAsAdmin,
   findAdminUserById,
   findAdminUsers,
   findUserByEmail,
   updateUserAsAdmin,
 } from "@/repositories/user-repository";
 import { buildAdminUserWhere } from "@/services/admin-user-query";
-import { validateAdminUserUpdate } from "@/services/admin-user-validation";
+import {
+  validateAdminUserCreation,
+  validateAdminUserUpdate,
+} from "@/services/admin-user-validation";
 
 /**
  * Administración de usuarios (spec.md, sección 21).
@@ -75,6 +79,46 @@ export async function getAdminUser(id: string): Promise<AdminUserDto | null> {
   const user = await findAdminUserById(id);
 
   return user ? toAdminUser(user) : null;
+}
+
+/**
+ * Da de alta una cuenta desde la administración (spec.md, sección 21).
+ *
+ * Admite crear otra administración, y es la única vía para hacerlo dentro de
+ * la aplicación: el registro público solo crea cuentas `USER`.
+ *
+ * La contraseña se guarda con el mismo hash que el registro público: aquí no
+ * hay ningún camino más corto.
+ */
+export async function createUserAsAdministrator(
+  payload: unknown,
+): Promise<UserMutationOutcome> {
+  const validation = validateAdminUserCreation(payload);
+
+  if (!validation.ok) {
+    return { status: "invalid", message: validation.message };
+  }
+
+  const { user } = validation;
+
+  // Se comprueba antes de escribir para responder un 409 explicando el
+  // motivo, en vez de dejar reventar la unicidad del email con un 500.
+  if (await findUserByEmail(user.email)) {
+    return {
+      status: "duplicate",
+      message: "Ese email ya pertenece a otra cuenta.",
+    };
+  }
+
+  const created = await createUserAsAdmin({
+    name: user.name,
+    email: user.email,
+    passwordHash: await hashPassword(user.password),
+    role: user.role,
+    isActive: user.isActive,
+  });
+
+  return { status: "ok", user: toAdminUser(created) };
 }
 
 /**

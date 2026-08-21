@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const repository = vi.hoisted(() => ({
+  createUserAsAdmin: vi.fn(),
   findAdminUsers: vi.fn(),
   findAdminUserById: vi.fn(),
   findUserByEmail: vi.fn(),
@@ -20,7 +21,10 @@ vi.mock("server-only", () => ({}));
 vi.mock("@/repositories/user-repository", () => repository);
 vi.mock("@/lib/password", () => password);
 
-import { updateUserAsAdministrator } from "./admin-user-service";
+import {
+  createUserAsAdministrator,
+  updateUserAsAdministrator,
+} from "./admin-user-service";
 
 const ADMIN_ID = "admin-1";
 const OTRA_ID = "user-2";
@@ -219,5 +223,80 @@ describe("updateUserAsAdministrator, sobre la propia cuenta", () => {
     });
 
     expect(outcome.status).toBe("ok");
+  });
+});
+
+describe("createUserAsAdministrator", () => {
+  const ALTA = {
+    name: "Ana Nueva",
+    email: "ana.nueva@example.com",
+    password: "contrasena-larga",
+  };
+
+  it("guarda la contraseña como hash, nunca en claro", async () => {
+    repository.findUserByEmail.mockResolvedValue(null);
+    repository.createUserAsAdmin.mockResolvedValue(buildRecord());
+
+    await createUserAsAdministrator(ALTA);
+
+    const [datos] = repository.createUserAsAdmin.mock.calls[0];
+    expect(datos.passwordHash).toBe("hash-nuevo");
+    expect(JSON.stringify(datos)).not.toContain("contrasena-larga");
+  });
+
+  it("crea con rol USER y activa por omisión", async () => {
+    repository.findUserByEmail.mockResolvedValue(null);
+    repository.createUserAsAdmin.mockResolvedValue(buildRecord());
+
+    await createUserAsAdministrator(ALTA);
+
+    expect(repository.createUserAsAdmin).toHaveBeenCalledWith(
+      expect.objectContaining({ role: "USER", isActive: true }),
+    );
+  });
+
+  it("admite crear otra administración", async () => {
+    repository.findUserByEmail.mockResolvedValue(null);
+    repository.createUserAsAdmin.mockResolvedValue(
+      buildRecord({ role: "ADMIN" }),
+    );
+
+    const outcome = await createUserAsAdministrator({
+      ...ALTA,
+      role: "ADMIN",
+    });
+
+    expect(outcome.status).toBe("ok");
+    expect(repository.createUserAsAdmin).toHaveBeenCalledWith(
+      expect.objectContaining({ role: "ADMIN" }),
+    );
+  });
+
+  it("rechaza un email que ya existe, sin escribir", async () => {
+    repository.findUserByEmail.mockResolvedValue({ id: "otro" });
+
+    const outcome = await createUserAsAdministrator(ALTA);
+
+    expect(outcome).toEqual({
+      status: "duplicate",
+      message: "Ese email ya pertenece a otra cuenta.",
+    });
+    expect(repository.createUserAsAdmin).not.toHaveBeenCalled();
+  });
+
+  it("no consulta la base si los datos no valen", async () => {
+    const outcome = await createUserAsAdministrator({ ...ALTA, name: "  " });
+
+    expect(outcome.status).toBe("invalid");
+    expect(repository.findUserByEmail).not.toHaveBeenCalled();
+  });
+
+  it("no devuelve el hash de la contraseña", async () => {
+    repository.findUserByEmail.mockResolvedValue(null);
+    repository.createUserAsAdmin.mockResolvedValue(buildRecord());
+
+    const outcome = await createUserAsAdministrator(ALTA);
+
+    expect(JSON.stringify(outcome)).not.toContain("passwordHash");
   });
 });
