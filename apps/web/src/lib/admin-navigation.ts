@@ -26,6 +26,11 @@ export const ADMIN_NAVIGATION_ITEMS: readonly AdminNavigationItem[] = [
     icon: "M3 10.5 12 4l9 6.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9.5Z",
   },
   {
+    href: "/admin/features",
+    label: "Características",
+    icon: "M12 4l2.4 5 5.6.7-4 3.9 1 5.4-5-2.7-5 2.7 1-5.4-4-3.9 5.6-.7L12 4Z",
+  },
+  {
     href: "/admin/profile",
     label: "Mi perfil",
     icon: "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-8 8a8 8 0 0 1 16 0",

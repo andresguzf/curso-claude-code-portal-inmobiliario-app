@@ -147,6 +147,17 @@ No crear una columna booleana en `Property` para cada característica.
 
 Una propiedad puede tener múltiples características y una característica puede pertenecer a múltiples propiedades.
 
+ADMIN puede crear, renombrar y eliminar características desde el panel, sin
+tocar el esquema ni desplegar: ampliar el vocabulario es dar de alta una fila.
+
+El identificador se deriva del nombre y **no cambia al renombrar**: es con lo
+que las propiedades quedan enlazadas, y corregir una errata no debe romper
+esas referencias.
+
+Al eliminar una característica, las propiedades que la declaraban dejan de
+hacerlo y no pierden ningún otro dato. La interfaz dice a cuántas afecta antes
+de confirmar.
+
 ---
 
 ## 5. Imágenes

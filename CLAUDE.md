@@ -165,15 +165,14 @@ El más justo es el texto claro sobre el acento en oscuro, con 4.53.
 
 ## Estado del proyecto
 
-Pasos 1 a 27 de `tasks.md` completos. En funcionamiento: portada, catálogo
+Pasos 1 a 28 de `tasks.md` completos. En funcionamiento: portada, catálogo
 con búsqueda, filtros combinados, ordenamiento, estados de carga/vacío/error,
 detalle de propiedad, galería, mapa de ubicación, formulario de contacto,
 autenticación con autorización por rol, el área privada de la cuenta —con
 edición de los propios datos, favoritos y consultas guardadas— y el panel de
 administración con sus indicadores y el alta, edición y baja de propiedades.
 
-Pendiente desde el paso 28: la gestión de características, usuarios y
-consultas.
+Pendiente desde el paso 29: la gestión de usuarios y consultas.
 
 ### Autenticación
 
@@ -336,6 +335,24 @@ Las características son casillas y no texto libre: el backend las conecta por
 `slug` contra la tabla `features`, y una escrita a mano no existiría. Las
 ofrece `GET /api/admin/features`. Un `slug` inexistente se rechaza con 400 y
 dice cuál sobra, en vez de hacer fallar al ORM y responder un 500 mudo.
+
+### Características
+
+`/admin/features` permite crear, renombrar y eliminar. Ampliar el vocabulario
+es dar de alta una fila: `Property` no tiene una columna por característica, y
+eso es lo que hace que no haga falta ni migración ni despliegue.
+
+El `slug` lo deriva el servidor del nombre —sin acentos, en minúsculas, con
+guiones— y **no cambia al renombrar**: es con lo que las propiedades quedan
+enlazadas, así que corregir una errata rompería esas referencias.
+
+Un nombre repetido responde **409** y dice cuál choca. La comparación ignora
+mayúsculas y acentos, porque «Lavanderia» y «Lavandería» darían el mismo
+`slug` y chocarían igualmente en la base.
+
+Al eliminar, las propiedades que la declaraban dejan de hacerlo y no pierden
+nada más. El diálogo dice a cuántas afecta con el número delante: «dejará de
+figurar» a secas ocultaría que toca fichas ya publicadas.
 
 Un campo numérico vacío viaja como `null`, no como cero: una propiedad por
 estrenar tiene cero años de antigüedad, y un terreno no declara dormitorios;

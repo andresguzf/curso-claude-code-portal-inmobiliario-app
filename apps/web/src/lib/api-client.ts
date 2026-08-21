@@ -3,7 +3,9 @@ import {
   QUERY_PARAM_NAMES,
   type AdminOverviewDto,
   type AdminPropertyDto,
+  type AdminFeatureDto,
   type AdminPropertyPageDto,
+  type FeatureInputDto,
   type FeatureListDto,
   type PropertyInputDto,
   type ApiErrorDto,
@@ -627,4 +629,50 @@ export async function deletePropertyImage(
   );
 
   await readOrThrow(response, "No pudimos eliminar la imagen.");
+}
+
+/**
+ * Características (spec.md, sección 4).
+ *
+ * Dar de alta una es crear una fila, no añadir una columna a `Property` ni
+ * desplegar código. El identificador lo deriva el servidor del nombre.
+ */
+
+export async function createAdminFeature(
+  name: string,
+): Promise<AdminFeatureDto> {
+  const body: FeatureInputDto = { name };
+  const response = await fetch(buildApiUrl("/api/admin/features"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  return readOrThrow(response, "No pudimos crear la característica.");
+}
+
+export async function renameAdminFeature(
+  featureId: string,
+  name: string,
+): Promise<AdminFeatureDto> {
+  const body: FeatureInputDto = { name };
+  const response = await fetch(
+    buildApiUrl(`/api/admin/features/${encodeURIComponent(featureId)}`),
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    },
+  );
+
+  return readOrThrow(response, "No pudimos guardar el nombre.");
+}
+
+export async function deleteAdminFeature(featureId: string): Promise<void> {
+  const response = await fetch(
+    buildApiUrl(`/api/admin/features/${encodeURIComponent(featureId)}`),
+    { method: "DELETE" },
+  );
+
+  await readOrThrow(response, "No pudimos eliminar la característica.");
 }
