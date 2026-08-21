@@ -165,15 +165,14 @@ El más justo es el texto claro sobre el acento en oscuro, con 4.53.
 
 ## Estado del proyecto
 
-Pasos 1 a 26 de `tasks.md` completos. En funcionamiento: portada, catálogo
+Pasos 1 a 28 de `tasks.md` completos. En funcionamiento: portada, catálogo
 con búsqueda, filtros combinados, ordenamiento, estados de carga/vacío/error,
 detalle de propiedad, galería, mapa de ubicación, formulario de contacto,
 autenticación con autorización por rol, el área privada de la cuenta —con
 edición de los propios datos, favoritos y consultas guardadas— y el panel de
 administración con sus indicadores y el alta, edición y baja de propiedades.
 
-Pendiente desde el paso 27: la administración de imágenes en la interfaz y
-la gestión de características, usuarios y consultas.
+Pendiente desde el paso 29: la gestión de usuarios y consultas.
 
 ### Autenticación
 
@@ -315,6 +314,11 @@ en un panel colapsable **a la derecha**: a la izquierda ya está la barra de
 secciones, y dos barras enfrentadas dejarían la tabla sin sitio. Contraído
 dice cuántos hay puestos, para que nadie olvide que ve un listado acotado.
 
+En escritorio se contrae **en horizontal**, de 288 a 48 píxeles, y la tabla
+gana esos 255. Contraerlo en vertical no devolvía nada: la columna seguía
+reservada y vacía. En móvil se contrae en vertical, porque allí va apilado
+sobre la tabla y una pestaña lateral no le quitaría sitio a nadie.
+
 Un filtro inválido escrito a mano en la URL produce un 400 con su motivo, y
 la página lo dice. El cliente REST reenvía los parámetros **sin
 interpretarlos**: descartarlos en silencio mostraría un listado que no
@@ -336,6 +340,36 @@ Las características son casillas y no texto libre: el backend las conecta por
 `slug` contra la tabla `features`, y una escrita a mano no existiría. Las
 ofrece `GET /api/admin/features`. Un `slug` inexistente se rechaza con 400 y
 dice cuál sobra, en vez de hacer fallar al ORM y responder un 500 mudo.
+
+### Características
+
+`/admin/features` permite crear, renombrar y eliminar. Ampliar el vocabulario
+es dar de alta una fila: `Property` no tiene una columna por característica, y
+eso es lo que hace que no haga falta ni migración ni despliegue.
+
+El `slug` lo deriva el servidor del nombre —sin acentos, en minúsculas, con
+guiones— y **no cambia al renombrar**: es con lo que las propiedades quedan
+enlazadas, así que corregir una errata rompería esas referencias.
+
+Un nombre repetido responde **409** y dice cuál choca. La comparación ignora
+mayúsculas y acentos, porque «Lavanderia» y «Lavandería» darían el mismo
+`slug` y chocarían igualmente en la base.
+
+Al eliminar, las propiedades que la declaraban dejan de hacerlo y no pierden
+nada más. El diálogo dice a cuántas afecta con el número delante: «dejará de
+figurar» a secas ocultaría que toca fichas ya publicadas.
+
+Se pinta como lista y no como tabla: son cuatro datos por fila y ninguno se
+compara entre filas. Con tabla, a poca anchura los botones quedaban fuera del
+área visible y la sección parecía no tener acciones.
+
+Si el renombrado falla, la fila **sigue abierta** con lo escrito dentro y el
+aviso aparece en la propia fila. Cerrarla perdía el texto y dejaba el mensaje
+al pie de la página, fuera de la pantalla: la operación parecía no hacer nada.
+
+El foco y la selección del texto se piden en un efecto, no con `autoFocus`:
+ese atributo enfoca antes de que React tenga puesto su escuchador, así que un
+`onFocus` que seleccione no llega a ejecutarse.
 
 Un campo numérico vacío viaja como `null`, no como cero: una propiedad por
 estrenar tiene cero años de antigüedad, y un terreno no declara dormitorios;
@@ -369,8 +403,35 @@ recurso recién subido. Un archivo que nada referencia es un huérfano que
 nadie sabría que sobra.
 
 La primera imagen de una propiedad queda como principal: sin portada no se
-pintaría en el catálogo. Reordenar, cambiar la principal y eliminar llegan en
-el paso 27.
+pintaría en el catálogo.
+
+La galería se administra desde la ficha de edición, en su propia sección:
+
+| Verbo | Ruta | Qué hace |
+|---|---|---|
+| `PUT` | `…/images` | Fija el orden con la lista **completa** de identificadores |
+| `PATCH` | `…/images/{id}` | Marca esa imagen como portada |
+| `DELETE` | `…/images/{id}` | La quita de la propiedad y de Cloudinary |
+
+`PUT` exige la lista entera, como el `PUT` de la propiedad exige la lista
+definitiva de características: una parcial dejaría posiciones a medias, y dos
+peticiones seguidas con movimientos relativos se pisarían.
+
+Al eliminar se borra **primero la fila y después el archivo**. Al revés, un
+fallo en el segundo paso dejaría una imagen rota en la ficha; en este orden
+lo peor que queda es un archivo huérfano, que cuesta almacenamiento pero no
+se le aparece a nadie. Por eso un fallo de Cloudinary no se propaga: para
+quien administra la imagen ya no está, que es lo que pidió, y el huérfano
+queda anotado en el log.
+
+Si se elimina la portada, asciende la primera de las que quedan. Reordenar,
+cambiar la portada y ese ascenso van en transacción: a medio hacer dejarían
+dos portadas o dos imágenes en la misma posición.
+
+Estos cambios **no** esperan al botón de guardar del formulario: operan sobre
+un archivo que ya está subido, y mezclarlos con el borrador de los demás
+campos haría que cancelar la edición dejara a medias algo que ya ocupa sitio
+en Cloudinary.
 
 ### Autorización
 

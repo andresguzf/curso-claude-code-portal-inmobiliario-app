@@ -3,7 +3,9 @@ import {
   QUERY_PARAM_NAMES,
   type AdminOverviewDto,
   type AdminPropertyDto,
+  type AdminFeatureDto,
   type AdminPropertyPageDto,
+  type FeatureInputDto,
   type FeatureListDto,
   type PropertyInputDto,
   type ApiErrorDto,
@@ -17,6 +19,8 @@ import {
   type InquiryRequestDto,
   type PropertyDetailDto,
   type PropertyFilterOptionsDto,
+  type PropertyImageDto,
+  type PropertyImageOrderDto,
   type PropertyListDto,
   type PropertyListQuery,
 } from "@portal/contracts";
@@ -543,4 +547,132 @@ export async function deleteAdminProperty(propertyId: string): Promise<void> {
   );
 
   await readOrThrow(response, "No pudimos eliminar la propiedad.");
+}
+
+/**
+ * Imágenes de una propiedad (spec.md, sección 20).
+ *
+ * Todas se ejecutan en el navegador y actúan de inmediato: no esperan al
+ * envío del formulario de la propiedad, porque operan sobre un archivo que
+ * ya existe.
+ */
+
+function buildImagesPath(propertyId: string): string {
+  return `/api/admin/properties/${encodeURIComponent(propertyId)}/images`;
+}
+
+/**
+ * Sube una imagen.
+ *
+ * El cuerpo es `FormData` y **no** lleva `Content-Type`: el navegador lo
+ * pone con el separador que él mismo genera, y escribirlo a mano produce un
+ * cuerpo que el servidor no sabe partir.
+ */
+export async function uploadPropertyImage(
+  propertyId: string,
+  file: File,
+): Promise<PropertyImageDto> {
+  const body = new FormData();
+
+  body.append("file", file);
+
+  const response = await fetch(buildApiUrl(buildImagesPath(propertyId)), {
+    method: "POST",
+    body,
+  });
+
+  return readOrThrow(response, "No pudimos subir la imagen.");
+}
+
+/** Fija el orden. Se envía la lista completa, no un movimiento. */
+export async function reorderPropertyImages(
+  propertyId: string,
+  imageIds: readonly string[],
+): Promise<void> {
+  const body: PropertyImageOrderDto = { imageIds };
+  const response = await fetch(buildApiUrl(buildImagesPath(propertyId)), {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  await readOrThrow(response, "No pudimos guardar el orden.");
+}
+
+export async function makePropertyImagePrimary(
+  propertyId: string,
+  imageId: string,
+): Promise<void> {
+  const response = await fetch(
+    buildApiUrl(
+      `${buildImagesPath(propertyId)}/${encodeURIComponent(imageId)}`,
+    ),
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ isPrimary: true }),
+    },
+  );
+
+  await readOrThrow(response, "No pudimos cambiar la imagen principal.");
+}
+
+export async function deletePropertyImage(
+  propertyId: string,
+  imageId: string,
+): Promise<void> {
+  const response = await fetch(
+    buildApiUrl(
+      `${buildImagesPath(propertyId)}/${encodeURIComponent(imageId)}`,
+    ),
+    { method: "DELETE" },
+  );
+
+  await readOrThrow(response, "No pudimos eliminar la imagen.");
+}
+
+/**
+ * Características (spec.md, sección 4).
+ *
+ * Dar de alta una es crear una fila, no añadir una columna a `Property` ni
+ * desplegar código. El identificador lo deriva el servidor del nombre.
+ */
+
+export async function createAdminFeature(
+  name: string,
+): Promise<AdminFeatureDto> {
+  const body: FeatureInputDto = { name };
+  const response = await fetch(buildApiUrl("/api/admin/features"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  return readOrThrow(response, "No pudimos crear la característica.");
+}
+
+export async function renameAdminFeature(
+  featureId: string,
+  name: string,
+): Promise<AdminFeatureDto> {
+  const body: FeatureInputDto = { name };
+  const response = await fetch(
+    buildApiUrl(`/api/admin/features/${encodeURIComponent(featureId)}`),
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    },
+  );
+
+  return readOrThrow(response, "No pudimos guardar el nombre.");
+}
+
+export async function deleteAdminFeature(featureId: string): Promise<void> {
+  const response = await fetch(
+    buildApiUrl(`/api/admin/features/${encodeURIComponent(featureId)}`),
+    { method: "DELETE" },
+  );
+
+  await readOrThrow(response, "No pudimos eliminar la característica.");
 }

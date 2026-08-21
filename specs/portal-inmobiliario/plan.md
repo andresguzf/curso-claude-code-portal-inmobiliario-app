@@ -373,7 +373,27 @@ Si la subida sale bien pero la fila no llega a guardarse, se elimina el
 recurso recién subido: quedaría un archivo que nada referencia y que nadie
 sabría que sobra.
 
-La eliminación debe mantener sincronizados Cloudinary y PostgreSQL.
+Administración de las imágenes ya subidas:
+
+```text
+PUT    /api/admin/properties/{id}/images          (orden definitivo)
+PATCH  /api/admin/properties/{id}/images/{imageId} (marcar principal)
+DELETE /api/admin/properties/{id}/images/{imageId}
+```
+
+`PUT` recibe la lista completa de identificadores en el orden deseado, como
+el `PUT` de la propiedad recibe la lista definitiva de características: una
+lista parcial dejaría posiciones a medias.
+
+La eliminación debe mantener sincronizados Cloudinary y PostgreSQL. El orden
+es **primero la fila y después el archivo**: al revés, un fallo en el segundo
+paso dejaría una imagen rota en la ficha, mientras que así lo peor que queda
+es un archivo huérfano, que cuesta almacenamiento pero no se le aparece a
+nadie.
+
+Las escrituras que tocan varias filas —reordenar, cambiar la principal,
+promover una nueva principal al eliminar— van en una transacción: a medio
+hacer dejarían dos imágenes principales o dos en la misma posición.
 
 ## 12. Google Maps
 

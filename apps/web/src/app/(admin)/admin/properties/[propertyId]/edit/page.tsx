@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import type { PropertyFeatureDto } from "@portal/contracts";
 
 import { PropertyForm } from "@/components/admin/property-form";
+import { PropertyImages } from "@/components/admin/property-images";
 import { fetchAdminFeatures, fetchAdminProperty } from "@/lib/api-client";
 import { requireAdminUser } from "@/lib/require-user";
 
@@ -51,6 +52,10 @@ export default async function EditPropertyPage({
           ? "Está publicada: los cambios se ven en el portal al guardar."
           : "Está en borrador: no aparece en el portal hasta que la publiques."}
       </p>
+
+      <div className="mt-6 rounded-xl border border-line bg-card p-6">
+        <PropertyImages propertyId={property.id} images={property.images} />
+      </div>
 
       <div className="mt-6 rounded-xl border border-line bg-card p-6">
         <PropertyForm features={features} property={property} />

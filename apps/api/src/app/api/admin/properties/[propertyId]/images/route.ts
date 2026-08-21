@@ -1,4 +1,7 @@
-import type { PropertyImageDto } from "@portal/contracts";
+import type {
+  PropertyImageDto,
+  PropertyImageOrderDto,
+} from "@portal/contracts";
 
 import {
   HTTP_STATUS,
@@ -7,7 +10,10 @@ import {
   jsonOk,
 } from "@/lib/api-response";
 import { requireAdmin } from "@/lib/auth-guard";
-import { addPropertyImage } from "@/services/property-image-service";
+import {
+  addPropertyImage,
+  reorderImages,
+} from "@/services/property-image-service";
 
 export const dynamic = "force-dynamic";
 
@@ -85,4 +91,71 @@ export async function POST(
       error,
     );
   }
+}
+
+/**
+ * PUT /api/admin/properties/{id}/images
+ *
+ * Fija el orden de la galería. El cuerpo lleva la lista **completa** de
+ * identificadores en el orden deseado, igual que el `PUT` de la propiedad
+ * lleva la lista definitiva de características: una parcial dejaría
+ * posiciones a medias.
+ */
+export async function PUT(
+  request: Request,
+  context: RouteContext<"/api/admin/properties/[propertyId]/images">,
+) {
+  try {
+    const session = await requireAdmin();
+
+    if (!session.ok) {
+      return session.response;
+    }
+
+    const { propertyId } = await context.params;
+    const payload: unknown = await request.json().catch(() => null);
+    const imageIds = readImageIds(payload);
+
+    if (imageIds === null) {
+      return jsonError(
+        "Envía «imageIds» con los identificadores en el orden deseado.",
+        HTTP_STATUS.BAD_REQUEST,
+      );
+    }
+
+    const outcome = await reorderImages(propertyId, imageIds);
+
+    switch (outcome.status) {
+      case "ok":
+        return jsonOk({ message: "Orden actualizado." });
+
+      case "invalid":
+        return jsonError(outcome.message, HTTP_STATUS.BAD_REQUEST);
+
+      case "not-found":
+        return jsonError("Propiedad no encontrada.", HTTP_STATUS.NOT_FOUND);
+    }
+  } catch (error) {
+    return jsonInternalError(
+      "PUT /api/admin/properties/[propertyId]/images",
+      error,
+    );
+  }
+}
+
+/** Devuelve `null` si el cuerpo no trae una lista de textos. */
+function readImageIds(payload: unknown): readonly string[] | null {
+  if (typeof payload !== "object" || payload === null) {
+    return null;
+  }
+
+  const { imageIds } = payload as Partial<PropertyImageOrderDto>;
+
+  if (!Array.isArray(imageIds)) {
+    return null;
+  }
+
+  return imageIds.every((imageId) => typeof imageId === "string" && imageId)
+    ? imageIds
+    : null;
 }

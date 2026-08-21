@@ -190,14 +190,14 @@
   - Validar tipo y tamaño.
   - Guardar URL y `publicId`.
 
-- [ ] **Paso 27 — Administración de imágenes**
+- [x] **Paso 27 — Administración de imágenes**
   - Múltiples imágenes.
   - Eliminar.
   - Seleccionar principal.
   - Ordenar.
   - Mantener sincronizados Cloudinary y PostgreSQL.
 
-- [ ] **Paso 28 — Características**
+- [x] **Paso 28 — Características**
   - Múltiples características por propiedad.
   - Modelo flexible.
   - Permitir nuevas características sin modificar columnas de Property.

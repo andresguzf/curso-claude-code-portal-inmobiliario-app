@@ -147,6 +147,17 @@ No crear una columna booleana en `Property` para cada característica.
 
 Una propiedad puede tener múltiples características y una característica puede pertenecer a múltiples propiedades.
 
+ADMIN puede crear, renombrar y eliminar características desde el panel, sin
+tocar el esquema ni desplegar: ampliar el vocabulario es dar de alta una fila.
+
+El identificador se deriva del nombre y **no cambia al renombrar**: es con lo
+que las propiedades quedan enlazadas, y corregir una errata no debe romper
+esas referencias.
+
+Al eliminar una característica, las propiedades que la declaraban dejan de
+hacerlo y no pierden ningún otro dato. La interfaz dice a cuántas afecta antes
+de confirmar.
+
 ---
 
 ## 5. Imágenes
@@ -527,8 +538,17 @@ El panel empieza abierto y se puede contraer; contraído indica cuántos
 filtros están aplicados, para que nadie olvide que está viendo un listado
 acotado.
 
+En escritorio se contrae en horizontal, hasta quedar en una pestaña estrecha,
+y el listado ocupa el ancho que deja libre. En móvil se contrae en vertical,
+porque allí el panel va apilado sobre el listado y una pestaña lateral no le
+devolvería espacio a nadie.
+
 El filtro de estado es la diferencia principal con el catálogo público, que
 no tiene ninguno: allí no hay borradores que distinguir.
+
+---
+
+## 20. Administración de imágenes
 
 ADMIN puede:
 
@@ -540,6 +560,20 @@ ADMIN puede:
 Al eliminar una imagen se debe mantener sincronizado Cloudinary con PostgreSQL.
 
 No dejar referencias huérfanas.
+
+Primero se borra la fila y después el archivo. Al revés, si lo segundo
+fallara, la ficha mostraría una imagen rota; en este orden lo peor que queda
+es un archivo que nadie referencia, que cuesta almacenamiento pero no se le
+aparece a nadie.
+
+Una propiedad con imágenes siempre tiene una principal. Si se elimina la que
+lo era, pasa a serlo la primera de las que quedan: sin portada, la propiedad
+no se pintaría en el catálogo.
+
+Los cambios de orden, de imagen principal y las eliminaciones se guardan al
+instante, no al enviar el formulario de la propiedad. Son operaciones sobre
+un archivo que ya existe, y mezclarlas con el borrador de los demás campos
+haría que cancelar la edición dejara a medias algo ya subido.
 
 ---
 
