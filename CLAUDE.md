@@ -135,6 +135,7 @@ resultantes y nunca colores literales.
 | Token | Uso |
 |---|---|
 | `header`, `header-hover` | Barra superior y hero (azul grisáceo) |
+| `sidebar`, `sidebar-hover`, `sidebar-ink`, `sidebar-ink-muted`, `sidebar-line` | Barra lateral del panel: clara en tema claro, hundida en oscuro |
 | `footer` | Pie de página (gris pardo) |
 | `page` | Fondo del cuerpo (arena cálida) |
 | `card` | Tarjetas y paneles |
@@ -149,6 +150,11 @@ El portal público es de tema claro único. El **panel de administración**
 admite claro y oscuro: el layout de `(admin)` marca `data-theme` en `<html>`
 y `globals.css` redefine ahí los mismos tokens. Cambiar de tema no toca ni
 una clase de componente.
+
+La barra lateral tiene tokens propios y no los del header público. En claro
+es una superficie clara, como el resto del panel; el header del portal sigue
+siendo oscuro. Compartir los tokens ataba dos decisiones que no tienen por
+qué ir juntas.
 
 La preferencia viaja en una cookie, no en `localStorage`, para que el
 servidor pinte el tema correcto desde el primer byte y no haya un parpadeo de

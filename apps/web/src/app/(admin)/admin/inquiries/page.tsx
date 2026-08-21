@@ -226,14 +226,12 @@ function Contact({ inquiry }: { readonly inquiry: AdminInquiryDto }) {
       </p>
 
       <p className="text-xs text-ink-muted">
-        {inquiry.user === null ? (
-          "Sin cuenta: la envió un visitante."
-        ) : differsFromAccount ? (
-          // Sin plantilla, el salto de línea de JSX deja «( email )».
-          `Cuenta: ${inquiry.user.name} (${inquiry.user.email})`
-        ) : (
-          "Con cuenta en el portal."
-        )}
+        {inquiry.user === null
+          ? "Sin cuenta: la envió un visitante."
+          : differsFromAccount
+            ? // Sin plantilla, el salto de línea de JSX deja «( email )».
+              `Cuenta: ${inquiry.user.name} (${inquiry.user.email})`
+            : "Con cuenta en el portal."}
       </p>
     </div>
   );

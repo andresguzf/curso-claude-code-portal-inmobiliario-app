@@ -115,13 +115,13 @@ function Sidebar({
         // Solo se anima `transform`, que va al compositor. Animar el ancho
         // obliga a recalcular la disposición en cada fotograma, y las guías
         // de interfaz lo desaconsejan: el ancho cambia de golpe.
-        "fixed inset-y-0 left-0 z-40 flex min-w-0 shrink-0 flex-col overflow-hidden bg-header text-on-dark transition-transform duration-200",
+        "fixed inset-y-0 left-0 z-40 flex min-w-0 shrink-0 flex-col overflow-hidden border-r border-sidebar-line bg-sidebar text-sidebar-ink transition-transform duration-200",
         "lg:static lg:translate-x-0",
         isMobileOpen ? "translate-x-0" : "-translate-x-full",
         isExpanded ? "w-64" : "w-64 lg:w-20",
       )}
     >
-      <div className="flex h-16 items-center gap-2 border-b border-line-on-dark px-4">
+      <div className="flex h-16 items-center gap-2 border-b border-sidebar-line px-4">
         <span
           className={cn(
             "truncate text-sm font-semibold tracking-tight",
@@ -135,7 +135,7 @@ function Sidebar({
           type="button"
           onClick={onToggle}
           aria-expanded={isExpanded}
-          className="ml-auto hidden rounded-md p-2 text-on-dark-muted transition-colors hover:bg-header-hover hover:text-on-dark lg:inline-flex"
+          className="ml-auto hidden rounded-md p-2 text-sidebar-ink-muted transition-colors hover:bg-sidebar-hover hover:text-sidebar-ink lg:inline-flex"
         >
           <span className="sr-only">
             {isExpanded ? "Contraer el menú" : "Expandir el menú"}
@@ -159,7 +159,7 @@ function Sidebar({
                   "flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors",
                   isActive
                     ? "bg-accent text-white"
-                    : "text-on-dark-muted hover:bg-header-hover hover:text-on-dark",
+                    : "text-sidebar-ink-muted hover:bg-sidebar-hover hover:text-sidebar-ink",
                   isExpanded ? "" : "lg:justify-center lg:px-0",
                 )}
               >
