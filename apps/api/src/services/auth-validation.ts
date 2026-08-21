@@ -155,7 +155,7 @@ export function validateAccountUpdate(
   };
 }
 
-function validateEmail(value: unknown): ValidationResult<string> {
+export function validateEmail(value: unknown): ValidationResult<string> {
   const email = readText(value);
 
   if (email === "") {
@@ -169,7 +169,7 @@ function validateEmail(value: unknown): ValidationResult<string> {
   return { ok: true, value: email };
 }
 
-function validatePassword(value: unknown): ValidationResult<string> {
+export function validatePassword(value: unknown): ValidationResult<string> {
   // La contraseña no se recorta: los espacios son caracteres como cualquiera
   // y recortarlos cambiaría en silencio lo que la persona escribió.
   const password = typeof value === "string" ? value : "";
@@ -188,12 +188,12 @@ function validatePassword(value: unknown): ValidationResult<string> {
   return { ok: true, value: password };
 }
 
-function readFields(payload: unknown): Record<string, unknown> | null {
+export function readFields(payload: unknown): Record<string, unknown> | null {
   return typeof payload === "object" && payload !== null
     ? (payload as Record<string, unknown>)
     : null;
 }
 
-function readText(value: unknown): string {
+export function readText(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
 }

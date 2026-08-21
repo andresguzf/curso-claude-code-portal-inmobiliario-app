@@ -230,9 +230,48 @@ Características disponibles, para el formulario de propiedad:
 GET /api/admin/features
 ```
 
-Vive bajo `/admin` porque hoy solo la administración necesita la lista
-completa: el catálogo público muestra las características de cada propiedad,
-no el vocabulario entero. Crear y editar características llega en el paso 28.
+Vive bajo `/admin` porque solo la administración necesita la lista completa:
+el catálogo público muestra las características de cada propiedad, no el
+vocabulario entero.
+
+```text
+POST   /api/admin/features
+PATCH  /api/admin/features/{id}
+DELETE /api/admin/features/{id}
+```
+
+`POST` deriva el identificador del nombre; `PATCH` cambia solo el nombre y
+deja el identificador quieto, porque es con lo que las propiedades quedan
+enlazadas. Un nombre repetido responde 409 y dice cuál choca, en lugar de
+dejar reventar la restricción de unicidad con un 500.
+
+El listado acompaña cada característica de cuántas propiedades la usan: es lo
+que permite advertir, antes de eliminarla, a cuántas fichas va a afectar.
+
+Usuarios:
+
+```text
+GET   /api/admin/users
+POST  /api/admin/users
+GET   /api/admin/users/{id}
+PATCH /api/admin/users/{id}
+```
+
+`GET` admite búsqueda por nombre o email y filtros por rol y estado. `PATCH`
+cambia nombre, email, contraseña, rol o estado: lo que no viaja no se toca.
+
+`POST` da de alta una cuenta con la contraseña inicial que se le fije, y
+admite rol `USER` o `ADMIN`. Es la única vía dentro de la aplicación para
+crear un segundo `ADMIN`; el registro público solo crea `USER`. Un email
+repetido responde 409, igual que en el registro.
+
+Quién hace la petición sale de la **sesión**, nunca del cuerpo. Es lo que
+hace imposible saltarse las reglas de la sección 21 de la especificación
+diciendo ser otra persona: sobre la propia cuenta, desactivarse o dejar de
+ser ADMIN responden 403.
+
+A diferencia de `PATCH /api/auth/me`, aquí no se pide la contraseña actual:
+quien administra no la conoce. Es la contrapartida del rol.
 
 El formulario las ofrece como casillas y el backend rechaza con 400 un
 identificador que no exista, en lugar de dejar que el ORM falle al conectarlo

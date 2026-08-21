@@ -584,9 +584,14 @@ ADMIN puede:
 - listar;
 - buscar;
 - consultar;
+- crear cuentas, con rol `USER` o `ADMIN`;
 - activar/desactivar;
 - modificar rol cuando corresponda;
 - editar sus propios datos y su contraseña, como los de cualquier usuario.
+
+Al crear una cuenta se fija su contraseña inicial, que quien la reciba podrá
+cambiar después desde su propia área. Es la única vía para dar de alta un
+segundo `ADMIN` desde la aplicación: el registro público solo crea `USER`.
 
 Sobre su propia cuenta, ADMIN **no** puede:
 

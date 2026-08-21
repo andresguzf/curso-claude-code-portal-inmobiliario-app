@@ -165,14 +165,14 @@ El más justo es el texto claro sobre el acento en oscuro, con 4.53.
 
 ## Estado del proyecto
 
-Pasos 1 a 28 de `tasks.md` completos. En funcionamiento: portada, catálogo
+Pasos 1 a 29 de `tasks.md` completos. En funcionamiento: portada, catálogo
 con búsqueda, filtros combinados, ordenamiento, estados de carga/vacío/error,
 detalle de propiedad, galería, mapa de ubicación, formulario de contacto,
 autenticación con autorización por rol, el área privada de la cuenta —con
 edición de los propios datos, favoritos y consultas guardadas— y el panel de
 administración con sus indicadores y el alta, edición y baja de propiedades.
 
-Pendiente desde el paso 29: la gestión de usuarios y consultas.
+Pendiente desde el paso 30: la gestión de consultas.
 
 ### Autenticación
 
@@ -261,9 +261,11 @@ que se oculte: `/api/favorites*` y el historial de consultas responden **403**
 a una sesión ADMIN, y `/account` la redirige al panel. Una consulta enviada
 por ADMIN se guarda sin usuario asociado, porque no tendría dónde aparecer.
 
-Sobre su propia cuenta, ADMIN no podrá eliminarse, desactivarse ni quitarse
-el rol cuando llegue el paso 29: el registro público solo crea `USER`, así
-que hacerlo dejaría el portal sin administración y sin forma de recuperarla.
+Sobre su propia cuenta, ADMIN no puede desactivarse ni quitarse el rol: el
+registro público solo crea `USER`, así que hacerlo dejaría el portal sin
+administración y sin forma de recuperarla. Ambas responden **403**, y la
+interfaz además no pinta esos controles en su propia fila —pero eso es
+cortesía: quien decide es el backend.
 
 ### Administración de propiedades
 
@@ -433,6 +435,39 @@ un archivo que ya está subido, y mezclarlos con el borrador de los demás
 campos haría que cancelar la edición dejara a medias algo que ya ocupa sitio
 en Cloudinary.
 
+### Administración de usuarios
+
+`/admin/users` lista las cuentas con búsqueda por nombre o email y filtros
+por rol y estado. Cada fila dice cuántos favoritos y cuántas consultas tiene,
+que es la forma rápida de saber si la cuenta se usa.
+
+`POST /api/admin/users` da de alta una cuenta con su contraseña inicial y
+con el rol que se pida. Es la **única vía dentro de la aplicación** para
+crear un segundo ADMIN: el registro público solo crea `USER`. La contraseña
+la fija quien crea la cuenta y hay que comunicársela a su destinatario; no
+se puede recuperar después, solo reemplazar.
+
+`PATCH /api/admin/users/{id}` cambia nombre, email, contraseña, rol o estado:
+lo que no viaja no se toca. **Quién** hace la petición sale de la sesión,
+nunca del cuerpo, y es lo que hace imposible saltarse las reglas de la propia
+cuenta diciendo ser otra persona.
+
+A diferencia de `/account/edit`, aquí **no** se pide la contraseña actual:
+quien administra no la conoce. Es la contrapartida del rol, y por eso el
+formulario avisa de que cambiarla deja fuera a esa persona hasta que se le
+comunique la nueva.
+
+Desactivar surte efecto en el acto —comprobado: el login pasa a responder
+401— porque el estado se relee de PostgreSQL en cada petición.
+
+El listado va paginado de diez en diez, como el de propiedades. El control no
+se pinta cuando solo hay una página: unos botones inertes ocupan sitio y
+hacen dudar de si algo falló.
+
+Los filtros de esta pantalla son enlaces y no un formulario: con dos filtros
+de tres opciones, un panel plegable sería más maquinaria de la necesaria, y
+así se pueden abrir en otra pestaña.
+
 ### Autorización
 
 La decisión siempre la toma el backend. Hay tres piezas:
@@ -474,8 +509,8 @@ mínimo de ocho caracteres que exige el backend.
 - Las imágenes del seed siguen siendo de `picsum.photos`: el seed no sube
   nada a Cloudinary, para no gastar la cuota de la cuenta en datos de
   desarrollo que se recrean a menudo.
-- El registro público solo da de alta cuentas con rol `USER`. El `ADMIN`
-  llega por el seed.
+- El registro público solo da de alta cuentas con rol `USER`. Un `ADMIN`
+  llega por el seed o lo crea otro `ADMIN` desde `/admin/users`.
 - El formulario de contacto necesita `NEXT_PUBLIC_WEB3FORMS_ACCESS_KEY` en
   `apps/web/.env`. Sin ella el formulario lo dice, en vez de dar por enviada
   una consulta que no salió. La clave está en el frontend porque el plan
