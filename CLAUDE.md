@@ -135,6 +135,7 @@ resultantes y nunca colores literales.
 | Token | Uso |
 |---|---|
 | `header`, `header-hover` | Barra superior y hero (azul grisáceo) |
+| `sidebar`, `sidebar-hover`, `sidebar-ink`, `sidebar-ink-muted`, `sidebar-line` | Barra lateral del panel: clara en tema claro, hundida en oscuro |
 | `footer` | Pie de página (gris pardo) |
 | `page` | Fondo del cuerpo (arena cálida) |
 | `card` | Tarjetas y paneles |
@@ -149,6 +150,11 @@ El portal público es de tema claro único. El **panel de administración**
 admite claro y oscuro: el layout de `(admin)` marca `data-theme` en `<html>`
 y `globals.css` redefine ahí los mismos tokens. Cambiar de tema no toca ni
 una clase de componente.
+
+La barra lateral tiene tokens propios y no los del header público. En claro
+es una superficie clara, como el resto del panel; el header del portal sigue
+siendo oscuro. Compartir los tokens ataba dos decisiones que no tienen por
+qué ir juntas.
 
 La preferencia viaja en una cookie, no en `localStorage`, para que el
 servidor pinte el tema correcto desde el primer byte y no haya un parpadeo de
@@ -165,14 +171,14 @@ El más justo es el texto claro sobre el acento en oscuro, con 4.53.
 
 ## Estado del proyecto
 
-Pasos 1 a 29 de `tasks.md` completos. En funcionamiento: portada, catálogo
+Pasos 1 a 30 de `tasks.md` completos. En funcionamiento: portada, catálogo
 con búsqueda, filtros combinados, ordenamiento, estados de carga/vacío/error,
 detalle de propiedad, galería, mapa de ubicación, formulario de contacto,
 autenticación con autorización por rol, el área privada de la cuenta —con
 edición de los propios datos, favoritos y consultas guardadas— y el panel de
 administración con sus indicadores y el alta, edición y baja de propiedades.
 
-Pendiente desde el paso 30: la gestión de consultas.
+Pendiente desde el paso 31: SEO, optimización y los pasos de cierre.
 
 ### Autenticación
 
@@ -435,6 +441,29 @@ un archivo que ya está subido, y mezclarlos con el borrador de los demás
 campos haría que cancelar la edición dejara a medias algo que ya ocupa sitio
 en Cloudinary.
 
+### Administración de consultas
+
+`/admin/inquiries` muestra **todas**: propiedad, contacto, mensaje y fecha,
+de lo más reciente a lo más antiguo, paginadas de diez en diez y con
+búsqueda sobre nombre, email, texto del mensaje y título de la propiedad.
+
+Aquí se ven también las que su autor quitó de su historial y las de
+propiedades despublicadas o eliminadas. Esta pantalla es el motivo por el que
+aquellos dos borrados son lógicos: sin ella, eliminar una propiedad o vaciar
+el historial propio destruiría contactos comerciales.
+
+Cada tarjeta enlaza a la **ficha de edición** de la propiedad, no a su página
+pública: es donde se ve todo y se puede actuar, y funciona también con un
+borrador, que públicamente responde 404. Una propiedad eliminada se nombra
+sin enlace, porque no hay a dónde llevar.
+
+El email y el teléfono son enlaces `mailto:` y `tel:`: responder es lo único
+que se hace desde aquí, y no hay ningún control que editar.
+
+El nombre y el email son los que se escribieron en el formulario, que no
+tienen por qué coincidir con los de la cuenta. Cuando hay cuenta y difieren,
+se dicen los dos.
+
 ### Administración de usuarios
 
 `/admin/users` lista las cuentas con búsqueda por nombre o email y filtros
@@ -467,6 +496,31 @@ hacen dudar de si algo falló.
 Los filtros de esta pantalla son enlaces y no un formulario: con dos filtros
 de tres opciones, un panel plegable sería más maquinaria de la necesaria, y
 así se pueden abrir en otra pestaña.
+
+### Búsqueda sin acentos
+
+`montana` encuentra «montaña» y `nunoa` encuentra «Ñuñoa», en el catálogo, en
+los filtros de ubicación y en los tres buscadores del panel.
+
+Cada fila guarda una **copia normalizada** de los campos por los que se busca
+—`search_text`, y en las propiedades además `commune_normalized`,
+`city_normalized` y `region_normalized`—, y las consultas comparan contra
+ella. La alternativa, `unaccent()` dentro de cada consulta, obligaba a SQL en
+crudo en todos los buscadores.
+
+La regla vive en `normalizeSearchText` (`@portal/contracts`) y se aplica dos
+veces: al **guardar** cada fila y al **preparar** lo que se teclea. Si
+divergieran, lo guardado y lo buscado dejarían de encontrarse.
+
+Las columnas las escribe la aplicación, no PostgreSQL. Una columna generada
+sería más difícil de olvidar, pero Prisma no las modela y cada migración
+futura propondría un `ALTER` espurio que además fallaría al aplicarse.
+
+El relleno de la migración **no** usa `unaccent`: esa extensión también toca
+la puntuación —convierte «¿» en «?»— y lo rellenado no habría coincidido con
+lo que escribe la aplicación. Usa `normalize(…, NFD)` y descarta las marcas
+combinantes, que es exactamente lo que hace el normalizador de TypeScript.
+Comprobado fila a fila: las 47 de la base coinciden.
 
 ### Autorización
 
@@ -503,9 +557,6 @@ mínimo de ocho caracteres que exige el backend.
 
 ### Limitaciones conocidas
 
-- La búsqueda y los filtros de ubicación distinguen acentos: `nunoa` no
-  encuentra `Ñuñoa`. Resolverlo requiere la extensión `unaccent` de
-  PostgreSQL (previsto para el paso 32).
 - Las imágenes del seed siguen siendo de `picsum.photos`: el seed no sube
   nada a Cloudinary, para no gastar la cuota de la cuenta en datos de
   desarrollo que se recrean a menudo.

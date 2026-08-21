@@ -6,3 +6,4 @@ export * from "./feature";
 export * from "./inquiry";
 export * from "./location";
 export * from "./property";
+export * from "./text";

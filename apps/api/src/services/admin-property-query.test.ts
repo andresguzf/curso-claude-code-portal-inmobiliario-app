@@ -140,10 +140,14 @@ describe("buildAdminPropertyWhere", () => {
     );
   });
 
-  it("busca en título, comuna y ciudad", () => {
-    const where = buildAdminPropertyWhere({ search: "ñuñoa" });
-
-    expect(where.OR).toHaveLength(3);
+  it("busca contra el texto normalizado, sin acentos", () => {
+    // «nunoa» y «Ñuñoa» tienen que llegar a la misma condición.
+    expect(buildAdminPropertyWhere({ search: "Ñuñoa" })).toEqual({
+      searchText: { contains: "nunoa" },
+    });
+    expect(buildAdminPropertyWhere({ search: "nunoa" })).toEqual({
+      searchText: { contains: "nunoa" },
+    });
   });
 
   it("ignora una búsqueda de solo espacios", () => {
@@ -186,12 +190,12 @@ describe("buildAdminPropertyWhere", () => {
     });
 
     expect(Object.keys(where).sort()).toEqual([
-      "OR",
       "isPublished",
       "operationType",
       "price",
       "propertyType",
       "publishedAt",
+      "searchText",
     ]);
   });
 });

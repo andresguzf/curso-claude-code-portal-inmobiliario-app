@@ -273,6 +273,20 @@ ser ADMIN responden 403.
 A diferencia de `PATCH /api/auth/me`, aquí no se pide la contraseña actual:
 quien administra no la conoce. Es la contrapartida del rol.
 
+Consultas:
+
+```text
+GET /api/admin/inquiries
+```
+
+Devuelve **todas**, de más reciente a más antigua, paginadas y con búsqueda
+sobre nombre, email, texto del mensaje y título de la propiedad.
+
+Sin filtro por `hiddenByUserAt` ni por el estado de la propiedad: aquí se ven
+también las que su autor quitó de su historial y las de propiedades
+despublicadas o eliminadas. Es lo contrario del historial propio, y el motivo
+por el que ambos borrados son lógicos.
+
 El formulario las ofrece como casillas y el backend rechaza con 400 un
 identificador que no exista, en lugar de dejar que el ORM falle al conectarlo
 y responder un 500 sin explicación.
@@ -333,6 +347,27 @@ sort
 ```
 
 El filtrado y ordenamiento debe ejecutarse principalmente en PostgreSQL y no cargando todo el catálogo en el navegador.
+
+### Sin acentos
+
+Cada fila guarda una copia normalizada de los campos por los que se busca
+—`search_text`, y en `Property` además `commune_normalized`,
+`city_normalized` y `region_normalized`—, y las consultas comparan contra
+ella. Así «montana» encuentra «montaña» sin SQL en crudo en cada buscador.
+
+La regla es `normalizeSearchText` de `@portal/contracts`, y se aplica en dos
+sitios que tienen que coincidir: al escribir la fila y al leer lo que se
+teclea. Vive en el contrato compartido justamente por eso.
+
+Las columnas las mantiene la aplicación, en los repositorios, junto a las
+columnas de las que derivan. Una columna generada por PostgreSQL sería más
+difícil de olvidar, pero Prisma no las modela: cada migración posterior
+propondría un `ALTER` espurio que además fallaría al aplicarse.
+
+El relleno inicial de la migración reproduce el mismo algoritmo con
+`normalize(…, NFD)` y descartando las marcas combinantes. No usa `unaccent`
+porque esa extensión toca también la puntuación, y entonces lo rellenado y lo
+que escribe la aplicación dejarían de coincidir.
 
 ## 10. Autenticación y autorización
 

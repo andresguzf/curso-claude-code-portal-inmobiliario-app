@@ -283,6 +283,13 @@ La búsqueda debe quedar representada mediante parámetros de consulta.
 
 ---
 
+La búsqueda ignora acentos, eñes y mayúsculas: «montana» encuentra «montaña»
+y «nunoa» encuentra «Ñuñoa». Quien busca escribe sin acentos, y quien no sabe
+cómo se escribe una comuna tampoco puede acertar con la virgulilla.
+
+Lo mismo vale para los filtros de ubicación y para los buscadores del área de
+administración.
+
 ## 10. Filtros
 
 Permitir combinar:

@@ -1,5 +1,7 @@
 import "server-only";
 
+import { buildSearchText, normalizeSearchText } from "@portal/contracts";
+
 import { prisma } from "@/lib/prisma";
 import { PUBLIC_PROPERTY_SCOPE } from "@/repositories/property-scope";
 
@@ -18,7 +20,13 @@ export function createInquiry(inquiry: {
   readonly phone: string | null;
   readonly message: string;
 }) {
-  return prisma.inquiry.create({ data: inquiry, select: { id: true } });
+  return prisma.inquiry.create({
+    data: {
+      ...inquiry,
+      searchText: buildSearchText(inquiry.name, inquiry.email, inquiry.message),
+    },
+    select: { id: true },
+  });
 }
 
 /**
@@ -45,23 +53,17 @@ export async function findUserInquiries(
     userId,
     hiddenByUserAt: null,
     property: PUBLIC_PROPERTY_SCOPE,
-    ...(options.search
+    ...(options.search.trim()
       ? {
+          // Contra las copias normalizadas, para que «montana» encuentre
+          // tanto el mensaje como la propiedad que se llama «montaña».
           OR: [
             {
               property: {
-                title: {
-                  contains: options.search,
-                  mode: "insensitive" as const,
-                },
+                searchText: { contains: normalizeSearchText(options.search) },
               },
             },
-            {
-              message: {
-                contains: options.search,
-                mode: "insensitive" as const,
-              },
-            },
+            { searchText: { contains: normalizeSearchText(options.search) } },
           ],
         }
       : {}),
@@ -114,4 +116,53 @@ export async function hideInquiryFromUser(
   });
 
   return count;
+}
+
+/**
+ * Página del listado de consultas de la administración.
+ *
+ * Sin filtro por `hiddenByUserAt` ni por el estado de la propiedad: aquí se
+ * ven **todas**, incluidas las que quien las escribió quitó de su historial y
+ * las de propiedades despublicadas o eliminadas. Ese es el motivo por el que
+ * ambos borrados son lógicos: la consulta es un contacto comercial que la
+ * inmobiliaria tiene que poder responder (spec.md, sección 22).
+ */
+export async function findAdminInquiries(options: {
+  /** Condiciones ya traducidas por `admin-inquiry-query.ts`. */
+  readonly filters: Record<string, unknown>;
+  readonly skip: number;
+  readonly take: number;
+}) {
+  const where = options.filters;
+
+  const [inquiries, total] = await Promise.all([
+    prisma.inquiry.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip: options.skip,
+      take: options.take,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        message: true,
+        createdAt: true,
+        hiddenByUserAt: true,
+        property: {
+          select: {
+            id: true,
+            title: true,
+            isPublished: true,
+            deletedAt: true,
+          },
+        },
+        // Nulo cuando la envió un visitante sin cuenta.
+        user: { select: { id: true, name: true, email: true } },
+      },
+    }),
+    prisma.inquiry.count({ where }),
+  ]);
+
+  return { inquiries, total };
 }

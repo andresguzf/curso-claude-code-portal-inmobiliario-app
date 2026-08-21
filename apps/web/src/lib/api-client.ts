@@ -1,4 +1,5 @@
 import {
+  ADMIN_INQUIRY_QUERY_PARAM_NAMES,
   ADMIN_QUERY_PARAM_NAMES,
   ADMIN_USER_QUERY_PARAM_NAMES,
   QUERY_PARAM_NAMES,
@@ -9,6 +10,7 @@ import {
   type AdminCreateUserRequestDto,
   type AdminUpdateUserRequestDto,
   type AdminUserDto,
+  type AdminInquiryPageDto,
   type AdminUserPageDto,
   type FeatureInputDto,
   type FeatureListDto,
@@ -756,4 +758,35 @@ export async function createAdminUser(
   });
 
   return readOrThrow(response, "No pudimos crear la cuenta.");
+}
+
+/**
+ * Consultas recibidas (spec.md, sección 22).
+ *
+ * Se piden desde el servidor, así que hay que reenviar la cookie a mano.
+ */
+export async function fetchAdminInquiries(
+  searchParams: URLSearchParams,
+  cookieHeader?: string,
+): Promise<AdminInquiryPageDto> {
+  const parameters = new URLSearchParams();
+
+  for (const name of Object.values(ADMIN_INQUIRY_QUERY_PARAM_NAMES)) {
+    const value = searchParams.get(name);
+
+    if (value !== null && value.trim() !== "") {
+      parameters.set(name, value);
+    }
+  }
+
+  const query = parameters.toString();
+  const response = await fetch(
+    buildApiUrl(`/api/admin/inquiries${query ? `?${query}` : ""}`),
+    {
+      cache: "no-store",
+      headers: cookieHeader ? { Cookie: cookieHeader } : undefined,
+    },
+  );
+
+  return readOrThrow(response, "No pudimos cargar las consultas.");
 }

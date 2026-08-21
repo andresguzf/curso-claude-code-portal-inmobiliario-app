@@ -1,6 +1,10 @@
 import "server-only";
 
-import type { PropertyInputDto } from "@portal/contracts";
+import {
+  buildSearchText,
+  normalizeSearchText,
+  type PropertyInputDto,
+} from "@portal/contracts";
 
 import { prisma } from "@/lib/prisma";
 import { NOT_DELETED } from "@/repositories/property-scope";
@@ -130,6 +134,30 @@ function toColumns(input: PropertyInputDto) {
     region: input.region,
     isPublished: input.isPublished ?? false,
     isFeatured: input.isFeatured ?? false,
+    ...toSearchColumns(input),
+  };
+}
+
+/**
+ * Copias normalizadas de los campos por los que se busca.
+ *
+ * Se escriben aquí, junto a las columnas de las que derivan, para que no haya
+ * forma de guardar una propiedad sin actualizarlas: es lo que se olvidaría si
+ * viviesen en otro sitio (spec.md, sección 9).
+ */
+function toSearchColumns(input: PropertyInputDto) {
+  return {
+    searchText: buildSearchText(
+      input.title,
+      input.commune,
+      input.city,
+      input.region,
+      input.address,
+      input.description,
+    ),
+    communeNormalized: normalizeSearchText(input.commune),
+    cityNormalized: normalizeSearchText(input.city),
+    regionNormalized: normalizeSearchText(input.region),
   };
 }
 

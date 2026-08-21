@@ -3,6 +3,7 @@ import {
   FILTER_LIMITS,
   MAX_LOCATION_LENGTH,
   MAX_SEARCH_LENGTH,
+  normalizeSearchText,
   PropertySort,
   QUERY_PARAM_NAMES,
   isOperationType,
@@ -57,7 +58,10 @@ type QueryReader = {
  * interpretan como espacios. La comparación posterior ignora mayúsculas.
  */
 export function normalizeLocationValue(rawValue: string): string {
-  return rawValue.replaceAll("-", " ").trim().replace(/\s+/g, " ");
+  // Los guiones son separadores en la URL; el resto lo iguala la misma
+  // normalización con la que se guardó, para que `?commune=nunoa` encuentre
+  // Ñuñoa igual que `?commune=Ñuñoa`.
+  return normalizeSearchText(rawValue.replaceAll("-", " "));
 }
 
 /** Descarta vacíos y duplicados conservando el orden de aparición. */
@@ -281,29 +285,20 @@ export function buildPropertyOrderBy(
   }
 }
 
-type InsensitiveEquals = {
-  readonly equals: string;
-  readonly mode: "insensitive";
-};
-
 type WhereCondition = Record<string, unknown>;
 
 /**
- * Compara un campo de texto contra varios valores admitidos.
+ * Compara una columna normalizada contra varios valores admitidos.
  *
- * Se usa `OR` de igualdades en lugar de `in` porque `in` de Prisma no aplica
- * `mode: "insensitive"`, y una comuna escrita en minúsculas en la URL no
- * coincidiría con «Las Condes» en la base de datos.
+ * Ahora sí puede usarse `in`: tanto lo guardado como lo pedido pasaron por la
+ * misma normalización, así que la comparación es exacta y no hace falta
+ * `mode: "insensitive"`. De paso, «nunoa» encuentra Ñuñoa.
  */
-function anyOfInsensitive(
+function anyOfNormalized(
   field: string,
   values: readonly string[],
 ): WhereCondition {
-  return {
-    OR: values.map((value): Record<string, InsensitiveEquals> => ({
-      [field]: { equals: value, mode: "insensitive" },
-    })),
-  };
+  return { [field]: { in: [...values] } };
 }
 
 /**
@@ -342,7 +337,7 @@ export function buildPropertyWhere(
   conditions.push(...buildSearchConditions(parseSearchTerms(search)));
 
   if (communes && communes.length > 0) {
-    conditions.push(anyOfInsensitive("commune", communes));
+    conditions.push(anyOfNormalized("communeNormalized", communes));
   }
 
   const priceRange = {
@@ -370,12 +365,8 @@ export function buildPropertyWhere(
     ...(minUsableArea === undefined
       ? {}
       : { usableAreaSquareMeters: { gte: minUsableArea } }),
-    ...(city === undefined
-      ? {}
-      : { city: { equals: city, mode: "insensitive" as const } }),
-    ...(region === undefined
-      ? {}
-      : { region: { equals: region, mode: "insensitive" as const } }),
+    ...(city === undefined ? {} : { cityNormalized: { equals: city } }),
+    ...(region === undefined ? {} : { regionNormalized: { equals: region } }),
     ...(conditions.length === 0 ? {} : { AND: conditions }),
   };
 }

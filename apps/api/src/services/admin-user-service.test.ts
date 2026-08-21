@@ -69,10 +69,13 @@ describe("updateUserAsAdministrator, sobre otra cuenta", () => {
     });
 
     expect(outcome.status).toBe("ok");
-    expect(repository.updateUserAsAdmin).toHaveBeenCalledWith(OTRA_ID, {
-      isActive: false,
-      role: "ADMIN",
-    });
+    expect(repository.updateUserAsAdmin).toHaveBeenCalledWith(
+      OTRA_ID,
+      { isActive: false, role: "ADMIN" },
+      // El texto de búsqueda se compone de nombre y email, y un `PATCH`
+      // puede traer solo uno: por eso viajan los vigentes.
+      { name: "María", email: "maria@example.com" },
+    );
   });
 
   it("guarda la contraseña como hash, nunca en claro", async () => {

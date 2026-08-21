@@ -176,15 +176,19 @@ export async function updateUserAsAdministrator(
     }
   }
 
-  const updated = await updateUserAsAdmin(targetId, {
-    ...(changes.name === undefined ? {} : { name: changes.name }),
-    ...(changes.email === undefined ? {} : { email: changes.email }),
-    ...(changes.role === undefined ? {} : { role: changes.role }),
-    ...(changes.isActive === undefined ? {} : { isActive: changes.isActive }),
-    ...(changes.newPassword === undefined
-      ? {}
-      : { passwordHash: await hashPassword(changes.newPassword) }),
-  });
+  const updated = await updateUserAsAdmin(
+    targetId,
+    {
+      ...(changes.name === undefined ? {} : { name: changes.name }),
+      ...(changes.email === undefined ? {} : { email: changes.email }),
+      ...(changes.role === undefined ? {} : { role: changes.role }),
+      ...(changes.isActive === undefined ? {} : { isActive: changes.isActive }),
+      ...(changes.newPassword === undefined
+        ? {}
+        : { passwordHash: await hashPassword(changes.newPassword) }),
+    },
+    { name: target.name, email: target.email },
+  );
 
   return { status: "ok", user: toAdminUser(updated) };
 }

@@ -172,15 +172,23 @@ describe("parsePropertyListQuery — búsqueda y ubicación", () => {
   });
 
   it("acepta varias comunas", () => {
+    // Llegan normalizadas: es como están guardadas.
     expect(
       expectQuery("commune=Las+Condes&commune=Providencia").communes,
-    ).toEqual(["Las Condes", "Providencia"]);
+    ).toEqual(["las condes", "providencia"]);
   });
 
   it("descarta comunas duplicadas", () => {
     expect(expectQuery("commune=Ñuñoa&commune=Ñuñoa").communes).toEqual([
-      "Ñuñoa",
+      "nunoa",
     ]);
+  });
+
+  it("iguala la comuna escrita sin acentos con la escrita con ellos", () => {
+    // «nunoa» y «Ñuñoa» tienen que llegar a la misma condición.
+    expect(expectQuery("commune=nunoa").communes).toEqual(
+      expectQuery("commune=Ñuñoa").communes,
+    );
   });
 
   it("interpreta los guiones del ejemplo de la especificación", () => {
@@ -190,12 +198,12 @@ describe("parsePropertyListQuery — búsqueda y ubicación", () => {
   it("mantiene ciudad y región como selección única", () => {
     const query = expectQuery("city=Santiago&region=Región+Metropolitana");
 
-    expect(query.city).toBe("Santiago");
-    expect(query.region).toBe("Región Metropolitana");
+    expect(query.city).toBe("santiago");
+    expect(query.region).toBe("region metropolitana");
   });
 
   it("toma la primera ciudad si la URL repite el parámetro", () => {
-    expect(expectQuery("city=Santiago&city=Temuco").city).toBe("Santiago");
+    expect(expectQuery("city=Santiago&city=Temuco").city).toBe("santiago");
   });
 
   it("rechaza una ubicación demasiado larga", () => {
@@ -211,7 +219,13 @@ describe("normalizeLocationValue", () => {
   });
 
   it("colapsa espacios repetidos y recorta", () => {
-    expect(normalizeLocationValue("  Las   Condes  ")).toBe("Las Condes");
+    expect(normalizeLocationValue("  Las   Condes  ")).toBe("las condes");
+  });
+
+  it("quita acentos y eñes, para que «nunoa» encuentre Ñuñoa", () => {
+    expect(normalizeLocationValue("Ñuñoa")).toBe("nunoa");
+    expect(normalizeLocationValue("Concón")).toBe("concon");
+    expect(normalizeLocationValue("vina-del-mar")).toBe("vina del mar");
   });
 });
 
@@ -243,9 +257,9 @@ describe("parsePropertyListQuery — filtros combinados", () => {
       bedrooms: 2,
       bathrooms: 1,
       minUsableArea: 50,
-      communes: ["Ñuñoa", "Providencia"],
-      city: "Santiago",
-      region: "Región Metropolitana",
+      communes: ["nunoa", "providencia"],
+      city: "santiago",
+      region: "region metropolitana",
     });
   });
 });
@@ -383,27 +397,22 @@ describe("buildPropertyWhere", () => {
     });
   });
 
-  it("combina varias comunas con OR, sin distinguir mayúsculas", () => {
+  it("compara varias comunas contra la columna normalizada", () => {
+    // Ahora puede usarse `in`: lo guardado y lo pedido pasaron por la misma
+    // normalización, así que la comparación es exacta.
     expect(
-      buildPropertyWhere({ communes: ["Las Condes", "Providencia"] }),
+      buildPropertyWhere({ communes: ["las condes", "providencia"] }),
     ).toEqual({
       deletedAt: null,
-      AND: [
-        {
-          OR: [
-            { commune: { equals: "Las Condes", mode: "insensitive" } },
-            { commune: { equals: "Providencia", mode: "insensitive" } },
-          ],
-        },
-      ],
+      AND: [{ communeNormalized: { in: ["las condes", "providencia"] } }],
     });
   });
 
-  it("compara ciudad y región sin distinguir mayúsculas", () => {
+  it("compara ciudad y región contra sus columnas normalizadas", () => {
     expect(buildPropertyWhere({ city: "santiago", region: "rm" })).toEqual({
       deletedAt: null,
-      city: { equals: "santiago", mode: "insensitive" },
-      region: { equals: "rm", mode: "insensitive" },
+      cityNormalized: { equals: "santiago" },
+      regionNormalized: { equals: "rm" },
     });
   });
 
@@ -414,9 +423,9 @@ describe("buildPropertyWhere", () => {
     });
 
     expect(where.AND).toHaveLength(2);
-    expect(where.AND?.[0]).toHaveProperty("OR");
+    expect(where.AND?.[0]).toHaveProperty("searchText");
     expect(where.AND?.[1]).toEqual({
-      OR: [{ commune: { equals: "Ñuñoa", mode: "insensitive" } }],
+      communeNormalized: { in: ["Ñuñoa"] },
     });
   });
 
@@ -446,9 +455,9 @@ describe("buildPropertyWhere", () => {
       bedrooms: { gte: 2 },
       bathrooms: { gte: 2 },
       usableAreaSquareMeters: { gte: 70 },
-      city: { equals: "Santiago", mode: "insensitive" },
-      region: { equals: "Región Metropolitana", mode: "insensitive" },
-      AND: [{ OR: [{ commune: { equals: "Vitacura", mode: "insensitive" } }] }],
+      cityNormalized: { equals: "Santiago" },
+      regionNormalized: { equals: "Región Metropolitana" },
+      AND: [{ communeNormalized: { in: ["Vitacura"] } }],
     });
   });
 });
