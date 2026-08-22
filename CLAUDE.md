@@ -171,14 +171,14 @@ El más justo es el texto claro sobre el acento en oscuro, con 4.53.
 
 ## Estado del proyecto
 
-Pasos 1 a 32 de `tasks.md` completos. En funcionamiento: portada, catálogo
+Pasos 1 a 33 de `tasks.md` completos. En funcionamiento: portada, catálogo
 con búsqueda, filtros combinados, ordenamiento, estados de carga/vacío/error,
 detalle de propiedad, galería, mapa de ubicación, formulario de contacto,
 autenticación con autorización por rol, el área privada de la cuenta —con
 edición de los propios datos, favoritos y consultas guardadas— y el panel de
 administración con sus indicadores y el alta, edición y baja de propiedades.
 
-Pendiente desde el paso 33: responsive, accesibilidad y los pasos de cierre.
+Pendiente desde el paso 34: seguridad y los pasos de cierre.
 
 ### Autenticación
 
@@ -496,6 +496,34 @@ hacen dudar de si algo falló.
 Los filtros de esta pantalla son enlaces y no un formulario: con dos filtros
 de tres opciones, un panel plegable sería más maquinaria de la necesaria, y
 así se pueden abrir en otra pestaña.
+
+### Responsive y accesibilidad
+
+Revisado contra las Web Interface Guidelines. Sin antipatrones: ni
+`user-scalable=no`, ni `transition: all`, ni `outline-none`, ni manejadores
+de clic sobre `div`.
+
+Lo que faltaba y se añadió:
+
+- `overscroll-contain` en el diálogo modal. Sin él, seguir desplazando al
+  llegar al final movía la página de detrás, que se supone inerte.
+- Enlace de salto al contenido en el **panel**. El portal público ya lo
+  tenía; el panel pone seis enlaces por delante del contenido en cada
+  página.
+- Márgenes de área segura en la barra lateral fija y en el pie. En un
+  teléfono en horizontal, la muesca se come el primer centímetro.
+- `line-clamp-2` en el título de la tarjeta: uno largo escrito desde el
+  panel empujaba el precio fuera.
+
+**Los nombres de las utilidades de Tailwind no se escriben en los
+comentarios.** Tailwind escanea el archivo entero y no distingue un
+comentario de una clase: un ejemplo abreviado como `pl-[env(...)]` generaba
+CSS inválido y tumbaba el sitio entero.
+
+Verificado sobre el HTML servido de once páginas: un solo `h1` por página,
+sin saltos de nivel de encabezado, ninguna imagen sin texto alternativo,
+ningún botón sin nombre accesible y ningún campo sin etiqueta. Y sin
+desbordamiento horizontal a 375, 768 ni 1440 píxeles.
 
 ### Rendimiento
 

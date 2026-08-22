@@ -11,6 +11,9 @@ import {
 import type { AdminTheme } from "@/lib/admin-theme";
 import { cn } from "@/lib/utils";
 
+/** Destino del enlace de salto. Solo hay un contenido principal por página. */
+const MAIN_CONTENT_ID = "contenido-del-panel";
+
 import { AdminSignOut } from "./admin-sign-out";
 import { ThemeToggle } from "./theme-toggle";
 
@@ -38,6 +41,18 @@ export function AdminShell({
 
   return (
     <div className="flex h-full">
+      {/*
+        La barra lateral pone seis enlaces por delante del contenido. Sin
+        esto, quien navega con teclado los recorre en cada página antes de
+        llegar a lo que vino a leer.
+      */}
+      <a
+        href={`#${MAIN_CONTENT_ID}`}
+        className="sr-only rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-on-dark focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50"
+      >
+        Saltar al contenido
+      </a>
+
       <Sidebar
         isExpanded={isExpanded}
         isMobileOpen={isMobileOpen}
@@ -86,7 +101,9 @@ export function AdminShell({
           </div>
         </header>
 
-        <main className="min-w-0 flex-1 overflow-y-auto">{children}</main>
+        <main id={MAIN_CONTENT_ID} className="min-w-0 flex-1 overflow-y-auto">
+          {children}
+        </main>
       </div>
     </div>
   );
@@ -115,7 +132,14 @@ function Sidebar({
         // Solo se anima `transform`, que va al compositor. Animar el ancho
         // obliga a recalcular la disposición en cada fotograma, y las guías
         // de interfaz lo desaconsejan: el ancho cambia de golpe.
-        "fixed inset-y-0 left-0 z-40 flex min-w-0 shrink-0 flex-col overflow-hidden border-r border-sidebar-line bg-sidebar text-sidebar-ink transition-transform duration-200",
+        // El relleno izquierdo reserva la muesca del teléfono: en
+        // horizontal se come el primer centímetro de la pantalla.
+        //
+        // El nombre de la utilidad no se escribe en los comentarios: Tailwind
+        // escanea el archivo entero, no distingue comentarios de clases, y
+        // generaría la regla que encuentre —aunque sea un ejemplo abreviado
+        // y produzca CSS inválido.
+        "fixed inset-y-0 left-0 z-40 flex min-w-0 shrink-0 flex-col overflow-hidden border-r border-sidebar-line bg-sidebar pl-[env(safe-area-inset-left)] text-sidebar-ink transition-transform duration-200",
         "lg:static lg:translate-x-0",
         isMobileOpen ? "translate-x-0" : "-translate-x-full",
         isExpanded ? "w-64" : "w-64 lg:w-20",

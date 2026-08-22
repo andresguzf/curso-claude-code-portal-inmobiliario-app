@@ -64,6 +64,15 @@ describe("AdminShell", () => {
     );
   });
 
+  it("ofrece saltar la barra lateral con el teclado", () => {
+    // Seis enlaces por delante del contenido en cada página.
+    renderShell();
+
+    expect(
+      screen.getByRole("link", { name: "Saltar al contenido" }),
+    ).toHaveAttribute("href", "#contenido-del-panel");
+  });
+
   it("marca la sección en la que se está", () => {
     mocks.pathname = "/admin/profile";
 

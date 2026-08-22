@@ -227,7 +227,7 @@
   - Revisar solicitudes duplicadas.
   - Revisar consultas PostgreSQL.
 
-- [ ] **Paso 33 — Responsive y accesibilidad**
+- [x] **Paso 33 — Responsive y accesibilidad**
   - Desktop.
   - Tablet.
   - Móvil.
