@@ -123,3 +123,39 @@ describe("readClientAddress", () => {
     expect(readClientAddress(new Headers())).toBe("desconocido");
   });
 });
+
+describe("check frente a record", () => {
+  it("consultar no gasta cupo", () => {
+    const limitador = createRateLimiter({ limit: 1, windowMs: 60_000 });
+
+    limitador.check("1.1.1.1");
+    limitador.check("1.1.1.1");
+    limitador.check("1.1.1.1");
+
+    // Solo anotar cuenta. Es lo que permite comprobar antes de trabajar y
+    // apuntar después, cuando ya se sabe si el intento falló.
+    expect(limitador.check("1.1.1.1").allowed).toBe(true);
+    expect(limitador.record("1.1.1.1").allowed).toBe(true);
+    expect(limitador.check("1.1.1.1").allowed).toBe(false);
+  });
+
+  it("consultar un origen agotado dice cuánto falta", () => {
+    const limitador = createRateLimiter({ limit: 1, windowMs: 60_000 });
+
+    limitador.record("1.1.1.1");
+    const decision = limitador.check("1.1.1.1");
+
+    expect(decision.allowed).toBe(false);
+    expect(decision.allowed === false && decision.retryAfterSeconds).toBe(60);
+  });
+
+  it("consultar un origen sin ventana no la crea", () => {
+    const limitador = createRateLimiter({ limit: 5, windowMs: 60_000 });
+
+    limitador.check("nadie");
+
+    // Si consultar creara ventana, el mapa crecería con cada dirección que
+    // se asomara, aunque nunca llegara a intentar nada.
+    expect(limitador.size()).toBe(0);
+  });
+});

@@ -22,7 +22,17 @@ export type RateLimitDecision =
   | { readonly allowed: false; readonly retryAfterSeconds: number };
 
 export type RateLimiter = {
-  /** Anota un intento y dice si se admite. */
+  /**
+   * ¿Se admite otro intento? No anota nada.
+   *
+   * Consultar y anotar están separados para que «solo cuentan los intentos
+   * fallidos» se cumpla literalmente: se consulta antes de trabajar y se
+   * anota después, cuando ya se sabe si el intento falló. Con una sola
+   * operación había que anotar a ciegas y deshacerlo al acertar, que es lo
+   * mismo escrito peor.
+   */
+  readonly check: (key: string) => RateLimitDecision;
+  /** Anota un intento fallido. */
   readonly record: (key: string) => RateLimitDecision;
   /** Olvida los intentos de un origen: se usa tras autenticar con éxito. */
   readonly reset: (key: string) => void;
@@ -62,7 +72,43 @@ export function createRateLimiter(options: {
     }
   }
 
+  /** Cuántos quedan en la ventana viva, sin tocarla. */
+  function restantes(key: string, currentTime: number): number {
+    const existing = windows.get(key);
+
+    if (!existing || existing.expiresAt <= currentTime) {
+      return limit;
+    }
+
+    return Math.max(0, limit - existing.count);
+  }
+
+  function esperaHasta(expiresAt: number, currentTime: number): number {
+    // Hacia arriba: redondear hacia abajo devolvería 0 en el último segundo,
+    // y quien reintentara al instante volvería a chocar.
+    return Math.max(1, Math.ceil((expiresAt - currentTime) / 1000));
+  }
+
   return {
+    check(key: string): RateLimitDecision {
+      const currentTime = now();
+      const quedan = restantes(key, currentTime);
+
+      if (quedan > 0) {
+        return { allowed: true, remaining: quedan };
+      }
+
+      const existing = windows.get(key);
+
+      return {
+        allowed: false,
+        retryAfterSeconds: esperaHasta(
+          existing?.expiresAt ?? currentTime,
+          currentTime,
+        ),
+      };
+    },
+
     record(key: string): RateLimitDecision {
       const currentTime = now();
       const existing = windows.get(key);
@@ -77,12 +123,7 @@ export function createRateLimiter(options: {
       if (existing.count >= limit) {
         return {
           allowed: false,
-          // Hacia arriba: redondear hacia abajo devolvería 0 en el último
-          // segundo, y quien reintentara al instante volvería a chocar.
-          retryAfterSeconds: Math.max(
-            1,
-            Math.ceil((existing.expiresAt - currentTime) / 1000),
-          ),
+          retryAfterSeconds: esperaHasta(existing.expiresAt, currentTime),
         };
       }
 

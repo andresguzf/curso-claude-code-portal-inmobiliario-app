@@ -675,23 +675,42 @@ servirse después a otra persona. Se decide en el constructor de la respuesta,
 como `deletedAt` vive en un solo sitio: lo que hay que repetir en cada archivo
 nuevo es lo que se olvida.
 
-**Intentos de autenticación.** Ventana fija por origen sobre `/api/auth/login`
-—cinco cada cinco minutos— y `/api/auth/register` —cinco cada quince—, con
-`429` y `Retry-After`. No es solo cuestión de adivinar contraseñas: cada
-intento obliga al servidor a derivar un scrypt de 16 MiB, así que sin límite
-un chorro de peticiones agota memoria y CPU aunque ninguna acierte. Por eso el
-rechazo se decide **antes** de leer el cuerpo.
+**Intentos de autenticación.** Dos contadores sobre `/api/auth/login`, porque
+protegen de cosas distintas.
 
-Entrar bien no gasta cupo; solo cuentan los intentos fallidos. En el registro
-cuentan todos, porque lo que se frena es dar de alta cuentas en serie.
+| Contador | Clave | Ventana | De qué protege |
+|---|---|---|---|
+| Fino | IP **+ cuenta** | 5 cada 5 min | De que adivinen la contraseña de esa cuenta |
+| Grueso | IP | 20 cada 5 min | De que agoten CPU y memoria |
+
+El fino va por cuenta y no solo por IP porque **una IP no es una máquina**.
+Detrás de un NAT —una oficina, un edificio, un operador móvil— salen muchas
+personas por la misma dirección, y contar solo por IP hacía que quien tecleaba
+mal su contraseña dejara fuera a todos sus compañeros. Comprobado: María agota
+sus cinco y admin, Ana y Bruno siguen entrando desde esa misma IP; María no,
+ni con la contraseña correcta, que es lo que se pretendía.
+
+El grueso existe porque el fino, solo, se esquiva cambiando de correo en cada
+intento. Y cada intento cuesta un scrypt de 16 MiB **aunque el correo no
+exista**, porque se deriva un hash de descarte para no delatar qué cuentas
+hay. Comprobado: rotando el correo, los veinte primeros pasan y el resto es
+429.
+
+El grueso se decide **antes de leer el cuerpo**; el fino necesita el correo,
+así que va después, pero sigue estando antes del scrypt, que es lo caro.
+
+**Solo cuentan los intentos fallidos**, y de forma literal: el limitador separa
+`check` de `record`, se consulta antes de trabajar y se anota solo si las
+credenciales no valían. Acertar pone a cero los dos contadores del origen. En
+el registro cuentan todos, porque lo que se frena es dar de alta cuentas en
+serie y la cuenta todavía no existe para usarla como clave.
 
 El recuento vive en memoria del proceso: con varias instancias cada una lleva
 la suya, lo que relaja el límite pero no lo anula. La dirección sale de
 `x-forwarded-for`, que quien llame directamente al backend puede inventarse;
 esto encarece el ataque más común sin pretender detener a quien rote
 direcciones. Comprobado que el proxy del frontend **conserva** la cabecera del
-cliente, así que detrás de un balanceador cada persona mantiene su propio
-contador y nadie deja fuera a los demás.
+cliente, así que detrás de un balanceador cada persona mantiene su contador.
 
 **Tamaño del cuerpo.** La subida de imágenes rechaza por `Content-Length`
 antes de leer el archivo: `request.formData()` almacena el cuerpo entero en

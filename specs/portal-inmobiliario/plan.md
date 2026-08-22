@@ -469,11 +469,41 @@ omisión: hoy ningún endpoint es cacheable —todos declaran `force-dynamic`—
 poner la instrucción en el constructor de la respuesta evita tener que
 acordarse en cada endpoint nuevo.
 
-**Límite de intentos de autenticación.** Ventana fija por IP: cinco intentos
-cada cinco minutos en `/api/auth/login` y cinco cada quince en
-`/api/auth/register`, respondiendo `429` con `Retry-After`. El estado vive en memoria del proceso: con varias instancias
-cada una lleva su cuenta, lo que relaja el límite pero no lo anula. Un almacén
-compartido es la evolución natural cuando haya más de un proceso.
+**Límite de intentos de autenticación.** Dos contadores sobre
+`/api/auth/login`, porque protegen de cosas distintas.
+
+| Contador | Clave | Ventana | De qué protege |
+|---|---|---|---|
+| Fino | IP **+ cuenta** | 5 cada 5 min | De que adivinen la contraseña de esa cuenta |
+| Grueso | IP | 20 cada 5 min | De que agoten CPU y memoria del servidor |
+
+El fino es el que importa para quien usa el portal, y va por cuenta y no solo
+por IP por una razón concreta: una IP no es una máquina. Detrás de un NAT
+—una oficina, un edificio, un operador móvil— salen muchas personas por la
+misma dirección, y contar solo por IP hace que quien teclea mal su contraseña
+deje fuera a todos sus compañeros, administración incluida.
+
+El grueso existe porque el fino, solo, se esquiva: basta cambiar de correo en
+cada intento para estrenar contador. Y cada intento cuesta un scrypt de
+16 MiB aunque el correo no exista, porque se deriva un hash de descarte para
+no delatar qué cuentas hay. Sin un tope por IP, rotar correos agota el
+servidor.
+
+El grueso se comprueba **antes de leer el cuerpo**; el fino necesita el
+correo, así que va después, pero sigue estando antes del scrypt, que es lo
+caro.
+
+**Solo cuentan los intentos fallidos.** El limitador separa consultar de
+anotar: se consulta antes de trabajar y se anota solo si las credenciales no
+valían. Entrar bien además pone a cero los dos contadores de ese origen.
+
+`/api/auth/register` mantiene su contador por IP —cinco cada quince minutos—
+y ahí sí cuentan todos los intentos: lo que se frena es dar de alta cuentas en
+serie, y una que se crea sin problemas es justo el caso a frenar.
+
+El estado vive en memoria del proceso: con varias instancias cada una lleva su
+cuenta, lo que relaja el límite pero no lo anula. Un almacén compartido es la
+evolución natural cuando haya más de un proceso.
 
 **Tamaño del cuerpo.** La subida de imágenes rechaza por `Content-Length`
 antes de leer el archivo. `request.formData()` almacena el cuerpo entero en

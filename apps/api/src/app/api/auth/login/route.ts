@@ -7,7 +7,12 @@ import {
   jsonOk,
   jsonTooManyRequests,
 } from "@/lib/api-response";
-import { loginRateLimiter, readClientAddress } from "@/lib/auth-rate-limit";
+import {
+  buildLoginKey,
+  loginFloodLimiter,
+  loginRateLimiter,
+  readClientAddress,
+} from "@/lib/auth-rate-limit";
 import {
   buildSessionCookieOptions,
   createSessionToken,
@@ -26,23 +31,43 @@ export const dynamic = "force-dynamic";
 export async function POST(request: Request) {
   try {
     const origin = readClientAddress(request.headers);
-    const attempt = loginRateLimiter.record(origin);
 
-    if (!attempt.allowed) {
-      // Se corta antes de leer el cuerpo y antes de derivar el scrypt: si el
-      // rechazo costara lo mismo que un intento normal, el límite frenaría
-      // las conjeturas pero no el consumo, que es la mitad del problema.
-      return jsonTooManyRequests(attempt.retryAfterSeconds);
+    // Primero el tope grueso, que no necesita el cuerpo: si el rechazo
+    // costara lo mismo que un intento normal, el límite frenaría las
+    // conjeturas pero no el consumo, que es la mitad del problema.
+    const flood = loginFloodLimiter.check(origin);
+
+    if (!flood.allowed) {
+      return jsonTooManyRequests(flood.retryAfterSeconds);
     }
 
     const payload: unknown = await request.json().catch(() => null);
+    // El contador fino necesita saber de qué cuenta se trata, así que va
+    // después de leer el cuerpo. Sigue estando antes del scrypt, que es lo
+    // caro; leer un JSON pequeño no lo es.
+    const accountKey = buildLoginKey(origin, payload);
+    const attempt = loginRateLimiter.check(accountKey);
+
+    if (!attempt.allowed) {
+      return jsonTooManyRequests(attempt.retryAfterSeconds);
+    }
+
     const outcome = await loginUser(payload);
+
+    if (outcome.status === "rejected") {
+      // Solo los fallos gastan cupo, y por eso se anotan aquí y no antes:
+      // cuando ya se sabe que el intento no valía.
+      loginFloodLimiter.record(origin);
+      loginRateLimiter.record(accountKey);
+    }
 
     switch (outcome.status) {
       case "authenticated": {
-        // Quien acierta no ha gastado cupo: el límite persigue a quien
-        // prueba, no a quien tecleó mal su contraseña un par de veces.
-        loginRateLimiter.reset(origin);
+        // Acertar limpia los dos contadores de este origen: quien demuestra
+        // saber su contraseña no es de quien había que defenderse, y sus
+        // fallos anteriores no deben pesar sobre nadie más de su oficina.
+        loginRateLimiter.reset(accountKey);
+        loginFloodLimiter.reset(origin);
 
         const response = jsonOk<AuthenticatedUserDto>(outcome.user);
 
