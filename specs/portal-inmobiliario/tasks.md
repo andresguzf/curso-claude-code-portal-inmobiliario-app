@@ -215,7 +215,7 @@
 
 ## Fase 5 — Calidad y finalización
 
-- [ ] **Paso 31 — SEO y metadata**
+- [x] **Paso 31 — SEO y metadata**
   - Metadata dinámica.
   - Título.
   - Descripción.

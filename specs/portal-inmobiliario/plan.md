@@ -533,6 +533,25 @@ Su clave de acceso es pública por diseño —Web3Forms la publica en el HTML de
 cada formulario que la usa— y por eso vive en `apps/web/.env`. No da acceso a
 ninguna cuenta: solo permite enviar al correo configurado.
 
+## 13b. SEO y metadata
+
+La ficha de cada propiedad genera su metadata con `generateMetadata`: título,
+descripción, canónica y Open Graph con la imagen de portada. La descripción
+empieza por precio y ubicación —lo que decide si alguien entra desde un
+resultado de búsqueda— y se recorta por palabra entera a 160 caracteres.
+
+`metadataBase` sale de `NEXT_PUBLIC_SITE_URL`. Open Graph exige direcciones
+absolutas: una imagen relativa no la resuelve el servidor que lee la etiqueta
+al compartir el enlace.
+
+La carga de la propiedad va envuelta en `cache` de React porque la piden dos
+veces por visita —la metadata y el contenido—; sin eso serían dos llamadas
+idénticas a la API.
+
+El área de cuenta y el panel de administración se declaran `noindex`. Están
+tras autenticación, así que un buscador no vería su contenido, pero sí podría
+listar sus direcciones.
+
 ## 14. Errores
 
 Utilizar códigos HTTP apropiados:

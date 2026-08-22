@@ -9,6 +9,13 @@ export const dynamic = "force-dynamic";
 /** El layout añade el sufijo del sitio mediante su plantilla de título. */
 export const metadata = {
   title: "Editar cuenta",
+  /**
+   * El área de cuenta no se indexa.
+   *
+   * Está tras autenticación, así que un buscador no vería su contenido, pero
+   * sí podría listar la dirección en un resultado.
+   */
+  robots: { index: false, follow: false },
 };
 
 const EDIT_ACCOUNT_PATH = "/account/edit";

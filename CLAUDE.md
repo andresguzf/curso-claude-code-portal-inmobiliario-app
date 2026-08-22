@@ -171,14 +171,14 @@ El más justo es el texto claro sobre el acento en oscuro, con 4.53.
 
 ## Estado del proyecto
 
-Pasos 1 a 30 de `tasks.md` completos. En funcionamiento: portada, catálogo
+Pasos 1 a 31 de `tasks.md` completos. En funcionamiento: portada, catálogo
 con búsqueda, filtros combinados, ordenamiento, estados de carga/vacío/error,
 detalle de propiedad, galería, mapa de ubicación, formulario de contacto,
 autenticación con autorización por rol, el área privada de la cuenta —con
 edición de los propios datos, favoritos y consultas guardadas— y el panel de
 administración con sus indicadores y el alta, edición y baja de propiedades.
 
-Pendiente desde el paso 31: SEO, optimización y los pasos de cierre.
+Pendiente desde el paso 32: optimización y los pasos de cierre.
 
 ### Autenticación
 
@@ -496,6 +496,30 @@ hacen dudar de si algo falló.
 Los filtros de esta pantalla son enlaces y no un formulario: con dos filtros
 de tres opciones, un panel plegable sería más maquinaria de la necesaria, y
 así se pueden abrir en otra pestaña.
+
+### SEO y metadata
+
+La ficha de cada propiedad genera la suya con `generateMetadata`: título,
+descripción, canónica, Open Graph y tarjeta de Twitter. La descripción
+empieza por **precio y ubicación** —lo que decide si alguien entra desde un
+resultado— y se recorta por palabra entera a 160 caracteres, que es lo que
+muestra un buscador.
+
+La imagen compartida es la **portada** de la propiedad. Si no tiene ninguna,
+no se declara `images` en vez de poner un marcador: la tarjeta se ve mejor
+sin imagen que con una que no es de la propiedad.
+
+`metadataBase` sale de `NEXT_PUBLIC_SITE_URL`. Open Graph exige direcciones
+absolutas, y una URL mal escrita no tumba el renderizado: se avisa por el log
+y se cae en `localhost`.
+
+La carga de la propiedad va envuelta en `cache` de React: la piden la
+metadata y la página, y sin eso serían dos llamadas idénticas a la API por
+visita. Comprobado en el log del backend: una sola.
+
+`/account*` y `/admin*` se declaran **noindex**. Un 404 no necesita marcarse:
+cuando la página llama a `notFound()`, Next descarta la metadata del segmento
+y ya lo marca por su cuenta.
 
 ### Búsqueda sin acentos
 
