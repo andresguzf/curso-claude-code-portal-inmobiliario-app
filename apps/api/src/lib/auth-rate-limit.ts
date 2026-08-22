@@ -9,13 +9,18 @@ import { createRateLimiter, readClientAddress } from "@/lib/rate-limit";
  *
  * Los dos números salen de la misma pregunta: cuántos intentos hace una
  * persona que se equivoca, frente a cuántos hace un programa que prueba.
- * Diez contraseñas en cinco minutos es mucho para lo primero y nada para lo
- * segundo.
+ * Cinco contraseñas en cinco minutos es holgado para lo primero y nada para
+ * lo segundo.
  */
 
-/** Solo cuenta los intentos fallidos: entrar bien no gasta cupo. */
+/**
+ * Cinco intentos por ventana.
+ *
+ * Solo cuentan los fallidos: entrar bien vacía el contador, así que quien se
+ * equivocó cuatro veces y acertó a la quinta vuelve a empezar con cinco.
+ */
 export const loginRateLimiter = createRateLimiter({
-  limit: 10,
+  limit: 5,
   windowMs: 5 * 60 * 1000,
 });
 

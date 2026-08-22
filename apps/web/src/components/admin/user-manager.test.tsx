@@ -15,6 +15,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 import { UserManager } from "./user-manager";
+import { readFlash, resetFlashForTests } from "@/lib/flash";
 
 const ADMIN_ID = "admin-1";
 
@@ -55,6 +56,8 @@ function rowOf(name: string): HTMLElement {
 }
 
 afterEach(() => {
+  window.sessionStorage.clear();
+  resetFlashForTests();
   updateAdminUser.mockReset();
   refresh.mockReset();
 });
@@ -240,5 +243,52 @@ describe("UserManager, sin resultados", () => {
     expect(
       screen.getByText("Ninguna cuenta coincide con lo que has pedido."),
     ).toBeVisible();
+  });
+});
+
+describe("UserManager: avisos de confirmación", () => {
+  it("dice qué pasó al desactivar, nombrando a la persona", async () => {
+    const user = userEvent.setup();
+    updateAdminUser.mockResolvedValue(buildUser({ isActive: false }));
+    renderManager();
+
+    await user.click(
+      within(rowOf("María")).getByRole("button", { name: /Desactivar/ }),
+    );
+    await user.click(screen.getByRole("button", { name: "Sí, desactivarla" }));
+
+    await waitFor(() => expect(updateAdminUser).toHaveBeenCalled());
+    expect(readFlash()[0]?.text).toContain("María");
+  });
+
+  it("al cambiar la contraseña recuerda que hay que comunicarla", async () => {
+    const user = userEvent.setup();
+    updateAdminUser.mockResolvedValue(buildUser());
+    renderManager();
+
+    await user.click(
+      within(rowOf("María")).getByRole("button", { name: /Editar la cuenta/ }),
+    );
+    await user.type(screen.getByLabelText(/contraseña/i), "clavenueva123");
+    await user.click(screen.getByRole("button", { name: "Guardar" }));
+
+    await waitFor(() => expect(updateAdminUser).toHaveBeenCalled());
+    // Es el único cambio que obliga a hacer algo después: sin comunicarla,
+    // esa persona se queda fuera.
+    expect(readFlash()[0]?.text).toContain("Comunícasela");
+  });
+
+  it("no anuncia nada cuando la API rechaza el cambio", async () => {
+    const user = userEvent.setup();
+    updateAdminUser.mockRejectedValue(new Error("Ese email ya existe."));
+    renderManager();
+
+    await user.click(
+      within(rowOf("María")).getByRole("button", { name: /Desactivar/ }),
+    );
+    await user.click(screen.getByRole("button", { name: "Sí, desactivarla" }));
+
+    await waitFor(() => expect(updateAdminUser).toHaveBeenCalled());
+    expect(readFlash()).toEqual([]);
   });
 });

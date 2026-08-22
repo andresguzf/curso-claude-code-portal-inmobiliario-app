@@ -22,6 +22,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 import { PropertyForm } from "./property-form";
+import { readFlash, resetFlashForTests } from "@/lib/flash";
 
 const FEATURES = [
   { id: "f1", name: "Piscina", slug: "piscina" },
@@ -67,6 +68,8 @@ async function fillRequiredFields(user: ReturnType<typeof userEvent.setup>) {
 }
 
 afterEach(() => {
+  window.sessionStorage.clear();
+  resetFlashForTests();
   for (const mock of [
     createAdminProperty,
     updateAdminProperty,
@@ -221,5 +224,44 @@ describe("PropertyForm", () => {
       await screen.findByText("Estas características no existen: helipuerto."),
     ).toBeVisible();
     expect(push).not.toHaveBeenCalled();
+  });
+});
+
+describe("PropertyForm: avisos de confirmación", () => {
+  it("dice que la propiedad nueva quedó como borrador", async () => {
+    const user = userEvent.setup();
+    createAdminProperty.mockResolvedValue(PROPERTY);
+
+    render(<PropertyForm features={FEATURES} />);
+    await fillRequiredFields(user);
+    await user.click(screen.getByRole("button", { name: "Crear propiedad" }));
+
+    await waitFor(() => expect(createAdminProperty).toHaveBeenCalled());
+    // Nace despublicada: decir solo «creada» haría pensar que ya está en el
+    // portal, y no lo está.
+    expect(readFlash()[0]?.text).toContain("borrador");
+  });
+
+  it("distingue publicar de guardar una corrección", async () => {
+    const user = userEvent.setup();
+    updateAdminProperty.mockResolvedValue(PROPERTY);
+
+    render(<PropertyForm features={FEATURES} property={PROPERTY} />);
+    await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
+
+    await waitFor(() => expect(updateAdminProperty).toHaveBeenCalled());
+    // Sin cambiar el estado de publicación, el aviso es el de guardar.
+    expect(readFlash()[0]?.text).toContain("Se guardaron los cambios");
+  });
+
+  it("no anuncia nada cuando el servidor rechaza el guardado", async () => {
+    const user = userEvent.setup();
+    updateAdminProperty.mockRejectedValue(new Error("El precio es inválido."));
+
+    render(<PropertyForm features={FEATURES} property={PROPERTY} />);
+    await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
+
+    await waitFor(() => expect(updateAdminProperty).toHaveBeenCalled());
+    expect(readFlash()).toEqual([]);
   });
 });

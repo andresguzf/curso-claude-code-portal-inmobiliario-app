@@ -7,6 +7,7 @@ import { useState } from "react";
 import { UserRole, type AuthenticatedUserDto } from "@portal/contracts";
 
 import { logOut } from "@/lib/api-client";
+import { flashSuccess } from "@/lib/flash";
 import { LOGIN_NAVIGATION_ITEM } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 
@@ -63,6 +64,7 @@ export function SessionMenu({
 
     try {
       await logOut();
+      flashSuccess("Cerraste tu sesión.");
       onNavigate?.();
       // La sesión la pinta el servidor: hay que pedirle la página de nuevo.
       router.refresh();

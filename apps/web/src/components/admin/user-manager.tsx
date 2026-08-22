@@ -13,6 +13,7 @@ import {
 import { fieldInputClassName } from "@/components/form/form-field";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { updateAdminUser } from "@/lib/api-client";
+import { flashSuccess } from "@/lib/flash";
 import { formatUserRole } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -50,7 +51,7 @@ export function UserManager({
   } | null>(null);
 
   function apply(
-    userId: string,
+    user: AdminUserDto,
     changes: AdminUpdateUserRequestDto,
   ): Promise<boolean> {
     setError(null);
@@ -58,12 +59,13 @@ export function UserManager({
     return new Promise((resolve) => {
       startTransition(async () => {
         try {
-          await updateAdminUser(userId, changes);
+          await updateAdminUser(user.id, changes);
+          flashSuccess(describeChange(user, changes));
           router.refresh();
           resolve(true);
         } catch (caught) {
           setError({
-            id: userId,
+            id: user.id,
             message:
               caught instanceof Error
                 ? caught.message
@@ -100,7 +102,7 @@ export function UserManager({
               }}
               onCancelEdit={() => setEditingId(null)}
               onSave={async (changes) => {
-                if (await apply(user.id, changes)) {
+                if (await apply(user, changes)) {
                   setEditingId(null);
                 }
               }}
@@ -126,12 +128,45 @@ export function UserManager({
           }
 
           setPendingChange(null);
-          void apply(target.user.id, target.changes);
+          void apply(target.user, target.changes);
         }}
         onCancel={() => setPendingChange(null)}
       />
     </>
   );
+}
+
+/**
+ * Qué decir según lo que se cambió.
+ *
+ * El texto sale del propio cuerpo enviado y no de quien llama: así una
+ * pantalla nueva que use `apply` no puede olvidarse de describir su acción,
+ * ni describirla de otra manera.
+ *
+ * La contraseña se menciona aparte porque es la única que obliga a hacer
+ * algo después: comunicarla, o esa persona se queda fuera.
+ */
+function describeChange(
+  user: AdminUserDto,
+  changes: AdminUpdateUserRequestDto,
+): string {
+  if (changes.newPassword !== undefined) {
+    return `Se cambió la contraseña de ${user.name}. Comunícasela: no hay forma de recuperarla desde aquí.`;
+  }
+
+  if (changes.isActive !== undefined) {
+    return changes.isActive
+      ? `${user.name} puede volver a entrar.`
+      : `${user.name} ya no puede entrar.`;
+  }
+
+  if (changes.role !== undefined) {
+    return changes.role === UserRole.ADMIN
+      ? `${user.name} ahora administra el portal.`
+      : `${user.name} ya no administra el portal.`;
+  }
+
+  return `Se guardaron los datos de ${changes.name ?? user.name}.`;
 }
 
 type PendingChange = {

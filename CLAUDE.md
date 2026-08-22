@@ -672,7 +672,7 @@ como `deletedAt` vive en un solo sitio: lo que hay que repetir en cada archivo
 nuevo es lo que se olvida.
 
 **Intentos de autenticación.** Ventana fija por origen sobre `/api/auth/login`
-—diez cada cinco minutos— y `/api/auth/register` —cinco cada quince—, con
+—cinco cada cinco minutos— y `/api/auth/register` —cinco cada quince—, con
 `429` y `Retry-After`. No es solo cuestión de adivinar contraseñas: cada
 intento obliga al servidor a derivar un scrypt de 16 MiB, así que sin límite
 un chorro de peticiones agota memoria y CPU aunque ninguna acierte. Por eso el
@@ -731,6 +731,43 @@ interfaz nunca estuvo afectada: ya enviaba `newPassword`.
 devuelve todas las publicadas y `page` no es un parámetro suyo. Con doce
 filas no se nota y la especificación no lo pide, pero crecerá con el
 catálogo.
+
+### Mensajes de confirmación
+
+Toda acción que cambia algo lo dice: entrar y salir, el registro, el alta,
+la edición y la baja de una propiedad —distinguiendo publicar de corregir—,
+el alta y la edición de una cuenta, y el alta, el renombrado y la baja de una
+característica.
+
+Aparecen arriba, por encima del contenido, en las dos raíces. Se van solos a
+los **cinco segundos** y se pueden cerrar antes. La cuenta atrás se detiene
+con el puntero o el foco encima: un aviso que se va a media lectura no ha
+informado a nadie.
+
+La cola vive en `sessionStorage`, no en un estado de React, porque el portal
+y el panel son **dos documentos distintos**: entrar como ADMIN salta de uno a
+otro y cualquier cosa en memoria se perdería justo en la navegación que había
+que anunciar.
+
+Un mensaje sale de la cola cuando se **cierra**, no cuando se lee. Vaciarla al
+leerla parecía natural y estaba mal: quien publica y quien pinta están en el
+mismo documento en ese instante, así que el aviso se consumía en la página que
+se estaba abandonando y no llegaba nunca a la siguiente. Se vio probando el
+login de ADMIN en el navegador; ninguna prueba unitaria lo habría enseñado,
+porque todas viven en un solo documento.
+
+Los leen con `useSyncExternalStore`, que es la forma que tiene React de mirar
+algo que cambia fuera de él. Vaciar la cola dentro de un efecto encadenaba un
+render extra en cada montaje, y el linter lo señalaba con razón.
+
+Se pintan con `role="status"`: confirman algo que la persona acaba de pedir,
+así que se anuncian sin interrumpir. Un error sigue explicándose junto al
+campo o al pie del formulario, que es donde está lo que hay que corregir; el
+aviso de arriba es para lo que salió bien.
+
+`success` es el único verde de la paleta: el acento es terracota y no
+distingue «se guardó» de «no se pudo». Contraste comprobado en ambos temas,
+el más justo 5,53.
 
 ### Limitaciones conocidas
 

@@ -666,6 +666,31 @@ Aplicar como mínimo:
 
 ---
 
+## 23b. Mensajes de confirmación
+
+Toda acción que cambia algo debe decir que ocurrió. Un formulario que se
+guarda y deja la pantalla igual obliga a recargar para saber si funcionó.
+
+Se muestran arriba de la página, por encima del contenido, y son los mismos
+en el portal y en el panel.
+
+Desaparecen solos a los **cinco segundos** y además se pueden cerrar antes. La
+cuenta atrás se detiene mientras el puntero o el foco están encima: un aviso
+que se va mientras se lee no ha informado a nadie.
+
+Deben cubrir al menos:
+
+- iniciar y cerrar sesión;
+- el alta, la edición y la baja de una propiedad, y su publicación;
+- el alta y la edición de una cuenta;
+- el alta, el renombrado y la baja de una característica.
+
+Un error ya se explica junto al campo o al pie del formulario, donde está lo
+que hay que corregir; el aviso de arriba es para lo que salió bien y hace que
+la pantalla cambie de sitio.
+
+---
+
 ## 24b. Endurecimiento
 
 El portal se sirve con las cabeceras de seguridad habituales: política de
@@ -680,8 +705,8 @@ Las respuestas de la API que dependen de quién pregunta no deben quedar
 almacenadas en ninguna caché intermedia. Una respuesta privada sin
 instrucción de caché puede acabar servida a otra persona.
 
-La autenticación debe limitar los intentos por origen. Sin límite, probar
-contraseñas sale gratis y cada intento cuesta al servidor una derivación
+La autenticación debe limitar los intentos por origen: **cinco** por ventana.
+Sin límite, probar contraseñas sale gratis y cada intento cuesta al servidor una derivación
 scrypt deliberadamente cara.
 
 ---

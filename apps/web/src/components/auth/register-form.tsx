@@ -11,6 +11,7 @@ import {
   FormField,
 } from "@/components/form/form-field";
 import { registerAccount } from "@/lib/api-client";
+import { flashSuccess } from "@/lib/flash";
 import { registerSchema, type RegisterFormValues } from "@/schemas/auth-schema";
 
 /**
@@ -39,6 +40,7 @@ export function RegisterForm({ redirectTo }: { readonly redirectTo: string }) {
 
     try {
       await registerAccount(values);
+      flashSuccess("Tu cuenta quedó creada y ya iniciaste sesión.");
       router.replace(redirectTo);
       router.refresh();
     } catch (error) {

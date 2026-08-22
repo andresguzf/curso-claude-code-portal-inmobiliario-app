@@ -298,6 +298,28 @@ Crear recursos REST adicionales cuando sean necesarios para:
 - usuarios;
 - consultas.
 
+## 7b. Mensajes de confirmación
+
+Viven enteros en el navegador. No hay Server Actions y ninguna de estas
+acciones vuelve a pintar la página desde el servidor: el formulario llama a
+la API, y si sale bien navega.
+
+La cola está en `sessionStorage`, no en un estado de React. El portal y el
+panel son **dos raíces distintas**, cada una con su `<html>`: entrar como
+ADMIN lleva de un documento al otro, y cualquier cosa guardada en memoria se
+perdería justo en la navegación que había que anunciar. En `sessionStorage`
+sobrevive, y muere al cerrar la pestaña, que es exactamente lo que dura un
+aviso.
+
+Publicar un mensaje escribe en la cola y lanza un evento de `window`. El
+componente que los pinta vacía la cola al montarse —eso cubre las
+navegaciones que recargan el documento— y también al recibir el evento —eso
+cubre las que no—. Una sola vía para los dos casos.
+
+Se pintan con `role="status"`, para que un lector de pantalla los anuncie sin
+interrumpir. La cuenta atrás de cinco segundos se detiene con el puntero o el
+foco encima.
+
 ## 8. Responsabilidades
 
 ### Route Handlers
@@ -411,9 +433,9 @@ omisión: hoy ningún endpoint es cacheable —todos declaran `force-dynamic`—
 poner la instrucción en el constructor de la respuesta evita tener que
 acordarse en cada endpoint nuevo.
 
-**Límite de intentos de autenticación.** Ventana fija por IP sobre
-`/api/auth/login` y `/api/auth/register`, respondiendo `429` con
-`Retry-After`. El estado vive en memoria del proceso: con varias instancias
+**Límite de intentos de autenticación.** Ventana fija por IP: cinco intentos
+cada cinco minutos en `/api/auth/login` y cinco cada quince en
+`/api/auth/register`, respondiendo `429` con `Retry-After`. El estado vive en memoria del proceso: con varias instancias
 cada una lleva su cuenta, lo que relaja el límite pero no lo anula. Un almacén
 compartido es la evolución natural cuando haya más de un proceso.
 

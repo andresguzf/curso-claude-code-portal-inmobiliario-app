@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { deleteAdminProperty } from "@/lib/api-client";
+import { flashSuccess } from "@/lib/flash";
 
 /**
  * Elimina una propiedad del portal (spec.md, sección 19).
@@ -35,6 +36,7 @@ export function DeletePropertyButton({
     startTransition(async () => {
       try {
         await deleteAdminProperty(propertyId);
+        flashSuccess(`«${propertyTitle}» ya no figura en el catálogo.`);
         setIsConfirming(false);
         router.refresh();
       } catch (error) {

@@ -13,6 +13,7 @@ import {
   FormField,
 } from "@/components/form/form-field";
 import { logIn } from "@/lib/api-client";
+import { flashSuccess } from "@/lib/flash";
 import { DEFAULT_REDIRECT_PATH } from "@/lib/redirect";
 import { loginSchema, type LoginFormValues } from "@/schemas/auth-schema";
 
@@ -42,6 +43,10 @@ export function LoginForm({ redirectTo }: { readonly redirectTo: string }) {
 
     try {
       const user = await logIn(values);
+
+      // Se publica antes de navegar: el aviso viaja en `sessionStorage`, así
+      // que sobrevive incluso al salto de raíz que hace ADMIN hacia el panel.
+      flashSuccess(`Sesión iniciada. Hola, ${user.name}.`);
 
       router.replace(resolveDestination(user.role, redirectTo));
       router.refresh();

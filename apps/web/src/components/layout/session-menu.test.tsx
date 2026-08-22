@@ -19,6 +19,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 import { SessionMenu } from "./session-menu";
+import { readFlash, resetFlashForTests } from "@/lib/flash";
 
 const MARIA = {
   id: "u1",
@@ -28,6 +29,8 @@ const MARIA = {
 } as const;
 
 afterEach(() => {
+  window.sessionStorage.clear();
+  resetFlashForTests();
   mocks.pathname = "/";
   mocks.logOut.mockReset();
   mocks.refresh.mockReset();
@@ -188,5 +191,29 @@ describe("SessionMenu — acceso a administración", () => {
     );
 
     expect(screen.queryByRole("link", { name: "Ir al panel" })).toBeNull();
+  });
+});
+
+describe("SessionMenu: aviso al salir", () => {
+  it("confirma que la sesión quedó cerrada", async () => {
+    const user = userEvent.setup();
+    mocks.logOut.mockResolvedValue(undefined);
+    render(
+      <SessionMenu
+        currentUser={{
+          id: "u1",
+          name: "María",
+          email: "maria@example.com",
+          role: "USER",
+        }}
+        favoriteCount={0}
+        isMobile={false}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /salir/i }));
+
+    await waitFor(() => expect(mocks.logOut).toHaveBeenCalled());
+    expect(readFlash()[0]?.text).toContain("Cerraste tu sesión");
   });
 });
