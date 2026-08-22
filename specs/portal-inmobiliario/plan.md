@@ -49,6 +49,16 @@ Web3Forms   → contacto
 - No exigir latitud/longitud en el formulario ADMIN.
 - No implementar funcionalidades especulativas fuera de `spec.md`.
 
+Las dos primeras no se dejan a la buena voluntad. Prohibir un import es
+trabajo de ESLint —`no-restricted-imports` en `apps/web`, contra
+`@prisma/client`, `pg` y cualquier ruta dentro de `apps/api`—, porque avisa
+mientras se escribe. Una directiva no es un import y ninguna regla la
+expresa, así que `"use server"` lo busca una prueba que lee los archivos.
+
+Hacía falta: npm iza las dependencias del monorepo a la raíz, de modo que
+`@prisma/client` se resuelve desde `apps/web` aunque no lo declare, y un
+import escrito por descuido compilaría sin protestar.
+
 ## 4. Estructura
 
 El proyecto es un monorepo con **npm workspaces**. Frontend y backend son

@@ -250,7 +250,7 @@
   - Errores y códigos HTTP.
   - Corregir defectos bloqueantes.
 
-- [ ] **Paso 36 — Cumplimiento arquitectónico**
+- [x] **Paso 36 — Cumplimiento arquitectónico**
   - Confirmar que no existen Server Actions.
   - Confirmar comunicación REST.
   - Confirmar PostgreSQL.

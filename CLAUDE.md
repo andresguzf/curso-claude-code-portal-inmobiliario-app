@@ -171,14 +171,14 @@ El más justo es el texto claro sobre el acento en oscuro, con 4.53.
 
 ## Estado del proyecto
 
-Pasos 1 a 35 de `tasks.md` completos. En funcionamiento: portada, catálogo
+Pasos 1 a 36 de `tasks.md` completos. En funcionamiento: portada, catálogo
 con búsqueda, filtros combinados, ordenamiento, estados de carga/vacío/error,
 detalle de propiedad, galería, mapa de ubicación, formulario de contacto,
 autenticación con autorización por rol, el área privada de la cuenta —con
 edición de los propios datos, favoritos y consultas guardadas— y el panel de
 administración con sus indicadores y el alta, edición y baja de propiedades.
 
-Pendiente desde el paso 36: cumplimiento arquitectónico y convergencia final.
+Pendiente el paso 37: la convergencia final del SDD.
 
 ### Autenticación
 
@@ -768,6 +768,35 @@ aviso de arriba es para lo que salió bien.
 `success` es el único verde de la paleta: el acento es terracota y no
 distingue «se guardó» de «no se pudo». Contraste comprobado en ambos temas,
 el más justo 5,53.
+
+### Cumplimiento arquitectónico
+
+Las seis reglas del paso 36, comprobadas sobre el código y sobre el sistema en
+marcha, no por lectura.
+
+| Regla | Cómo se comprobó |
+|---|---|
+| Sin Server Actions | `server-reference-manifest.json` de ambas aplicaciones: **0 acciones**. Los dos `action=` que hay son rutas con `method="get"` |
+| Comunicación REST | Solo dos archivos del frontend abren la red: `api-client.ts`, siempre contra `/api/*`, y `web3forms.ts` |
+| PostgreSQL única | `provider = "postgresql"`, seis modelos, y ninguna dependencia de otro motor en los cuatro `package.json` |
+| React no accede a la base | Ningún import, y **en caliente**: de los dos procesos de Next, solo el de `:3001` tiene conexión al 5432 |
+| Permisos en el backend | 34 verbos en 22 handlers; los 27 privados con guarda, los 7 públicos por diseño. En los 27, la guarda se resuelve **antes** de cualquier trabajo |
+| Integraciones externas | Cloudinary y Geocoding salen de `apps/api`; Web3Forms y Maps JS del navegador, con las dos únicas claves `NEXT_PUBLIC_` |
+
+**El hueco que apareció.** Las dos primeras reglas se cumplían por convención
+y nada las sostenía: npm iza las dependencias del monorepo a la raíz, así que
+`@prisma/client` se resuelve desde `apps/web` aunque no lo declare, y un
+import escrito por descuido habría compilado sin protestar.
+
+Ahora hay dos cerrojos. `no-restricted-imports` ataja `@prisma/client`, `pg`
+y cualquier ruta dentro de `apps/api`, y avisa mientras se escribe.
+`architecture.test.ts` busca `"use server"` y los `fetch` sueltos, porque una
+directiva no es un import y ninguna regla de ESLint la expresa. Los dos
+comprobados inyectando la violación: los dos fallan como deben.
+
+`server-only` **no** está en la lista de imports prohibidos, y no por
+descuido: las guardas de página lo usan bien, para no acabar en el paquete
+del navegador. Prohibirlo sería prohibir la precaución.
 
 ### Limitaciones conocidas
 
