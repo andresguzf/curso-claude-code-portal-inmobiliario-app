@@ -243,7 +243,7 @@
   - Web3Forms.
   - Endpoints ADMIN.
 
-- [ ] **Paso 35 — QA integral**
+- [x] **Paso 35 — QA integral**
   - Flujos visitante.
   - Flujos USER.
   - Flujos ADMIN.

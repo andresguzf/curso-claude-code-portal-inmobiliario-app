@@ -171,14 +171,14 @@ El más justo es el texto claro sobre el acento en oscuro, con 4.53.
 
 ## Estado del proyecto
 
-Pasos 1 a 34 de `tasks.md` completos. En funcionamiento: portada, catálogo
+Pasos 1 a 35 de `tasks.md` completos. En funcionamiento: portada, catálogo
 con búsqueda, filtros combinados, ordenamiento, estados de carga/vacío/error,
 detalle de propiedad, galería, mapa de ubicación, formulario de contacto,
 autenticación con autorización por rol, el área privada de la cuenta —con
 edición de los propios datos, favoritos y consultas guardadas— y el panel de
 administración con sus indicadores y el alta, edición y baja de propiedades.
 
-Pendiente desde el paso 35: QA integral y los pasos de cierre.
+Pendiente desde el paso 36: cumplimiento arquitectónico y convergencia final.
 
 ### Autenticación
 
@@ -705,6 +705,32 @@ secreto de `apps/api/.env` aparece en el HTML ni en los 23 paquetes de
 JavaScript que sirve el navegador. El nombre de la cuenta de Cloudinary sí
 aparece, pero dentro de las URL de las imágenes: es parte de cómo se sirven,
 no una variable filtrada.
+
+### QA integral
+
+Recorrido del paso 35: **119 comprobaciones** contra la aplicación en marcha,
+sin fallos. Los tres roles de punta a punta —catálogo, búsqueda sin acentos,
+filtros, detalle, favoritos, consultas, el CRUD de propiedades con su
+publicación y despublicación, características, usuarios, la subida y el
+borrado de una imagen en Cloudinary— y la tabla de códigos: 400, 401, 403,
+404, 409. Ningún 500 en el log.
+
+**El defecto que apareció.** `PATCH /api/admin/users/{id}` esperaba
+`newPassword`, pero el alta pide `password`. Enviar `password` al cambio
+devolvía **200 con la contraseña intacta**: el campo desconocido se
+descartaba en silencio y, si el cuerpo traía además otro cambio, había algo
+que aplicar y la respuesta salía correcta. Quien administra habría comunicado
+una contraseña que no funcionaba.
+
+Ese descarte silencioso no se ha tocado, porque es lo que impide ascenderse a
+ADMIN con un campo de más en `PATCH /api/auth/me`. Lo que ahora ocurre es que
+`password` se rechaza con un 400 que dice cuál es el nombre correcto. La
+interfaz nunca estuvo afectada: ya enviaba `newPassword`.
+
+**Observación, no defecto.** El catálogo público no pagina: `/api/properties`
+devuelve todas las publicadas y `page` no es un parámetro suyo. Con doce
+filas no se nota y la especificación no lo pide, pero crecerá con el
+catálogo.
 
 ### Limitaciones conocidas
 
