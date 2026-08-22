@@ -58,6 +58,13 @@ La especificación es la fuente de verdad del proyecto.
 7. Marca la tarea como completada en `tasks.md`.
 8. No implementes tareas futuras salvo que el usuario lo solicite explícitamente.
 
+**`tasks.md` está cerrado: los 39 pasos están completos.** El paso 3 no
+encontrará nada pendiente, y eso no es un error. Para cualquier funcionalidad
+nueva el ciclo empieza antes: se añade a `spec.md` y a `plan.md`, y solo
+entonces se escribe código. Así se hicieron la edición de la cuenta, el
+historial de solicitudes y los mensajes de confirmación, que tampoco estaban
+en la especificación original.
+
 ## Reglas de arquitectura
 
 - Utiliza Next.js (version más reciente disponible) + React + TypeScript.

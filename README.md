@@ -3,35 +3,61 @@
 Portal inmobiliario full stack orientado al mercado chileno, desarrollado con
 **Spec-Driven Development (SDD)** usando Claude Code.
 
-Los visitantes pueden descubrir propiedades en venta y arriendo, buscarlas,
-filtrarlas y consultar su detalle. Los usuarios registrados podrán guardar
-favoritas, y los administradores gestionar el portal desde un área privada.
+Los visitantes descubren propiedades en venta y arriendo, las buscan, filtran
+y ordenan, y consultan su detalle con fotografías, características y ubicación
+en el mapa. Los usuarios registrados guardan favoritas y revisan sus
+consultas; los administradores gestionan propiedades, imágenes, usuarios y
+solicitudes desde un área privada.
 
 ## Estado
 
-Pasos 1 a 23 de `specs/portal-inmobiliario/tasks.md` completos.
+**Terminado.** Los 39 pasos de `specs/portal-inmobiliario/tasks.md` están
+completos y el ciclo de SDD ha convergido: la especificación, el plan y el
+código dicen lo mismo.
 
-| Funcionalidad | Estado |
+| Portal público | |
 |---|---|
 | Portada con buscador y propiedades destacadas | ✅ |
-| Catálogo con búsqueda textual | ✅ |
+| Catálogo con búsqueda textual, que ignora acentos y eñes | ✅ |
 | Diez filtros combinables reflejados en la URL | ✅ |
 | Ordenamiento por fecha, precio y superficie | ✅ |
 | Estados de carga, vacío y error | ✅ |
-| Detalle de propiedad | ✅ |
-| Galería de imágenes | ✅ |
-| Ubicación en Google Maps | ✅ |
+| Detalle de propiedad, galería y ubicación en Google Maps | ✅ |
 | Formulario de contacto con Web3Forms | ✅ |
-| API REST de autenticación | ✅ |
-| Registro, login y sesión en la barra | ✅ |
+| Metadata por ficha: título, descripción, canónica y Open Graph | ✅ |
+
+| Cuenta de usuario | |
+|---|---|
+| Registro, login y sesión resuelta en el servidor | ✅ |
 | Autorización USER y ADMIN | ✅ |
-| Área privada de la cuenta | ✅ |
-| Edición de los propios datos | ✅ |
+| Área privada con edición de los propios datos | ✅ |
 | Favoritos | ✅ |
 | Consultas guardadas, con buscador y paginación | ✅ |
-| Panel de administración con indicadores | ✅ |
-| CRUD REST de propiedades | ✅ |
-| Interfaz de administración e imágenes | Pasos 24-30 |
+
+| Administración | |
+|---|---|
+| Panel propio con indicadores y tema claro/oscuro | ✅ |
+| CRUD de propiedades, con publicar y destacar | ✅ |
+| Listado con filtros en panel colapsable | ✅ |
+| Imágenes en Cloudinary: subir, ordenar, portada y eliminar | ✅ |
+| Características: crear, renombrar y eliminar | ✅ |
+| Usuarios: alta, rol, estado y contraseña | ✅ |
+| Consultas recibidas | ✅ |
+
+| Calidad | |
+|---|---|
+| Responsive y accesibilidad revisadas | ✅ |
+| Cabeceras de seguridad y límite de intentos | ✅ |
+| Mensajes de confirmación en toda acción que cambia algo | ✅ |
+| QA de los tres roles y reglas de arquitectura verificadas | ✅ |
+
+### Validaciones
+
+| | |
+|---|---|
+| Pruebas | 962 · api 404 · web 539 · contracts 19 |
+| Lint · typecheck · build | limpios |
+| Criterios de aceptación de `spec.md` §26 | 21/21 verificados por HTTP |
 
 ## Arquitectura
 
@@ -49,10 +75,10 @@ portal-inmobiliario/
 └── specs/portal-inmobiliario/
     ├── spec.md               Qué debe hacer la aplicación
     ├── plan.md               Cómo se construye técnicamente
-    └── tasks.md              Secuencia de 37 pasos
+    └── tasks.md              Secuencia de 39 pasos, todos completos
 ```
 
-### Decisiones que conviene conocer
+### Cómo encajan las piezas
 
 **El frontend no depende de Prisma.** El paquete de contratos declara los
 DTOs y el vocabulario del dominio como TypeScript plano. El backend verifica
@@ -61,7 +87,7 @@ Prisma, de modo que una divergencia rompa el build en lugar de llegar al
 navegador.
 
 **El navegador conoce un solo origen.** El frontend reescribe `/api/*` hacia
-el backend, así que no hace falta CORS y las cookies de sesión funcionarán
+el backend, así que no hace falta CORS y las cookies de sesión funcionan
 como same-origin.
 
 ```text
@@ -172,7 +198,18 @@ a Tailwind. Los componentes usan las utilidades resultantes y nunca colores
 literales, así que ajustar la paleta no obliga a recorrerlos.
 
 Header y pie oscuros enmarcan un cuerpo claro y cálido, con acento terracota
-en precios y acciones. La interfaz es de tema claro único.
+en precios y acciones.
+
+El **portal público** es de tema claro único. El **panel de administración**
+admite claro y oscuro: el layout marca `data-theme` en `<html>` y la hoja de
+estilos redefine ahí los mismos tokens, así que cambiar de tema no toca ni una
+clase de componente.
+
+La preferencia viaja en una cookie y no en `localStorage`, para que el
+servidor pinte el tema correcto desde el primer byte y no haya un parpadeo de
+claro antes de oscuro.
+
+Contraste verificado en ambos temas: todos los pares de texto superan 4.5:1.
 
 ## Cuentas de desarrollo
 
@@ -192,30 +229,97 @@ inactivo no puede autenticarse. La contraseña de cada cuenta es su nombre
 seguido de dígitos hasta alcanzar el mínimo de ocho caracteres. Estas
 credenciales son solo para desarrollo.
 
-## Decisiones que conviene conocer
+## Cómo se comporta el portal
 
-Eliminar una propiedad desde la administración es un **borrado lógico**: la
-fila se conserva y la propiedad desaparece de todas las vistas. El motivo es
-que arrastra consultas, que son contactos comerciales, y favoritos ajenos.
-Para retirarla del catálogo conservándola a la vista de la administración
-está despublicarla.
+**Los borrados son lógicos.** Eliminar una propiedad desde la administración
+conserva la fila y la hace desaparecer de todas las vistas. El motivo es que
+arrastra consultas, que son contactos comerciales, y favoritos ajenos. Para
+retirarla del catálogo conservándola a la vista de la administración está
+despublicarla, que es una acción distinta.
 
-Lo mismo ocurre al eliminar una consulta desde la cuenta: se oculta del
-historial propio, pero la inmobiliaria la conserva.
+Lo mismo al eliminar una consulta desde la cuenta: se oculta del historial
+propio, pero la inmobiliaria la conserva para responderla.
+
+**ADMIN no tiene nada personal.** Ni favoritos, ni consultas, ni área de
+cuenta: sus datos se editan desde el panel. No es solo que se oculte —la API
+responde 403 a una sesión ADMIN en esos endpoints—. Y sobre su propia cuenta
+no puede desactivarse ni quitarse el rol: el registro público solo crea
+`USER`, así que hacerlo dejaría el portal sin administración.
+
+**La búsqueda ignora acentos y eñes.** `montana` encuentra «montaña» y
+`nunoa` encuentra «Ñuñoa». Cada fila guarda una copia normalizada de los
+campos por los que se busca, y las consultas comparan contra ella. La regla
+vive en el paquete de contratos y se aplica dos veces: al guardar la fila y al
+preparar lo que se teclea. Si divergieran, lo guardado y lo buscado dejarían
+de encontrarse.
+
+**Toda acción que cambia algo lo dice.** Los avisos aparecen arriba, se van
+solos a los cinco segundos y se pueden cerrar antes; la cuenta atrás se
+detiene con el puntero encima. La cola vive en `sessionStorage` porque el
+portal y el panel son dos documentos distintos, y entrar como ADMIN salta de
+uno al otro: cualquier cosa en memoria se perdería justo en la navegación que
+había que anunciar.
+
+## Seguridad
+
+La decisión siempre la toma el backend. Que la interfaz esconda un botón no
+impide a nadie llamar a la API.
+
+**Cabeceras.** Política de contenido, `frame-ancestors` y `X-Frame-Options`,
+`nosniff`, política de *referrer* y restricción de permisos. Van en el
+`next.config.ts` de cada aplicación, no en el middleware, para que alcancen
+también a los archivos estáticos. El panel no puede incrustarse en otro sitio:
+un marco invisible convierte un clic de quien administra en algo que no quiso
+hacer.
+
+**Sesión.** Cookie `httpOnly` firmada, nunca `localStorage`. El testigo solo
+lleva el identificador; el rol y el estado se releen de PostgreSQL en cada
+petición, de modo que desactivar a alguien surta efecto en el acto. Las
+contraseñas se guardan con `scrypt`, con sal propia y los parámetros de coste
+dentro del hash.
+
+**Caché.** Toda respuesta de la API lleva `Cache-Control: no-store`. Se decide
+en el constructor de la respuesta: lo que hay que repetir en cada archivo
+nuevo es lo que se olvida.
+
+**Intentos de login.** Dos contadores, porque protegen de cosas distintas.
+
+| Contador | Clave | Ventana | De qué protege |
+|---|---|---|---|
+| Fino | IP + cuenta | 5 cada 5 min | De que adivinen esa contraseña |
+| Grueso | IP | 20 cada 5 min | De que agoten CPU y memoria |
+
+El fino va por cuenta y no solo por IP porque una IP no es una máquina:
+detrás de un NAT salen muchas personas, y contar solo por IP hacía que quien
+tecleaba mal su contraseña dejara fuera a toda su oficina. El grueso existe
+porque el fino, solo, se esquiva cambiando de correo en cada intento, y cada
+intento cuesta un `scrypt` de 16 MiB aunque el correo no exista.
+
+Solo cuentan los intentos fallidos. Acertar pone los dos contadores a cero.
+
+**CSRF.** No hacen falta testigos: la cookie es `SameSite=Lax` y el navegador
+ve un solo origen, así que una petición desde otro sitio no la lleva. No hay
+ningún `GET` que cambie estado.
 
 ## Limitaciones conocidas
 
-- La búsqueda y los filtros de ubicación distinguen acentos: `nunoa` no
-  encuentra `Ñuñoa`. Resolverlo requiere la extensión `unaccent` de
-  PostgreSQL, previsto para el paso 32.
-- Las imágenes del seed provienen de `picsum.photos`. Cloudinary se integra
-  en el paso 26.
-- El formulario de contacto necesita `NEXT_PUBLIC_WEB3FORMS_ACCESS_KEY` en
-  `apps/web/.env`, que se obtiene gratis en web3forms.com. Vive en el
-  frontend porque el plan gratuito de Web3Forms solo acepta envíos desde el
-  navegador. Sin esa clave la consulta se guarda igualmente: lo que no sale
-  es el aviso por correo.
-- El mapa del detalle necesita dos claves de Google Maps: una de
+- **El catálogo público no pagina.** `/api/properties` devuelve todas las
+  propiedades publicadas. Con doce filas no se nota y la especificación no lo
+  pide, pero crecerá con el catálogo.
+- **Las imágenes del seed vienen de `picsum.photos`.** El seed no sube nada a
+  Cloudinary, para no gastar la cuota de la cuenta en datos de desarrollo que
+  se recrean a menudo. Las que se suben desde el panel sí van a Cloudinary.
+- **El registro público solo crea cuentas `USER`.** Un `ADMIN` llega por el
+  seed o lo crea otro `ADMIN` desde `/admin/users`.
+- **El límite de intentos vive en memoria del proceso.** Con varias instancias
+  cada una lleva su cuenta, lo que relaja el límite pero no lo anula. Un
+  almacén compartido es la evolución natural cuando haya más de un proceso.
+- **El formulario de contacto necesita `NEXT_PUBLIC_WEB3FORMS_ACCESS_KEY`** en
+  `apps/web/.env`, que se obtiene gratis en web3forms.com. Vive en el frontend
+  porque el plan gratuito de Web3Forms solo acepta envíos desde el navegador.
+  Sin esa clave la consulta se guarda igualmente: lo que no sale es el aviso
+  por correo.
+- **El mapa del detalle necesita dos claves de Google Maps:** una de
   geocodificación en `apps/api/.env` (`GOOGLE_MAPS_API_KEY`) y otra para el
   mapa del navegador en `apps/web/.env`
   (`NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`). La segunda es pública por diseño y se
@@ -228,16 +332,20 @@ La especificación es la fuente de verdad. Antes de implementar, se leen
 `spec.md`, `plan.md` y `tasks.md`; se toma la primera tarea pendiente, se
 implementa solo esa, se valida y se marca como completada.
 
-Las instrucciones permanentes para Claude Code están en `CLAUDE.md`.
+Las instrucciones permanentes para Claude Code están en `CLAUDE.md`, junto con
+el detalle de cada decisión y por qué se tomó.
 
-Para continuar:
+**El backlog está cerrado.** No queda ninguna tarea pendiente en `tasks.md`,
+así que lo siguiente ya no sale de esa lista. Para cualquier funcionalidad
+nueva, el ciclo empieza donde empezó todo: añadirla a `spec.md` y a `plan.md`
+antes de escribir código, como se hizo con la edición de la cuenta, el
+historial de solicitudes y los mensajes de confirmación, que tampoco estaban
+en la especificación original.
 
 ```text
-Continúa con la siguiente tarea pendiente de tasks.md.
+Quiero añadir <funcionalidad>.
 
-Consulta spec.md y plan.md cuando sea necesario.
-Implementa únicamente esa tarea, valida los cambios y márcala
-como completada cuando esté correctamente terminada.
-
-No avances a la siguiente tarea.
+Añádela primero a spec.md y a plan.md, explicando qué debe hacer y cómo
+encaja con lo que ya existe. Después impleméntala, con sus pruebas, y
+ejecuta las validaciones.
 ```
