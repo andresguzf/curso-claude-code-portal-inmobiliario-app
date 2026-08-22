@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
 
+import { buildSecurityHeaders } from "./src/lib/security-headers";
+
 /**
  * URL interna del backend. El navegador nunca la ve: las peticiones salen
  * como `/api/*` hacia este mismo origen y se reescriben aquí.
@@ -9,6 +11,10 @@ const apiInternalUrl = process.env.API_INTERNAL_URL ?? "http://localhost:3001";
 const nextConfig: NextConfig = {
   // El paquete de contratos se distribuye como TypeScript sin compilar.
   transpilePackages: ["@portal/contracts"],
+
+  // `X-Powered-By` anuncia el marco y su versión sin que nadie lo necesite:
+  // es información gratis para quien busque una vulnerabilidad conocida.
+  poweredByHeader: false,
 
   images: {
     remotePatterns: [
@@ -32,6 +38,16 @@ const nextConfig: NextConfig = {
    * Así el navegador solo conoce un origen: no hace falta CORS y las cookies
    * de sesión del Paso 17 funcionan como same-origin, sin `SameSite=None`.
    */
+  /**
+   * Cabeceras de seguridad (spec.md, sección 24b).
+   *
+   * Se aplican a todo lo que sirve la aplicación, incluidos los archivos
+   * estáticos, que el middleware no llega a ver.
+   */
+  async headers() {
+    return [{ source: "/:path*", headers: buildSecurityHeaders() }];
+  },
+
   async rewrites() {
     return [
       {

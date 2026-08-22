@@ -25,6 +25,36 @@ type ImageCandidate = {
   readonly size: number;
 };
 
+/**
+ * ¿El cuerpo anunciado ya excede el tope? (spec.md, sección 24b).
+ *
+ * `request.formData()` almacena el cuerpo entero en memoria antes de que
+ * nadie pueda mirar el tamaño del archivo, así que comprobarlo después de
+ * leerlo llega tarde: la memoria ya se gastó. `Content-Length` permite
+ * cortar antes de leer nada.
+ *
+ * El margen cubre lo que el sobre `multipart` añade al archivo —las
+ * fronteras y las cabeceras de cada parte—, para no rechazar por unos bytes
+ * de envoltorio una imagen que sí cabe. Quien mienta en la cabecera se
+ * encuentra igualmente con la comprobación de `validateImageFile`.
+ */
+const MULTIPART_OVERHEAD_BYTES = 8 * 1024;
+
+export function exceedsDeclaredSize(
+  contentLength: string | null,
+  maxBytes: number = IMAGE_LIMITS.maxBytes,
+): boolean {
+  const declared = Number(contentLength);
+
+  if (!Number.isFinite(declared) || declared <= 0) {
+    // Sin cabecera o con una ilegible no se puede decidir aquí; decide la
+    // comprobación posterior, que mira el archivo ya leído.
+    return false;
+  }
+
+  return declared > maxBytes + MULTIPART_OVERHEAD_BYTES;
+}
+
 export function validateImageFile(file: ImageCandidate): ImageValidationResult {
   if (file.size === 0) {
     return {

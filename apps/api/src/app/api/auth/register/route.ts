@@ -5,7 +5,9 @@ import {
   jsonError,
   jsonInternalError,
   jsonOk,
+  jsonTooManyRequests,
 } from "@/lib/api-response";
+import { readClientAddress, registerRateLimiter } from "@/lib/auth-rate-limit";
 import {
   buildSessionCookieOptions,
   createSessionToken,
@@ -23,6 +25,14 @@ export const dynamic = "force-dynamic";
  */
 export async function POST(request: Request) {
   try {
+    const attempt = registerRateLimiter.record(
+      readClientAddress(request.headers),
+    );
+
+    if (!attempt.allowed) {
+      return jsonTooManyRequests(attempt.retryAfterSeconds);
+    }
+
     const payload: unknown = await request.json().catch(() => null);
     const outcome = await registerUser(payload);
 

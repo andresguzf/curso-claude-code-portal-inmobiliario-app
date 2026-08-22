@@ -383,6 +383,44 @@ Requisitos:
 - endpoints ADMIN requieren ADMIN;
 - endpoints privados USER requieren autenticación.
 
+## 10b. Endurecimiento
+
+Cuatro medidas, todas en el servidor.
+
+**Cabeceras de seguridad.** Las declara `headers()` en el `next.config.ts` de
+cada aplicación. Van en las dos porque el navegador solo ve el frontend, pero
+el backend es alcanzable por su cuenta en un despliegue donde comparta red.
+
+| Cabecera | Por qué |
+|---|---|
+| `Content-Security-Policy` | Acota de dónde puede salir un script, un estilo o una imagen |
+| `X-Frame-Options: DENY` | Para los navegadores que no aplican `frame-ancestors` |
+| `X-Content-Type-Options: nosniff` | Impide que un archivo se ejecute como algo que no declara |
+| `Referrer-Policy` | Una URL privada no viaja al salir del sitio |
+| `Permissions-Policy` | Cámara, micrófono y geolocalización quedan denegadas |
+| `Strict-Transport-Security` | Solo en producción: en local no hay `https` |
+
+La política admite `'unsafe-inline'` en los estilos porque Next inyecta
+estilos en línea, y en desarrollo admite además `'unsafe-eval'`, que necesita
+la recarga en caliente. Cerrar esas dos puertas exige un *nonce* por petición
+y, con él, pasar cada respuesta por el middleware.
+
+**Caché de las respuestas privadas.** `jsonOk` y `jsonError` marcan
+`Cache-Control: no-store` en toda respuesta de la API. Es la opción segura por
+omisión: hoy ningún endpoint es cacheable —todos declaran `force-dynamic`—, y
+poner la instrucción en el constructor de la respuesta evita tener que
+acordarse en cada endpoint nuevo.
+
+**Límite de intentos de autenticación.** Ventana fija por IP sobre
+`/api/auth/login` y `/api/auth/register`, respondiendo `429` con
+`Retry-After`. El estado vive en memoria del proceso: con varias instancias
+cada una lleva su cuenta, lo que relaja el límite pero no lo anula. Un almacén
+compartido es la evolución natural cuando haya más de un proceso.
+
+**Tamaño del cuerpo.** La subida de imágenes rechaza por `Content-Length`
+antes de leer el archivo. `request.formData()` almacena el cuerpo entero en
+memoria, así que comprobar el tamaño después de leerlo llega tarde.
+
 ## 11. Cloudinary
 
 Flujo:

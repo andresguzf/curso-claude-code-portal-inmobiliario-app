@@ -5,7 +5,9 @@ import {
   jsonError,
   jsonInternalError,
   jsonOk,
+  jsonTooManyRequests,
 } from "@/lib/api-response";
+import { loginRateLimiter, readClientAddress } from "@/lib/auth-rate-limit";
 import {
   buildSessionCookieOptions,
   createSessionToken,
@@ -23,11 +25,25 @@ export const dynamic = "force-dynamic";
  */
 export async function POST(request: Request) {
   try {
+    const origin = readClientAddress(request.headers);
+    const attempt = loginRateLimiter.record(origin);
+
+    if (!attempt.allowed) {
+      // Se corta antes de leer el cuerpo y antes de derivar el scrypt: si el
+      // rechazo costara lo mismo que un intento normal, el límite frenaría
+      // las conjeturas pero no el consumo, que es la mitad del problema.
+      return jsonTooManyRequests(attempt.retryAfterSeconds);
+    }
+
     const payload: unknown = await request.json().catch(() => null);
     const outcome = await loginUser(payload);
 
     switch (outcome.status) {
       case "authenticated": {
+        // Quien acierta no ha gastado cupo: el límite persigue a quien
+        // prueba, no a quien tecleó mal su contraseña un par de veces.
+        loginRateLimiter.reset(origin);
+
         const response = jsonOk<AuthenticatedUserDto>(outcome.user);
 
         response.cookies.set(

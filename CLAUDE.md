@@ -171,14 +171,14 @@ El más justo es el texto claro sobre el acento en oscuro, con 4.53.
 
 ## Estado del proyecto
 
-Pasos 1 a 33 de `tasks.md` completos. En funcionamiento: portada, catálogo
+Pasos 1 a 34 de `tasks.md` completos. En funcionamiento: portada, catálogo
 con búsqueda, filtros combinados, ordenamiento, estados de carga/vacío/error,
 detalle de propiedad, galería, mapa de ubicación, formulario de contacto,
 autenticación con autorización por rol, el área privada de la cuenta —con
 edición de los propios datos, favoritos y consultas guardadas— y el panel de
 administración con sus indicadores y el alta, edición y baja de propiedades.
 
-Pendiente desde el paso 34: seguridad y los pasos de cierre.
+Pendiente desde el paso 35: QA integral y los pasos de cierre.
 
 ### Autenticación
 
@@ -636,6 +636,75 @@ Cuentas del seed, solo para desarrollo:
 La de Pedro existe para comprobar que un usuario inactivo no puede entrar. La
 contraseña de cada cuenta es su nombre seguido de dígitos hasta alcanzar el
 mínimo de ocho caracteres que exige el backend.
+
+### Seguridad
+
+Auditoría del paso 34. La autorización, la validación y el manejo de secretos
+ya estaban bien; lo que faltaba era el endurecimiento del transporte.
+
+**Cabeceras.** Las declara `headers()` en el `next.config.ts` de cada
+aplicación, no el middleware: así alcanzan también a los archivos estáticos y
+no cuestan una ejecución por petición. El portal lleva una política de
+contenido que enumera de dónde puede venir cada recurso; la API, que solo
+devuelve JSON, lleva `default-src 'none'`.
+
+`frame-ancestors 'none'` y `X-Frame-Options` van juntos a propósito: el
+segundo cubre a los navegadores que no aplican el primero. Sin ellos, un marco
+invisible sobre el panel convierte un clic de quien administra en una acción
+que no quiso hacer.
+
+La política admite `'unsafe-inline'` en los estilos porque Next inyecta
+estilos en línea en cada página, y en desarrollo admite además
+`'unsafe-eval'`, que exige la recarga en caliente. Cerrar esas dos puertas
+pide un *nonce* por petición y, con él, pasar cada respuesta por el
+middleware.
+
+Los orígenes de Google Maps son más de los que sugiere el script inicial: el
+mapa trae sus teselas de subdominios rotatorios de `googleapis.com` y de
+`gstatic.com`, pide Roboto a Google Fonts y dibuja en un trabajador creado
+desde un `blob:`. Declarar solo `maps.googleapis.com` lo dejaría a medias.
+
+**Caché.** `jsonOk` y `jsonError` marcan `Cache-Control: no-store` en toda
+respuesta de la API. Antes no llevaban ninguna instrucción, y `/api/auth/me` o
+`/api/admin/users` podían quedar almacenadas en un proxy intermedio y
+servirse después a otra persona. Se decide en el constructor de la respuesta,
+como `deletedAt` vive en un solo sitio: lo que hay que repetir en cada archivo
+nuevo es lo que se olvida.
+
+**Intentos de autenticación.** Ventana fija por origen sobre `/api/auth/login`
+—diez cada cinco minutos— y `/api/auth/register` —cinco cada quince—, con
+`429` y `Retry-After`. No es solo cuestión de adivinar contraseñas: cada
+intento obliga al servidor a derivar un scrypt de 16 MiB, así que sin límite
+un chorro de peticiones agota memoria y CPU aunque ninguna acierte. Por eso el
+rechazo se decide **antes** de leer el cuerpo.
+
+Entrar bien no gasta cupo; solo cuentan los intentos fallidos. En el registro
+cuentan todos, porque lo que se frena es dar de alta cuentas en serie.
+
+El recuento vive en memoria del proceso: con varias instancias cada una lleva
+la suya, lo que relaja el límite pero no lo anula. La dirección sale de
+`x-forwarded-for`, que quien llame directamente al backend puede inventarse;
+esto encarece el ataque más común sin pretender detener a quien rote
+direcciones. Comprobado que el proxy del frontend **conserva** la cabecera del
+cliente, así que detrás de un balanceador cada persona mantiene su propio
+contador y nadie deja fuera a los demás.
+
+**Tamaño del cuerpo.** La subida de imágenes rechaza por `Content-Length`
+antes de leer el archivo: `request.formData()` almacena el cuerpo entero en
+memoria, y comprobar el tamaño después llega tarde.
+
+**CSRF.** No hacen falta testigos: la cookie es `SameSite=Lax` y el navegador
+ve un solo origen, así que una petición desde otro sitio no la lleva. No hay
+ningún `GET` que cambie estado, que es lo que `Lax` sí dejaría pasar.
+
+Lo verificado y que ya estaba bien: los cinco endpoints ADMIN responden 401
+sin sesión y 403 a un USER; favoritos y consultas responden 403 a ADMIN;
+nadie puede tocar la consulta de otra persona ni alcanzar un borrador; un
+campo `role` de más en `PATCH /api/auth/me` se descarta sin efecto; y ningún
+secreto de `apps/api/.env` aparece en el HTML ni en los 23 paquetes de
+JavaScript que sirve el navegador. El nombre de la cuenta de Cloudinary sí
+aparece, pero dentro de las URL de las imágenes: es parte de cómo se sirven,
+no una variable filtrada.
 
 ### Limitaciones conocidas
 

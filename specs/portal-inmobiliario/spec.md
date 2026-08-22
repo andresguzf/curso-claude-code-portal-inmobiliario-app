@@ -666,6 +666,26 @@ Aplicar como mínimo:
 
 ---
 
+## 24b. Endurecimiento
+
+El portal se sirve con las cabeceras de seguridad habituales: política de
+contenido, prohibición de enmarcado, `nosniff`, política de *referrer* y
+restricción de permisos del navegador.
+
+El panel de administración no debe poder incrustarse en otro sitio: un marco
+invisible sobre él convierte un clic de la persona que administra en una
+acción que no quiso hacer.
+
+Las respuestas de la API que dependen de quién pregunta no deben quedar
+almacenadas en ninguna caché intermedia. Una respuesta privada sin
+instrucción de caché puede acabar servida a otra persona.
+
+La autenticación debe limitar los intentos por origen. Sin límite, probar
+contraseñas sale gratis y cada intento cuesta al servidor una derivación
+scrypt deliberadamente cara.
+
+---
+
 ## 25. SEO
 
 Las páginas públicas de propiedades deben generar metadata dinámica:

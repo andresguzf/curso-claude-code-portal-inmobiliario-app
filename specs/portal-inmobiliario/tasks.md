@@ -233,7 +233,7 @@
   - Móvil.
   - Labels, teclado, foco, alt y semántica.
 
-- [ ] **Paso 34 — Seguridad**
+- [x] **Paso 34 — Seguridad**
   - Autenticación.
   - Autorización.
   - Validación REST.

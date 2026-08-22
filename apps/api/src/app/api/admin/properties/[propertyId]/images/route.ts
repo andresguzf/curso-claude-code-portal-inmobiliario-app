@@ -14,6 +14,7 @@ import {
   addPropertyImage,
   reorderImages,
 } from "@/services/property-image-service";
+import { exceedsDeclaredSize } from "@/services/image-validation";
 
 export const dynamic = "force-dynamic";
 
@@ -37,6 +38,16 @@ export async function POST(
 
     if (!session.ok) {
       return session.response;
+    }
+
+    if (exceedsDeclaredSize(request.headers.get("content-length"))) {
+      // Se corta antes de leer el cuerpo: `formData()` lo almacena entero en
+      // memoria, y un archivo enorme ya habría costado esa memoria cuando
+      // llegara el turno de rechazarlo por grande.
+      return jsonError(
+        "La imagen supera el tamaño permitido.",
+        HTTP_STATUS.PAYLOAD_TOO_LARGE,
+      );
     }
 
     const { propertyId } = await context.params;
