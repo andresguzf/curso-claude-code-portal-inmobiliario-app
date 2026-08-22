@@ -653,19 +653,6 @@ Revisar especialmente:
 
 ---
 
-## 24. Accesibilidad
-
-Aplicar como mínimo:
-
-- HTML semántico;
-- labels;
-- navegación mediante teclado;
-- estados de foco;
-- textos alternativos;
-- jerarquía correcta de encabezados.
-
----
-
 ## 23b. Mensajes de confirmación
 
 Toda acción que cambia algo debe decir que ocurrió. Un formulario que se
@@ -688,6 +675,19 @@ Deben cubrir al menos:
 Un error ya se explica junto al campo o al pie del formulario, donde está lo
 que hay que corregir; el aviso de arriba es para lo que salió bien y hace que
 la pantalla cambie de sitio.
+
+---
+
+## 24. Accesibilidad
+
+Aplicar como mínimo:
+
+- HTML semántico;
+- labels;
+- navegación mediante teclado;
+- estados de foco;
+- textos alternativos;
+- jerarquía correcta de encabezados.
 
 ---
 

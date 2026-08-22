@@ -258,7 +258,7 @@
   - Confirmar permisos backend.
   - Confirmar integraciones externas.
 
-- [ ] **Paso 37 — Convergencia final del SDD**
+- [x] **Paso 37 — Convergencia final del SDD**
   - Releer `spec.md`.
   - Releer `plan.md`.
   - Comparar implementación con requisitos.

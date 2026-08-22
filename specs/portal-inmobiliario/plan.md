@@ -72,14 +72,15 @@ portal-inmobiliario/
 │   │       ├── app/            # Páginas: /, /properties, /account, /admin
 │   │       ├── components/
 │   │       ├── hooks/
-│   │       ├── stores/
 │   │       ├── schemas/
+│   │       ├── test-support/   # Datos de ejemplo compartidos entre pruebas
 │   │       └── lib/            # Cliente REST, formateo, utilidades
 │   │
 │   └── api/                    # Backend Next.js — puerto 3001
 │       ├── prisma/             # Esquema, migraciones y seed
 │       └── src/
 │           ├── app/api/        # Route Handlers REST
+│           ├── generated/      # Cliente de Prisma; no se edita a mano
 │           ├── services/       # Reglas de negocio
 │           ├── repositories/   # Acceso a PostgreSQL
 │           └── lib/            # Cliente Prisma, respuestas HTTP
@@ -87,6 +88,12 @@ portal-inmobiliario/
 └── packages/
     └── contracts/              # @portal/contracts — DTOs y enumeraciones
 ```
+
+No hay directorio de *stores*: **el estado compartido vive en la URL**. La
+búsqueda, los filtros, el orden y la página son parámetros de consulta, así
+que el resultado se puede compartir y el botón de atrás hace lo que se
+espera. Lo demás es estado de un formulario o de un componente, y no necesita
+salir de él.
 
 ### Frontera entre aplicaciones
 
@@ -169,7 +176,12 @@ Propiedades públicas:
 ```text
 GET /api/properties
 GET /api/properties/{id}
+GET /api/properties/filter-options
 ```
+
+`filter-options` devuelve las comunas, ciudades y regiones que existen en el
+catálogo publicado. Los filtros de ubicación ofrecen lo que hay, no una lista
+escrita a mano que envejece con el catálogo.
 
 Autenticación:
 
@@ -189,9 +201,15 @@ Favoritos:
 
 ```text
 GET    /api/favorites
+GET    /api/favorites/ids
 POST   /api/favorites/{propertyId}
 DELETE /api/favorites/{propertyId}
 ```
+
+`ids` devuelve solo los identificadores guardados, que es lo que necesita el
+catálogo para saber qué tarjetas pintar marcadas sin traerse las propiedades
+otra vez. Responde 401 sin sesión y una lista vacía con ella: son cosas
+distintas, y es lo que decide si el botón de guardar llega a pintarse.
 
 Consultas:
 
@@ -208,6 +226,14 @@ paginadas y filtrables por título de propiedad o texto del mensaje.
 siguen disponibles para ADMIN.
 
 Administración:
+
+```text
+GET /api/admin/overview
+```
+
+Los indicadores del panel (sección 18 de la especificación) en una sola
+llamada. Son seis recuentos sobre las mismas tablas: pedirlos por separado
+serían seis viajes para pintar una fila de tarjetas.
 
 ```text
 GET    /api/admin/properties
@@ -646,12 +672,23 @@ visita al catálogo hace cuatro llamadas a la API, todas distintas.
 
 Utilizar códigos HTTP apropiados:
 
-- 400
-- 401
-- 403
-- 404
-- 409
-- 500
+| Código | Cuándo |
+|---|---|
+| 200 · 201 | Correcto; `201` cuando se crea un recurso |
+| 400 | El cuerpo o un parámetro no valen, y se dice cuál |
+| 401 | No hay sesión: se resuelve entrando |
+| 403 | Hay sesión y no basta: entrar otra vez no arregla nada |
+| 404 | No existe —o no existe **para quien pregunta**: un borrador responde lo mismo que una propiedad inventada— |
+| 409 | Choca con algo que ya está: un email o un nombre repetido |
+| 413 | El archivo excede lo admitido |
+| 429 | Se agotaron los intentos de la ventana; lleva `Retry-After` |
+| 500 | Fallo inesperado; la causa queda en el log, no en la respuesta |
+| 502 | Un servicio externo falló y reintentar puede servir |
+| 503 | Una integración no está configurada en este entorno; reintentar no sirve |
+
+Los tres últimos son distintos a propósito. Un 500 es culpa nuestra, un 502
+es de Cloudinary o de Google, y un 503 dice que falta una credencial: cada
+uno se atiende de otra manera.
 
 Formato recomendado:
 

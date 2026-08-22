@@ -171,14 +171,18 @@ El más justo es el texto claro sobre el acento en oscuro, con 4.53.
 
 ## Estado del proyecto
 
-Pasos 1 a 36 de `tasks.md` completos. En funcionamiento: portada, catálogo
-con búsqueda, filtros combinados, ordenamiento, estados de carga/vacío/error,
-detalle de propiedad, galería, mapa de ubicación, formulario de contacto,
-autenticación con autorización por rol, el área privada de la cuenta —con
-edición de los propios datos, favoritos y consultas guardadas— y el panel de
-administración con sus indicadores y el alta, edición y baja de propiedades.
+**Los 39 pasos de `tasks.md` están completos.** No queda ninguno pendiente.
 
-Pendiente el paso 37: la convergencia final del SDD.
+En funcionamiento: portada, catálogo con búsqueda sin acentos, filtros
+combinados, ordenamiento, estados de carga/vacío/error, detalle de propiedad,
+galería, mapa de ubicación, formulario de contacto, autenticación con
+autorización por rol, el área privada de la cuenta —con edición de los propios
+datos, favoritos y consultas guardadas— y el panel de administración completo:
+indicadores, propiedades, imágenes, características, usuarios y consultas.
+
+Cerrado con las cabeceras de seguridad y el límite de intentos, los mensajes
+de confirmación, el recorrido de QA de los tres roles y la comprobación de las
+seis reglas de arquitectura.
 
 ### Autenticación
 
@@ -797,6 +801,38 @@ comprobados inyectando la violación: los dos fallan como deben.
 `server-only` **no** está en la lista de imports prohibidos, y no por
 descuido: las guardas de página lo usan bien, para no acabar en el paquete
 del navegador. Prohibirlo sería prohibir la precaución.
+
+### Convergencia final
+
+Paso 37: relectura completa de `spec.md` y `plan.md`, y comparación requisito
+a requisito con lo que hay.
+
+Los **21 criterios de aceptación** verificables por HTTP se comprobaron contra
+la aplicación en marcha, uno por uno. Los dos restantes —responsive y
+«sin errores bloqueantes»— los cubren el paso 33 y las validaciones finales.
+
+Verificado además campo a campo: los diecisiete del formulario de propiedad,
+los catorce del detalle, los nueve de la tarjeta, los siete de la consulta en
+el panel, los seis indicadores, los doce parámetros del catálogo, los cinco
+ordenamientos y los diez filtros. Y que la búsqueda alcanza los cinco campos
+que pide la especificación, no solo el título.
+
+**Cuatro desajustes entre los documentos y el código.** Ninguno rompía nada;
+los cuatro eran el plan describiendo algo que no era.
+
+| Desajuste | Qué se hizo |
+|---|---|
+| `## 23b` quedó escrita detrás de `## 24` | Movida a su sitio |
+| El plan declaraba `src/stores/`, que existía **vacío** | Retirado, y escrito por qué: el estado compartido vive en la URL |
+| Tres rutas REST existían sin estar declaradas | `/api/admin/overview`, `/api/favorites/ids` y `/api/properties/filter-options`, documentadas con su motivo |
+| El plan listaba seis códigos HTTP; la API usa once | Tabla completa, distinguiendo 500 de 502 y de 503 |
+
+El árbol de directorios del plan tampoco mencionaba `test-support/` ni
+`generated/`. Ahora sí.
+
+**Lo que ya estaba bien.** Las 31 rutas que el plan declara existen todas.
+`.env.example` no se ha quedado atrás en ninguna de las dos aplicaciones y no
+lleva ningún valor real. No queda ni un `TODO` ni un `FIXME` en el código.
 
 ### Limitaciones conocidas
 
