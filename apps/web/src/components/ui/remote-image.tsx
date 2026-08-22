@@ -1,3 +1,5 @@
+"use client";
+
 import Image, { type ImageProps } from "next/image";
 
 import { cloudinaryLoader, isCloudinaryUrl } from "@/lib/cloudinary-image";
@@ -13,6 +15,11 @@ import { cloudinaryLoader, isCloudinaryUrl } from "@/lib/cloudinary-image";
  * Cualquier otra imagen sigue pasando por el optimizador de Next. La
  * distinción es necesaria: al fijar un cargador propio, Next deja de
  * optimizar y sirve tal cual lo que se le devuelva.
+ *
+ * Es un componente de **cliente** por obligación: el cargador es una
+ * función, y una función no se puede enviar de un componente de servidor a
+ * uno de cliente. Declarándolo aquí, la función se crea ya en el cliente y
+ * nunca cruza esa frontera.
  */
 export function RemoteImage({ src, alt, ...props }: ImageProps) {
   const esDeCloudinary = typeof src === "string" && isCloudinaryUrl(src);
