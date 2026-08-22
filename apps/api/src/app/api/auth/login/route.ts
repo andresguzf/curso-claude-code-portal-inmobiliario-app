@@ -5,7 +5,14 @@ import {
   jsonError,
   jsonInternalError,
   jsonOk,
+  jsonTooManyRequests,
 } from "@/lib/api-response";
+import {
+  buildLoginKey,
+  loginFloodLimiter,
+  loginRateLimiter,
+  readClientAddress,
+} from "@/lib/auth-rate-limit";
 import {
   buildSessionCookieOptions,
   createSessionToken,
@@ -23,11 +30,45 @@ export const dynamic = "force-dynamic";
  */
 export async function POST(request: Request) {
   try {
+    const origin = readClientAddress(request.headers);
+
+    // Primero el tope grueso, que no necesita el cuerpo: si el rechazo
+    // costara lo mismo que un intento normal, el límite frenaría las
+    // conjeturas pero no el consumo, que es la mitad del problema.
+    const flood = loginFloodLimiter.check(origin);
+
+    if (!flood.allowed) {
+      return jsonTooManyRequests(flood.retryAfterSeconds);
+    }
+
     const payload: unknown = await request.json().catch(() => null);
+    // El contador fino necesita saber de qué cuenta se trata, así que va
+    // después de leer el cuerpo. Sigue estando antes del scrypt, que es lo
+    // caro; leer un JSON pequeño no lo es.
+    const accountKey = buildLoginKey(origin, payload);
+    const attempt = loginRateLimiter.check(accountKey);
+
+    if (!attempt.allowed) {
+      return jsonTooManyRequests(attempt.retryAfterSeconds);
+    }
+
     const outcome = await loginUser(payload);
+
+    if (outcome.status === "rejected") {
+      // Solo los fallos gastan cupo, y por eso se anotan aquí y no antes:
+      // cuando ya se sabe que el intento no valía.
+      loginFloodLimiter.record(origin);
+      loginRateLimiter.record(accountKey);
+    }
 
     switch (outcome.status) {
       case "authenticated": {
+        // Acertar limpia los dos contadores de este origen: quien demuestra
+        // saber su contraseña no es de quien había que defenderse, y sus
+        // fallos anteriores no deben pesar sobre nadie más de su oficina.
+        loginRateLimiter.reset(accountKey);
+        loginFloodLimiter.reset(origin);
+
         const response = jsonOk<AuthenticatedUserDto>(outcome.user);
 
         response.cookies.set(

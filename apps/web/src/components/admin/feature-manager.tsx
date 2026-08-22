@@ -12,6 +12,7 @@ import {
   deleteAdminFeature,
   renameAdminFeature,
 } from "@/lib/api-client";
+import { flashSuccess } from "@/lib/flash";
 
 /**
  * Alta, cambio de nombre y baja de características (spec.md, sección 4).
@@ -60,6 +61,7 @@ export function FeatureManager({
     scope: string,
     action: () => Promise<void>,
     fallbackMessage: string,
+    successMessage: string,
   ): Promise<boolean> {
     setError(null);
 
@@ -67,6 +69,7 @@ export function FeatureManager({
       startTransition(async () => {
         try {
           await action();
+          flashSuccess(successMessage);
           router.refresh();
           resolve(true);
         } catch (caught) {
@@ -90,6 +93,7 @@ export function FeatureManager({
             "create",
             () => createAdminFeature(name).then(() => undefined),
             "No pudimos crear la característica.",
+            `«${name}» ya está disponible para las propiedades.`,
           )
         }
       />
@@ -122,6 +126,7 @@ export function FeatureManager({
                         () => undefined,
                       ),
                     "No pudimos guardar el nombre.",
+                    `Ahora se llama «${name}».`,
                   );
 
                   // Solo se cierra si se guardó: si falla, lo escrito sigue
@@ -157,6 +162,7 @@ export function FeatureManager({
             target.id,
             () => deleteAdminFeature(target.id),
             "No pudimos eliminar la característica.",
+            `«${target.name}» dejó de figurar en las propiedades.`,
           );
         }}
         onCancel={() => setFeatureToRemove(null)}

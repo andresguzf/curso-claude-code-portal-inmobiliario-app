@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { IMAGE_LIMITS } from "@portal/contracts";
 
-import { validateImageFile } from "./image-validation";
+import { exceedsDeclaredSize, validateImageFile } from "./image-validation";
 
 function rejectionOf(file: { type: string; size: number }) {
   const result = validateImageFile(file);
@@ -72,5 +72,28 @@ describe("validateImageFile", () => {
 
     expect(rechazo.message).toMatch(/no se admite/);
     expect(rechazo.isTooLarge).toBe(false);
+  });
+});
+
+describe("exceedsDeclaredSize", () => {
+  const CINCO_MB = 5 * 1024 * 1024;
+
+  it("rechaza un cuerpo que ya se anuncia por encima del tope", () => {
+    expect(exceedsDeclaredSize(String(20 * 1024 * 1024), CINCO_MB)).toBe(true);
+  });
+
+  it("admite un archivo del tamaño máximo", () => {
+    // El margen del sobre `multipart` evita rechazar por unos bytes de
+    // envoltorio una imagen que sí cabe.
+    expect(exceedsDeclaredSize(String(CINCO_MB), CINCO_MB)).toBe(false);
+    expect(exceedsDeclaredSize(String(CINCO_MB + 1024), CINCO_MB)).toBe(false);
+  });
+
+  it("no decide cuando la cabecera falta o es ilegible", () => {
+    // Sin dato fiable decide la comprobación posterior, que mira el archivo
+    // ya leído; cortar aquí rechazaría subidas legítimas.
+    expect(exceedsDeclaredSize(null, CINCO_MB)).toBe(false);
+    expect(exceedsDeclaredSize("no es un número", CINCO_MB)).toBe(false);
+    expect(exceedsDeclaredSize("-1", CINCO_MB)).toBe(false);
   });
 });

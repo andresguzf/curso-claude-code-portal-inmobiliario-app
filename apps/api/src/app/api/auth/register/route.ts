@@ -5,7 +5,9 @@ import {
   jsonError,
   jsonInternalError,
   jsonOk,
+  jsonTooManyRequests,
 } from "@/lib/api-response";
+import { readClientAddress, registerRateLimiter } from "@/lib/auth-rate-limit";
 import {
   buildSessionCookieOptions,
   createSessionToken,
@@ -23,6 +25,18 @@ export const dynamic = "force-dynamic";
  */
 export async function POST(request: Request) {
   try {
+    // Aquí cuentan todos los intentos, no solo los fallidos: lo que se frena
+    // es dar de alta cuentas en serie, y una que se crea sin problemas es
+    // justo el caso que interesa frenar. Por eso se anota antes de saber el
+    // resultado, y no hace falta clave por cuenta: todavía no existe.
+    const attempt = registerRateLimiter.record(
+      readClientAddress(request.headers),
+    );
+
+    if (!attempt.allowed) {
+      return jsonTooManyRequests(attempt.retryAfterSeconds);
+    }
+
     const payload: unknown = await request.json().catch(() => null);
     const outcome = await registerUser(payload);
 

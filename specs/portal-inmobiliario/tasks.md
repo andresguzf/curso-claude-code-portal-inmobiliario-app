@@ -215,25 +215,25 @@
 
 ## Fase 5 — Calidad y finalización
 
-- [ ] **Paso 31 — SEO y metadata**
+- [x] **Paso 31 — SEO y metadata**
   - Metadata dinámica.
   - Título.
   - Descripción.
   - Open Graph.
 
-- [ ] **Paso 32 — Optimización**
+- [x] **Paso 32 — Optimización**
   - Optimizar imágenes Next.js/Cloudinary.
   - Evitar imágenes sobredimensionadas.
   - Revisar solicitudes duplicadas.
   - Revisar consultas PostgreSQL.
 
-- [ ] **Paso 33 — Responsive y accesibilidad**
+- [x] **Paso 33 — Responsive y accesibilidad**
   - Desktop.
   - Tablet.
   - Móvil.
   - Labels, teclado, foco, alt y semántica.
 
-- [ ] **Paso 34 — Seguridad**
+- [x] **Paso 34 — Seguridad**
   - Autenticación.
   - Autorización.
   - Validación REST.
@@ -243,14 +243,14 @@
   - Web3Forms.
   - Endpoints ADMIN.
 
-- [ ] **Paso 35 — QA integral**
+- [x] **Paso 35 — QA integral**
   - Flujos visitante.
   - Flujos USER.
   - Flujos ADMIN.
   - Errores y códigos HTTP.
   - Corregir defectos bloqueantes.
 
-- [ ] **Paso 36 — Cumplimiento arquitectónico**
+- [x] **Paso 36 — Cumplimiento arquitectónico**
   - Confirmar que no existen Server Actions.
   - Confirmar comunicación REST.
   - Confirmar PostgreSQL.
@@ -258,7 +258,7 @@
   - Confirmar permisos backend.
   - Confirmar integraciones externas.
 
-- [ ] **Paso 37 — Convergencia final del SDD**
+- [x] **Paso 37 — Convergencia final del SDD**
   - Releer `spec.md`.
   - Releer `plan.md`.
   - Comparar implementación con requisitos.

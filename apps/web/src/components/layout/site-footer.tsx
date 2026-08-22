@@ -11,7 +11,9 @@ export function SiteFooter() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="mt-16 bg-footer text-on-dark">
+    // El pie llega al borde inferior: en un teléfono con barra de gestos,
+    // sin este relleno el último enlace queda debajo de ella.
+    <footer className="mt-16 bg-footer pb-[env(safe-area-inset-bottom)] text-on-dark">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-12 sm:px-6 lg:flex-row lg:items-start lg:justify-between lg:px-8">
         <div className="max-w-sm">
           <p className="flex items-center gap-2.5 text-base font-semibold tracking-tight">

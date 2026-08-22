@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { cookies } from "next/headers";
 
 import { AdminShell } from "@/components/admin/admin-shell";
+import { FlashRegion } from "@/components/flash/flash-region";
 import { ADMIN_THEME_COOKIE, readAdminTheme } from "@/lib/admin-theme";
 import { requireAdminUser } from "@/lib/require-user";
 
@@ -67,6 +68,8 @@ export default async function AdminLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="h-full bg-page">
+        <FlashRegion />
+
         <AdminShell adminName={admin.name} theme={theme}>
           {children}
         </AdminShell>

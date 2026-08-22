@@ -1,10 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
+import { FlashRegion } from "@/components/flash/flash-region";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
 import { getCurrentUser } from "@/lib/current-user";
 import { getFavoritePropertyIds } from "@/lib/favorites";
+import { resolveSiteUrl, SITE_DESCRIPTION, SITE_NAME } from "@/lib/site";
 
 import "../globals.css";
 
@@ -19,12 +21,31 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  /**
+   * Base para las URL relativas de la metadata.
+   *
+   * Open Graph exige direcciones absolutas: una imagen relativa no la
+   * resuelve el servidor que lee la etiqueta al compartir un enlace.
+   */
+  metadataBase: resolveSiteUrl(),
   title: {
-    default: "Portal Inmobiliario",
-    template: "%s | Portal Inmobiliario",
+    default: SITE_NAME,
+    template: `%s | ${SITE_NAME}`,
   },
-  description:
-    "Encuentra propiedades en venta y arriendo: casas, departamentos, terrenos y oficinas.",
+  description: SITE_DESCRIPTION,
+  openGraph: {
+    type: "website",
+    siteName: SITE_NAME,
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
+    locale: "es_CL",
+    url: "/",
+  },
+  twitter: {
+    card: "summary",
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
+  },
 };
 
 /**
@@ -69,6 +90,8 @@ export default async function PublicLayout({ children }: LayoutProps<"/">) {
           currentUser={currentUser}
           favoriteCount={favoritePropertyIds?.size ?? 0}
         />
+
+        <FlashRegion />
 
         <main id={MAIN_CONTENT_ID} className="flex-1">
           {children}

@@ -75,6 +75,9 @@ export function ConfirmDialog({
       className={cn(
         "m-auto w-[min(28rem,calc(100vw-2rem))] rounded-xl border border-line bg-card p-0 text-ink shadow-2xl",
         "backdrop:bg-ink/50",
+        // Sin esto, seguir desplazando al llegar al final del diálogo mueve
+        // la página de detrás, que se supone inerte.
+        "overscroll-contain",
       )}
     >
       <div className="flex flex-col gap-3 p-6">

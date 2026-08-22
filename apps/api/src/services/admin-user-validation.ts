@@ -77,6 +77,18 @@ export function validateAdminUserUpdate(
     changes.email = email.value;
   }
 
+  // El alta pide «password» y el cambio pide «newPassword». Quien confunda
+  // los dos recibiría un 200 con la contraseña intacta, porque un campo
+  // desconocido se descarta en silencio —y eso, en `PATCH /api/auth/me`, es
+  // justo lo que impide ascenderse a ADMIN—. Aquí se dice cuál es el nombre
+  // en lugar de dar por buena una operación que no ocurrió.
+  if (fields.password !== undefined) {
+    return {
+      ok: false,
+      message: "Para cambiar la contraseña envía «newPassword».",
+    };
+  }
+
   // Ausente o vacío significa «no cambiarla», no «ponerla en blanco».
   if (typeof fields.newPassword === "string" && fields.newPassword !== "") {
     const password = validatePassword(fields.newPassword);

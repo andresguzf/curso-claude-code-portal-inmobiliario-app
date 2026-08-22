@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { logOut } from "@/lib/api-client";
+import { flashSuccess } from "@/lib/flash";
 
 /**
  * Cierra la sesión desde el panel.
@@ -20,6 +21,7 @@ export function AdminSignOut() {
 
     try {
       await logOut();
+      flashSuccess("Cerraste tu sesión.");
       router.replace("/");
       router.refresh();
     } finally {

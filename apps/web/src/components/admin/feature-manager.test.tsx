@@ -22,6 +22,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 import { FeatureManager } from "./feature-manager";
+import { readFlash, resetFlashForTests } from "@/lib/flash";
 
 const FEATURES: readonly AdminFeatureDto[] = [
   { id: "f1", name: "Piscina", slug: "piscina", propertyCount: 3 },
@@ -33,6 +34,8 @@ function renderManager(features: readonly AdminFeatureDto[] = FEATURES) {
 }
 
 afterEach(() => {
+  window.sessionStorage.clear();
+  resetFlashForTests();
   for (const mock of [
     createAdminFeature,
     renameAdminFeature,
@@ -243,5 +246,38 @@ describe("FeatureManager", () => {
     await user.click(screen.getByRole("button", { name: "Añadir" }));
 
     expect(await screen.findByText("«Piscina» ya existe.")).toBeVisible();
+  });
+});
+
+describe("FeatureManager: avisos de confirmación", () => {
+  it("anuncia el alta con el nombre creado", async () => {
+    const usuario = userEvent.setup();
+    createAdminFeature.mockResolvedValue({
+      id: "f3",
+      name: "Bodega",
+      slug: "bodega",
+      propertyCount: 0,
+    });
+    renderManager();
+
+    await usuario.type(screen.getByLabelText("Nueva característica"), "Bodega");
+    await usuario.click(screen.getByRole("button", { name: "Añadir" }));
+
+    await waitFor(() => expect(createAdminFeature).toHaveBeenCalled());
+    expect(readFlash().map((m) => m.text).join(" ")).toContain("Bodega");
+  });
+
+  it("no anuncia nada cuando el alta falla", async () => {
+    const usuario = userEvent.setup();
+    createAdminFeature.mockRejectedValue(new Error("Ya existe."));
+    renderManager();
+
+    await usuario.type(screen.getByLabelText("Nueva característica"), "Piscina");
+    await usuario.click(screen.getByRole("button", { name: "Añadir" }));
+
+    await waitFor(() => expect(createAdminFeature).toHaveBeenCalled());
+    // El fallo se explica en el formulario, junto a lo que hay que corregir;
+    // anunciarlo arriba además diría que algo salió bien.
+    expect(readFlash()).toEqual([]);
   });
 });

@@ -39,6 +39,9 @@
    * al mismo valor por casualidad, no por diseño.
    */
   --danger: #82492a;
+  /* Confirmación. Es el único verde de la paleta: el acento es terracota y
+     no distingue «se guardó» de «no se pudo». */
+  --success: #3f6b46;
 
   /* Texto */
   --ink: #2b2724;
@@ -112,6 +115,7 @@
 
   /* En oscuro, el error se aclara: el fondo ya es oscuro. */
   --danger: #e6a077;
+  --success: #8cc194;
 
   /* Texto */
   --ink: #e9e5df;
@@ -145,6 +149,7 @@
   --color-accent-strong: var(--accent-strong);
   --color-accent-soft: var(--accent-soft);
   --color-danger: var(--danger);
+  --color-success: var(--success);
 
   --color-ink: var(--ink);
   --color-ink-muted: var(--ink-muted);

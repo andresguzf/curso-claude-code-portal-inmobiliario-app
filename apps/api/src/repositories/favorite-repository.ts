@@ -14,8 +14,26 @@ import { PUBLIC_PROPERTY_SCOPE } from "@/repositories/property-scope";
 /** Solo el catálogo público puede guardarse (spec.md, sección 8). */
 const PUBLISHED = PUBLIC_PROPERTY_SCOPE;
 
-/** Imagen principal para las tarjetas, igual que en el catálogo. */
+/**
+ * Las mismas columnas que el catálogo, y por el mismo motivo: la tarjeta de
+ * una propiedad guardada no muestra ni la descripción ni el texto de
+ * búsqueda, y con `include` viajaban las dos.
+ */
 const summarySelection = {
+  id: true,
+  title: true,
+  operationType: true,
+  propertyType: true,
+  price: true,
+  currency: true,
+  commune: true,
+  city: true,
+  region: true,
+  bedrooms: true,
+  bathrooms: true,
+  usableAreaSquareMeters: true,
+  isFeatured: true,
+  createdAt: true,
   images: { where: { isPrimary: true }, take: 1 },
 } as const;
 
@@ -30,7 +48,7 @@ export async function findFavoriteProperties(userId: string) {
   const favorites = await prisma.favorite.findMany({
     where: { userId, property: PUBLISHED },
     orderBy: { createdAt: "desc" },
-    include: { property: { include: summarySelection } },
+    select: { property: { select: summarySelection } },
   });
 
   return favorites.map((favorite) => favorite.property);

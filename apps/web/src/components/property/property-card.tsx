@@ -1,8 +1,8 @@
-import Image from "next/image";
 import Link from "next/link";
 
 import type { PropertySummaryDto } from "@portal/contracts";
 
+import { RemoteImage } from "@/components/ui/remote-image";
 import { FavoriteButton } from "@/components/property/favorite-button";
 import {
   formatArea,
@@ -62,7 +62,7 @@ export function PropertyCard({
     >
       <div className="relative aspect-[4/3] bg-muted">
         {property.primaryImage ? (
-          <Image
+          <RemoteImage
             src={property.primaryImage.url}
             alt={`Fotografía de ${property.title}`}
             fill
@@ -102,7 +102,12 @@ export function PropertyCard({
           {formatPropertyType(property.propertyType)}
         </p>
 
-        <h3 className="text-base font-semibold text-ink">
+        {/*
+          Dos líneas como máximo: un título largo escrito desde el panel no
+          debe empujar el precio fuera de la tarjeta ni descuadrar la
+          cuadrícula.
+        */}
+        <h3 className="line-clamp-2 text-base font-semibold text-ink">
           {/*
             El seudoelemento extiende el enlace sobre toda la tarjeta: el área
             pulsable abarca la imagen completa sin anidar enlaces ni repetir

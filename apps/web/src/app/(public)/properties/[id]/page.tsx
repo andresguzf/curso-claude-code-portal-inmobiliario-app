@@ -1,5 +1,7 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 
 import type { PropertyDetailDto } from "@portal/contracts";
 
@@ -22,6 +24,7 @@ import {
   formatPropertyPrice,
   formatPropertyType,
 } from "@/lib/format";
+import { buildPropertyMetadata } from "@/lib/property-metadata";
 
 /** El detalle refleja el estado de publicación vigente en cada visita. */
 export const dynamic = "force-dynamic";
@@ -34,8 +37,30 @@ export const dynamic = "force-dynamic";
  * visible, y una propiedad despublicada responde 404 igual que una
  * inexistente.
  *
- * La metadata dinámica llega en el paso 31.
  */
+/**
+ * Metadata de la ficha (spec.md, sección 25).
+ *
+ * Comparte la carga con la página gracias a `cache`: sin eso, cada visita
+ * pediría la propiedad dos veces a la API, una para las etiquetas y otra
+ * para el contenido.
+ */
+export async function generateMetadata({
+  params,
+}: PageProps<"/properties/[id]">): Promise<Metadata> {
+  const { id } = await params;
+  const result = await loadProperty(id);
+
+  if (result.status === "error" || result.property === null) {
+    // Se devuelven los valores del layout a propósito: cuando la página llama
+    // a `notFound()`, Next descarta la metadata de este segmento y ya marca
+    // el 404 como no indexable. Comprobado en el HTML servido.
+    return {};
+  }
+
+  return buildPropertyMetadata(result.property);
+}
+
 export default async function PropertyDetailPage({
   params,
 }: PageProps<"/properties/[id]">) {
@@ -179,7 +204,9 @@ type PropertyLoadResult =
  * Sin esa distinción un backend caído mostraría un 404, sugiriendo que la
  * propiedad fue eliminada cuando en realidad sigue publicada.
  */
-async function loadProperty(id: string): Promise<PropertyLoadResult> {
+const loadProperty = cache(async function loadProperty(
+  id: string,
+): Promise<PropertyLoadResult> {
   try {
     return { status: "ready", property: await fetchPublicPropertyById(id) };
   } catch (error) {
@@ -187,4 +214,4 @@ async function loadProperty(id: string): Promise<PropertyLoadResult> {
 
     return { status: "error" };
   }
-}
+});

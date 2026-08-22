@@ -1,8 +1,8 @@
-import Image from "next/image";
 import Link from "next/link";
 
 import type { UserInquiryPageDto } from "@portal/contracts";
 
+import { RemoteImage } from "@/components/ui/remote-image";
 import { HideInquiryButton } from "@/components/account/hide-inquiry-button";
 import { Pagination } from "@/components/ui/pagination";
 import { SearchForm } from "@/components/ui/search-form";
@@ -80,7 +80,7 @@ function InquiryRow({
     <article className="relative flex gap-4 rounded-xl border border-line bg-card p-4">
       <div className="relative size-20 shrink-0 overflow-hidden rounded-lg bg-muted sm:size-24">
         {inquiry.property.imageUrl ? (
-          <Image
+          <RemoteImage
             src={inquiry.property.imageUrl}
             alt=""
             fill

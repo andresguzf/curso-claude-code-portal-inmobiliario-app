@@ -17,7 +17,37 @@ import { NOT_DELETED } from "@/repositories/property-scope";
  * ADMIN lo garantiza la guarda del Route Handler.
  */
 
+/**
+ * Columnas que necesita la administración.
+ *
+ * Aquí sí hacen falta la descripción y las características —el listado
+ * comparte DTO con la ficha de edición—, pero no las copias normalizadas
+ * para búsqueda, que duplican todo lo anterior y no se muestran en ninguna
+ * parte.
+ */
 const adminSelection = {
+  id: true,
+  title: true,
+  description: true,
+  operationType: true,
+  propertyType: true,
+  price: true,
+  currency: true,
+  usableAreaSquareMeters: true,
+  totalAreaSquareMeters: true,
+  bedrooms: true,
+  bathrooms: true,
+  parkingSpaces: true,
+  ageYears: true,
+  address: true,
+  commune: true,
+  city: true,
+  region: true,
+  isPublished: true,
+  isFeatured: true,
+  createdAt: true,
+  updatedAt: true,
+  publishedAt: true,
   images: { orderBy: { position: "asc" } },
   features: true,
 } as const;
@@ -33,7 +63,7 @@ export async function findAdminProperties(options: {
   const [properties, total] = await Promise.all([
     prisma.property.findMany({
       where,
-      include: adminSelection,
+      select: adminSelection,
       orderBy: { createdAt: "desc" },
       skip: options.skip,
       take: options.take,
@@ -49,7 +79,7 @@ export function findAdminPropertyById(id: string) {
   // y una propiedad eliminada debe responder como inexistente.
   return prisma.property.findFirst({
     where: { id, ...NOT_DELETED },
-    include: adminSelection,
+    select: adminSelection,
   });
 }
 
@@ -66,7 +96,7 @@ export function createProperty(input: PropertyInputDto) {
       publishedAt: input.isPublished ? new Date() : null,
       features: { connect: toFeatureConnections(input) },
     },
-    include: adminSelection,
+    select: adminSelection,
   });
 }
 
@@ -96,7 +126,7 @@ export function updateProperty(
         : {}),
       features: { set: toFeatureConnections(input) },
     },
-    include: adminSelection,
+    select: adminSelection,
   });
 }
 

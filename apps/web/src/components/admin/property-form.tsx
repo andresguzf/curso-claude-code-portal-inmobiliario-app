@@ -19,6 +19,7 @@ import {
   FormField,
 } from "@/components/form/form-field";
 import { createAdminProperty, updateAdminProperty } from "@/lib/api-client";
+import { flashSuccess } from "@/lib/flash";
 import { formatOperationType, formatPropertyType } from "@/lib/format";
 import {
   propertyFormSchema,
@@ -77,8 +78,23 @@ export function PropertyForm({
     try {
       if (property) {
         await updateAdminProperty(property.id, input);
+        // Publicar y despublicar cambian dónde se ve la propiedad, así que se
+        // dicen aparte: «se guardaron los cambios» no distingue entre
+        // corregir una errata y sacarla del portal.
+        flashSuccess(
+          Boolean(input.isPublished) === property.isPublished
+            ? `Se guardaron los cambios de «${input.title}».`
+            : input.isPublished
+              ? `«${input.title}» ya está publicada en el portal.`
+              : `«${input.title}» se retiró del portal y queda como borrador.`,
+        );
       } else {
         await createAdminProperty(input);
+        flashSuccess(
+          input.isPublished
+            ? `«${input.title}» quedó creada y publicada.`
+            : `«${input.title}» quedó creada como borrador.`,
+        );
       }
 
       router.push("/admin/properties");

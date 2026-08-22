@@ -653,6 +653,31 @@ Revisar especialmente:
 
 ---
 
+## 23b. Mensajes de confirmación
+
+Toda acción que cambia algo debe decir que ocurrió. Un formulario que se
+guarda y deja la pantalla igual obliga a recargar para saber si funcionó.
+
+Se muestran arriba de la página, por encima del contenido, y son los mismos
+en el portal y en el panel.
+
+Desaparecen solos a los **cinco segundos** y además se pueden cerrar antes. La
+cuenta atrás se detiene mientras el puntero o el foco están encima: un aviso
+que se va mientras se lee no ha informado a nadie.
+
+Deben cubrir al menos:
+
+- iniciar y cerrar sesión;
+- el alta, la edición y la baja de una propiedad, y su publicación;
+- el alta y la edición de una cuenta;
+- el alta, el renombrado y la baja de una característica.
+
+Un error ya se explica junto al campo o al pie del formulario, donde está lo
+que hay que corregir; el aviso de arriba es para lo que salió bien y hace que
+la pantalla cambie de sitio.
+
+---
+
 ## 24. Accesibilidad
 
 Aplicar como mínimo:
@@ -663,6 +688,34 @@ Aplicar como mínimo:
 - estados de foco;
 - textos alternativos;
 - jerarquía correcta de encabezados.
+
+---
+
+## 24b. Endurecimiento
+
+El portal se sirve con las cabeceras de seguridad habituales: política de
+contenido, prohibición de enmarcado, `nosniff`, política de *referrer* y
+restricción de permisos del navegador.
+
+El panel de administración no debe poder incrustarse en otro sitio: un marco
+invisible sobre él convierte un clic de la persona que administra en una
+acción que no quiso hacer.
+
+Las respuestas de la API que dependen de quién pregunta no deben quedar
+almacenadas en ninguna caché intermedia. Una respuesta privada sin
+instrucción de caché puede acabar servida a otra persona.
+
+La autenticación debe limitar los intentos por **origen y cuenta**: cinco por
+ventana. Que alguien se equivoque con su contraseña no puede dejar fuera a
+otra persona, y detrás de una misma dirección —una oficina, un operador
+móvil— hay muchas.
+
+Hace falta además un tope por origen a secas, más holgado: cambiar de correo
+en cada intento estrenaría contador, y cada intento cuesta trabajo real al
+servidor aunque falle.
+
+Sin límite, probar contraseñas sale gratis y cada intento cuesta al servidor una derivación
+scrypt deliberadamente cara.
 
 ---
 

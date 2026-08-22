@@ -158,3 +158,36 @@ describe("validateAdminUserCreation", () => {
     );
   });
 });
+
+describe("validateAdminUserUpdate: el nombre del campo de contraseña", () => {
+  it("rechaza «password» diciendo cuál es el nombre correcto", () => {
+    const resultado = validateAdminUserUpdate({ password: "clavenueva123" });
+
+    // Sin esto respondería 200 con la contraseña intacta: el campo
+    // desconocido se descartaría y no quedaría ningún cambio que aplicar.
+    expect(resultado.ok).toBe(false);
+    expect(resultado.ok === false && resultado.message).toContain("newPassword");
+  });
+
+  it("lo rechaza aunque venga acompañado de un cambio válido", () => {
+    // Este es el caso peligroso: con otro campo presente sí había cambios que
+    // aplicar, así que respondía 200 y quien administra daba por hecho que la
+    // contraseña era la nueva.
+    const resultado = validateAdminUserUpdate({
+      isActive: true,
+      password: "clavenueva123",
+    });
+
+    expect(resultado.ok).toBe(false);
+  });
+
+  it("acepta «newPassword», que es el nombre del contrato", () => {
+    const resultado = validateAdminUserUpdate({ newPassword: "clavenueva123" });
+
+    expect(resultado.ok).toBe(true);
+    expect(resultado.ok === true && resultado.changes.newPassword).toBe(
+      "clavenueva123",
+    );
+  });
+});
+

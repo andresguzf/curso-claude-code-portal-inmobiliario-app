@@ -7,6 +7,7 @@ import { AUTH_LIMITS, UserRole } from "@portal/contracts";
 
 import { fieldInputClassName } from "@/components/form/form-field";
 import { createAdminUser } from "@/lib/api-client";
+import { flashSuccess } from "@/lib/flash";
 import { formatUserRole } from "@/lib/format";
 
 /**
@@ -54,6 +55,10 @@ export function NewUserForm() {
         // sigue abierto por el mismo motivo.
         formRef.current?.reset();
         nameRef.current?.focus();
+        // El aviso de arriba anuncia el alta; el del formulario recuerda lo
+        // que hay que hacer después, y se queda mientras se dan de alta más
+        // cuentas seguidas.
+        flashSuccess(`Cuenta creada para ${name}.`);
         setSuccessMessage(
           `Cuenta creada para ${name}. Comunícale su contraseña: no hay forma de recuperarla desde aquí.`,
         );

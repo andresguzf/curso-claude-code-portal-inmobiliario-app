@@ -171,14 +171,18 @@ El más justo es el texto claro sobre el acento en oscuro, con 4.53.
 
 ## Estado del proyecto
 
-Pasos 1 a 30 de `tasks.md` completos. En funcionamiento: portada, catálogo
-con búsqueda, filtros combinados, ordenamiento, estados de carga/vacío/error,
-detalle de propiedad, galería, mapa de ubicación, formulario de contacto,
-autenticación con autorización por rol, el área privada de la cuenta —con
-edición de los propios datos, favoritos y consultas guardadas— y el panel de
-administración con sus indicadores y el alta, edición y baja de propiedades.
+**Los 39 pasos de `tasks.md` están completos.** No queda ninguno pendiente.
 
-Pendiente desde el paso 31: SEO, optimización y los pasos de cierre.
+En funcionamiento: portada, catálogo con búsqueda sin acentos, filtros
+combinados, ordenamiento, estados de carga/vacío/error, detalle de propiedad,
+galería, mapa de ubicación, formulario de contacto, autenticación con
+autorización por rol, el área privada de la cuenta —con edición de los propios
+datos, favoritos y consultas guardadas— y el panel de administración completo:
+indicadores, propiedades, imágenes, características, usuarios y consultas.
+
+Cerrado con las cabeceras de seguridad y el límite de intentos, los mensajes
+de confirmación, el recorrido de QA de los tres roles y la comprobación de las
+seis reglas de arquitectura.
 
 ### Autenticación
 
@@ -497,6 +501,88 @@ Los filtros de esta pantalla son enlaces y no un formulario: con dos filtros
 de tres opciones, un panel plegable sería más maquinaria de la necesaria, y
 así se pueden abrir en otra pestaña.
 
+### Responsive y accesibilidad
+
+Revisado contra las Web Interface Guidelines. Sin antipatrones: ni
+`user-scalable=no`, ni `transition: all`, ni `outline-none`, ni manejadores
+de clic sobre `div`.
+
+Lo que faltaba y se añadió:
+
+- `overscroll-contain` en el diálogo modal. Sin él, seguir desplazando al
+  llegar al final movía la página de detrás, que se supone inerte.
+- Enlace de salto al contenido en el **panel**. El portal público ya lo
+  tenía; el panel pone seis enlaces por delante del contenido en cada
+  página.
+- Márgenes de área segura en la barra lateral fija y en el pie. En un
+  teléfono en horizontal, la muesca se come el primer centímetro.
+- `line-clamp-2` en el título de la tarjeta: uno largo escrito desde el
+  panel empujaba el precio fuera.
+
+**Los nombres de las utilidades de Tailwind no se escriben en los
+comentarios.** Tailwind escanea el archivo entero y no distingue un
+comentario de una clase: un ejemplo abreviado como `pl-[env(...)]` generaba
+CSS inválido y tumbaba el sitio entero.
+
+Verificado sobre el HTML servido de once páginas: un solo `h1` por página,
+sin saltos de nivel de encabezado, ninguna imagen sin texto alternativo,
+ningún botón sin nombre accesible y ningún campo sin etiqueta. Y sin
+desbordamiento horizontal a 375, 768 ni 1440 píxeles.
+
+### Rendimiento
+
+Las consultas piden **columnas concretas**, no la fila entera. Con `include`,
+cada tarjeta del catálogo arrastraba la descripción, la dirección y
+`search_text` —que duplica todo lo anterior— sin mostrar ninguna de las tres:
+19,9 kB por página de doce frente a 7,4 kB. Si un `select` se queda corto, el
+mapeador no compila; ese es el seguro.
+
+Las imágenes de Cloudinary se piden **ya redimensionadas**, con `f_auto`,
+`q_auto` y `c_limit`, mediante un cargador propio de `next/image`. Sin él, el
+optimizador de Next se descargaba el original para reescalarlo aquí. Medido
+sobre una fotografía real: 1 MB frente a 50 kB en WebP.
+
+`c_limit` reduce pero nunca amplía: una foto subida a 800 px no se estira a
+1200 y se ve borrosa.
+
+El resto de las imágenes —el hero y los marcadores del seed— sigue pasando
+por el optimizador de Next. La distinción importa: al fijar un cargador
+propio, Next deja de optimizar y sirve tal cual lo que se le devuelva.
+
+Las cargas que piden dos partes de la misma página van en `cache` de React:
+la sesión, los favoritos y la propiedad de la ficha. Comprobado en el log del
+backend: una visita al catálogo hace cuatro llamadas, todas distintas.
+
+Las consultas de PostgreSQL se revisaron con `EXPLAIN ANALYZE`. Con el
+volumen actual el planificador elige barridos secuenciales y tarda
+centésimas de milisegundo: añadir índices ahí sería más lento, no más
+rápido. Los índices por ubicación y por estado ya están declarados para
+cuando el catálogo crezca.
+
+### SEO y metadata
+
+La ficha de cada propiedad genera la suya con `generateMetadata`: título,
+descripción, canónica, Open Graph y tarjeta de Twitter. La descripción
+empieza por **precio y ubicación** —lo que decide si alguien entra desde un
+resultado— y se recorta por palabra entera a 160 caracteres, que es lo que
+muestra un buscador.
+
+La imagen compartida es la **portada** de la propiedad. Si no tiene ninguna,
+no se declara `images` en vez de poner un marcador: la tarjeta se ve mejor
+sin imagen que con una que no es de la propiedad.
+
+`metadataBase` sale de `NEXT_PUBLIC_SITE_URL`. Open Graph exige direcciones
+absolutas, y una URL mal escrita no tumba el renderizado: se avisa por el log
+y se cae en `localhost`.
+
+La carga de la propiedad va envuelta en `cache` de React: la piden la
+metadata y la página, y sin eso serían dos llamadas idénticas a la API por
+visita. Comprobado en el log del backend: una sola.
+
+`/account*` y `/admin*` se declaran **noindex**. Un 404 no necesita marcarse:
+cuando la página llama a `notFound()`, Next descarta la metadata del segmento
+y ya lo marca por su cuenta.
+
 ### Búsqueda sin acentos
 
 `montana` encuentra «montaña» y `nunoa` encuentra «Ñuñoa», en el catálogo, en
@@ -554,6 +640,218 @@ Cuentas del seed, solo para desarrollo:
 La de Pedro existe para comprobar que un usuario inactivo no puede entrar. La
 contraseña de cada cuenta es su nombre seguido de dígitos hasta alcanzar el
 mínimo de ocho caracteres que exige el backend.
+
+### Seguridad
+
+Auditoría del paso 34. La autorización, la validación y el manejo de secretos
+ya estaban bien; lo que faltaba era el endurecimiento del transporte.
+
+**Cabeceras.** Las declara `headers()` en el `next.config.ts` de cada
+aplicación, no el middleware: así alcanzan también a los archivos estáticos y
+no cuestan una ejecución por petición. El portal lleva una política de
+contenido que enumera de dónde puede venir cada recurso; la API, que solo
+devuelve JSON, lleva `default-src 'none'`.
+
+`frame-ancestors 'none'` y `X-Frame-Options` van juntos a propósito: el
+segundo cubre a los navegadores que no aplican el primero. Sin ellos, un marco
+invisible sobre el panel convierte un clic de quien administra en una acción
+que no quiso hacer.
+
+La política admite `'unsafe-inline'` en los estilos porque Next inyecta
+estilos en línea en cada página, y en desarrollo admite además
+`'unsafe-eval'`, que exige la recarga en caliente. Cerrar esas dos puertas
+pide un *nonce* por petición y, con él, pasar cada respuesta por el
+middleware.
+
+Los orígenes de Google Maps son más de los que sugiere el script inicial: el
+mapa trae sus teselas de subdominios rotatorios de `googleapis.com` y de
+`gstatic.com`, pide Roboto a Google Fonts y dibuja en un trabajador creado
+desde un `blob:`. Declarar solo `maps.googleapis.com` lo dejaría a medias.
+
+**Caché.** `jsonOk` y `jsonError` marcan `Cache-Control: no-store` en toda
+respuesta de la API. Antes no llevaban ninguna instrucción, y `/api/auth/me` o
+`/api/admin/users` podían quedar almacenadas en un proxy intermedio y
+servirse después a otra persona. Se decide en el constructor de la respuesta,
+como `deletedAt` vive en un solo sitio: lo que hay que repetir en cada archivo
+nuevo es lo que se olvida.
+
+**Intentos de autenticación.** Dos contadores sobre `/api/auth/login`, porque
+protegen de cosas distintas.
+
+| Contador | Clave | Ventana | De qué protege |
+|---|---|---|---|
+| Fino | IP **+ cuenta** | 5 cada 5 min | De que adivinen la contraseña de esa cuenta |
+| Grueso | IP | 20 cada 5 min | De que agoten CPU y memoria |
+
+El fino va por cuenta y no solo por IP porque **una IP no es una máquina**.
+Detrás de un NAT —una oficina, un edificio, un operador móvil— salen muchas
+personas por la misma dirección, y contar solo por IP hacía que quien tecleaba
+mal su contraseña dejara fuera a todos sus compañeros. Comprobado: María agota
+sus cinco y admin, Ana y Bruno siguen entrando desde esa misma IP; María no,
+ni con la contraseña correcta, que es lo que se pretendía.
+
+El grueso existe porque el fino, solo, se esquiva cambiando de correo en cada
+intento. Y cada intento cuesta un scrypt de 16 MiB **aunque el correo no
+exista**, porque se deriva un hash de descarte para no delatar qué cuentas
+hay. Comprobado: rotando el correo, los veinte primeros pasan y el resto es
+429.
+
+El grueso se decide **antes de leer el cuerpo**; el fino necesita el correo,
+así que va después, pero sigue estando antes del scrypt, que es lo caro.
+
+**Solo cuentan los intentos fallidos**, y de forma literal: el limitador separa
+`check` de `record`, se consulta antes de trabajar y se anota solo si las
+credenciales no valían. Acertar pone a cero los dos contadores del origen. En
+el registro cuentan todos, porque lo que se frena es dar de alta cuentas en
+serie y la cuenta todavía no existe para usarla como clave.
+
+El recuento vive en memoria del proceso: con varias instancias cada una lleva
+la suya, lo que relaja el límite pero no lo anula. La dirección sale de
+`x-forwarded-for`, que quien llame directamente al backend puede inventarse;
+esto encarece el ataque más común sin pretender detener a quien rote
+direcciones. Comprobado que el proxy del frontend **conserva** la cabecera del
+cliente, así que detrás de un balanceador cada persona mantiene su contador.
+
+**Tamaño del cuerpo.** La subida de imágenes rechaza por `Content-Length`
+antes de leer el archivo: `request.formData()` almacena el cuerpo entero en
+memoria, y comprobar el tamaño después llega tarde.
+
+**CSRF.** No hacen falta testigos: la cookie es `SameSite=Lax` y el navegador
+ve un solo origen, así que una petición desde otro sitio no la lleva. No hay
+ningún `GET` que cambie estado, que es lo que `Lax` sí dejaría pasar.
+
+Lo verificado y que ya estaba bien: los cinco endpoints ADMIN responden 401
+sin sesión y 403 a un USER; favoritos y consultas responden 403 a ADMIN;
+nadie puede tocar la consulta de otra persona ni alcanzar un borrador; un
+campo `role` de más en `PATCH /api/auth/me` se descarta sin efecto; y ningún
+secreto de `apps/api/.env` aparece en el HTML ni en los 23 paquetes de
+JavaScript que sirve el navegador. El nombre de la cuenta de Cloudinary sí
+aparece, pero dentro de las URL de las imágenes: es parte de cómo se sirven,
+no una variable filtrada.
+
+### QA integral
+
+Recorrido del paso 35: **119 comprobaciones** contra la aplicación en marcha,
+sin fallos. Los tres roles de punta a punta —catálogo, búsqueda sin acentos,
+filtros, detalle, favoritos, consultas, el CRUD de propiedades con su
+publicación y despublicación, características, usuarios, la subida y el
+borrado de una imagen en Cloudinary— y la tabla de códigos: 400, 401, 403,
+404, 409. Ningún 500 en el log.
+
+**El defecto que apareció.** `PATCH /api/admin/users/{id}` esperaba
+`newPassword`, pero el alta pide `password`. Enviar `password` al cambio
+devolvía **200 con la contraseña intacta**: el campo desconocido se
+descartaba en silencio y, si el cuerpo traía además otro cambio, había algo
+que aplicar y la respuesta salía correcta. Quien administra habría comunicado
+una contraseña que no funcionaba.
+
+Ese descarte silencioso no se ha tocado, porque es lo que impide ascenderse a
+ADMIN con un campo de más en `PATCH /api/auth/me`. Lo que ahora ocurre es que
+`password` se rechaza con un 400 que dice cuál es el nombre correcto. La
+interfaz nunca estuvo afectada: ya enviaba `newPassword`.
+
+**Observación, no defecto.** El catálogo público no pagina: `/api/properties`
+devuelve todas las publicadas y `page` no es un parámetro suyo. Con doce
+filas no se nota y la especificación no lo pide, pero crecerá con el
+catálogo.
+
+### Mensajes de confirmación
+
+Toda acción que cambia algo lo dice: entrar y salir, el registro, el alta,
+la edición y la baja de una propiedad —distinguiendo publicar de corregir—,
+el alta y la edición de una cuenta, y el alta, el renombrado y la baja de una
+característica.
+
+Aparecen arriba, por encima del contenido, en las dos raíces. Se van solos a
+los **cinco segundos** y se pueden cerrar antes. La cuenta atrás se detiene
+con el puntero o el foco encima: un aviso que se va a media lectura no ha
+informado a nadie.
+
+La cola vive en `sessionStorage`, no en un estado de React, porque el portal
+y el panel son **dos documentos distintos**: entrar como ADMIN salta de uno a
+otro y cualquier cosa en memoria se perdería justo en la navegación que había
+que anunciar.
+
+Un mensaje sale de la cola cuando se **cierra**, no cuando se lee. Vaciarla al
+leerla parecía natural y estaba mal: quien publica y quien pinta están en el
+mismo documento en ese instante, así que el aviso se consumía en la página que
+se estaba abandonando y no llegaba nunca a la siguiente. Se vio probando el
+login de ADMIN en el navegador; ninguna prueba unitaria lo habría enseñado,
+porque todas viven en un solo documento.
+
+Los leen con `useSyncExternalStore`, que es la forma que tiene React de mirar
+algo que cambia fuera de él. Vaciar la cola dentro de un efecto encadenaba un
+render extra en cada montaje, y el linter lo señalaba con razón.
+
+Se pintan con `role="status"`: confirman algo que la persona acaba de pedir,
+así que se anuncian sin interrumpir. Un error sigue explicándose junto al
+campo o al pie del formulario, que es donde está lo que hay que corregir; el
+aviso de arriba es para lo que salió bien.
+
+`success` es el único verde de la paleta: el acento es terracota y no
+distingue «se guardó» de «no se pudo». Contraste comprobado en ambos temas,
+el más justo 5,53.
+
+### Cumplimiento arquitectónico
+
+Las seis reglas del paso 36, comprobadas sobre el código y sobre el sistema en
+marcha, no por lectura.
+
+| Regla | Cómo se comprobó |
+|---|---|
+| Sin Server Actions | `server-reference-manifest.json` de ambas aplicaciones: **0 acciones**. Los dos `action=` que hay son rutas con `method="get"` |
+| Comunicación REST | Solo dos archivos del frontend abren la red: `api-client.ts`, siempre contra `/api/*`, y `web3forms.ts` |
+| PostgreSQL única | `provider = "postgresql"`, seis modelos, y ninguna dependencia de otro motor en los cuatro `package.json` |
+| React no accede a la base | Ningún import, y **en caliente**: de los dos procesos de Next, solo el de `:3001` tiene conexión al 5432 |
+| Permisos en el backend | 34 verbos en 22 handlers; los 27 privados con guarda, los 7 públicos por diseño. En los 27, la guarda se resuelve **antes** de cualquier trabajo |
+| Integraciones externas | Cloudinary y Geocoding salen de `apps/api`; Web3Forms y Maps JS del navegador, con las dos únicas claves `NEXT_PUBLIC_` |
+
+**El hueco que apareció.** Las dos primeras reglas se cumplían por convención
+y nada las sostenía: npm iza las dependencias del monorepo a la raíz, así que
+`@prisma/client` se resuelve desde `apps/web` aunque no lo declare, y un
+import escrito por descuido habría compilado sin protestar.
+
+Ahora hay dos cerrojos. `no-restricted-imports` ataja `@prisma/client`, `pg`
+y cualquier ruta dentro de `apps/api`, y avisa mientras se escribe.
+`architecture.test.ts` busca `"use server"` y los `fetch` sueltos, porque una
+directiva no es un import y ninguna regla de ESLint la expresa. Los dos
+comprobados inyectando la violación: los dos fallan como deben.
+
+`server-only` **no** está en la lista de imports prohibidos, y no por
+descuido: las guardas de página lo usan bien, para no acabar en el paquete
+del navegador. Prohibirlo sería prohibir la precaución.
+
+### Convergencia final
+
+Paso 37: relectura completa de `spec.md` y `plan.md`, y comparación requisito
+a requisito con lo que hay.
+
+Los **21 criterios de aceptación** verificables por HTTP se comprobaron contra
+la aplicación en marcha, uno por uno. Los dos restantes —responsive y
+«sin errores bloqueantes»— los cubren el paso 33 y las validaciones finales.
+
+Verificado además campo a campo: los diecisiete del formulario de propiedad,
+los catorce del detalle, los nueve de la tarjeta, los siete de la consulta en
+el panel, los seis indicadores, los doce parámetros del catálogo, los cinco
+ordenamientos y los diez filtros. Y que la búsqueda alcanza los cinco campos
+que pide la especificación, no solo el título.
+
+**Cuatro desajustes entre los documentos y el código.** Ninguno rompía nada;
+los cuatro eran el plan describiendo algo que no era.
+
+| Desajuste | Qué se hizo |
+|---|---|
+| `## 23b` quedó escrita detrás de `## 24` | Movida a su sitio |
+| El plan declaraba `src/stores/`, que existía **vacío** | Retirado, y escrito por qué: el estado compartido vive en la URL |
+| Tres rutas REST existían sin estar declaradas | `/api/admin/overview`, `/api/favorites/ids` y `/api/properties/filter-options`, documentadas con su motivo |
+| El plan listaba seis códigos HTTP; la API usa once | Tabla completa, distinguiendo 500 de 502 y de 503 |
+
+El árbol de directorios del plan tampoco mencionaba `test-support/` ni
+`generated/`. Ahora sí.
+
+**Lo que ya estaba bien.** Las 31 rutas que el plan declara existen todas.
+`.env.example` no se ha quedado atrás en ninguna de las dos aplicaciones y no
+lleva ningún valor real. No queda ni un `TODO` ni un `FIXME` en el código.
 
 ### Limitaciones conocidas
 

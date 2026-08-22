@@ -49,6 +49,16 @@ Web3Forms   → contacto
 - No exigir latitud/longitud en el formulario ADMIN.
 - No implementar funcionalidades especulativas fuera de `spec.md`.
 
+Las dos primeras no se dejan a la buena voluntad. Prohibir un import es
+trabajo de ESLint —`no-restricted-imports` en `apps/web`, contra
+`@prisma/client`, `pg` y cualquier ruta dentro de `apps/api`—, porque avisa
+mientras se escribe. Una directiva no es un import y ninguna regla la
+expresa, así que `"use server"` lo busca una prueba que lee los archivos.
+
+Hacía falta: npm iza las dependencias del monorepo a la raíz, de modo que
+`@prisma/client` se resuelve desde `apps/web` aunque no lo declare, y un
+import escrito por descuido compilaría sin protestar.
+
 ## 4. Estructura
 
 El proyecto es un monorepo con **npm workspaces**. Frontend y backend son
@@ -62,14 +72,15 @@ portal-inmobiliario/
 │   │       ├── app/            # Páginas: /, /properties, /account, /admin
 │   │       ├── components/
 │   │       ├── hooks/
-│   │       ├── stores/
 │   │       ├── schemas/
+│   │       ├── test-support/   # Datos de ejemplo compartidos entre pruebas
 │   │       └── lib/            # Cliente REST, formateo, utilidades
 │   │
 │   └── api/                    # Backend Next.js — puerto 3001
 │       ├── prisma/             # Esquema, migraciones y seed
 │       └── src/
 │           ├── app/api/        # Route Handlers REST
+│           ├── generated/      # Cliente de Prisma; no se edita a mano
 │           ├── services/       # Reglas de negocio
 │           ├── repositories/   # Acceso a PostgreSQL
 │           └── lib/            # Cliente Prisma, respuestas HTTP
@@ -77,6 +88,12 @@ portal-inmobiliario/
 └── packages/
     └── contracts/              # @portal/contracts — DTOs y enumeraciones
 ```
+
+No hay directorio de *stores*: **el estado compartido vive en la URL**. La
+búsqueda, los filtros, el orden y la página son parámetros de consulta, así
+que el resultado se puede compartir y el botón de atrás hace lo que se
+espera. Lo demás es estado de un formulario o de un componente, y no necesita
+salir de él.
 
 ### Frontera entre aplicaciones
 
@@ -159,7 +176,12 @@ Propiedades públicas:
 ```text
 GET /api/properties
 GET /api/properties/{id}
+GET /api/properties/filter-options
 ```
+
+`filter-options` devuelve las comunas, ciudades y regiones que existen en el
+catálogo publicado. Los filtros de ubicación ofrecen lo que hay, no una lista
+escrita a mano que envejece con el catálogo.
 
 Autenticación:
 
@@ -179,9 +201,15 @@ Favoritos:
 
 ```text
 GET    /api/favorites
+GET    /api/favorites/ids
 POST   /api/favorites/{propertyId}
 DELETE /api/favorites/{propertyId}
 ```
+
+`ids` devuelve solo los identificadores guardados, que es lo que necesita el
+catálogo para saber qué tarjetas pintar marcadas sin traerse las propiedades
+otra vez. Responde 401 sin sesión y una lista vacía con ella: son cosas
+distintas, y es lo que decide si el botón de guardar llega a pintarse.
 
 Consultas:
 
@@ -198,6 +226,14 @@ paginadas y filtrables por título de propiedad o texto del mensaje.
 siguen disponibles para ADMIN.
 
 Administración:
+
+```text
+GET /api/admin/overview
+```
+
+Los indicadores del panel (sección 18 de la especificación) en una sola
+llamada. Son seis recuentos sobre las mismas tablas: pedirlos por separado
+serían seis viajes para pintar una fila de tarjetas.
 
 ```text
 GET    /api/admin/properties
@@ -298,6 +334,28 @@ Crear recursos REST adicionales cuando sean necesarios para:
 - usuarios;
 - consultas.
 
+## 7b. Mensajes de confirmación
+
+Viven enteros en el navegador. No hay Server Actions y ninguna de estas
+acciones vuelve a pintar la página desde el servidor: el formulario llama a
+la API, y si sale bien navega.
+
+La cola está en `sessionStorage`, no en un estado de React. El portal y el
+panel son **dos raíces distintas**, cada una con su `<html>`: entrar como
+ADMIN lleva de un documento al otro, y cualquier cosa guardada en memoria se
+perdería justo en la navegación que había que anunciar. En `sessionStorage`
+sobrevive, y muere al cerrar la pestaña, que es exactamente lo que dura un
+aviso.
+
+Publicar un mensaje escribe en la cola y lanza un evento de `window`. El
+componente que los pinta vacía la cola al montarse —eso cubre las
+navegaciones que recargan el documento— y también al recibir el evento —eso
+cubre las que no—. Una sola vía para los dos casos.
+
+Se pintan con `role="status"`, para que un lector de pantalla los anuncie sin
+interrumpir. La cuenta atrás de cinco segundos se detiene con el puntero o el
+foco encima.
+
 ## 8. Responsabilidades
 
 ### Route Handlers
@@ -382,6 +440,74 @@ Requisitos:
 - usuarios inactivos no pueden autenticarse;
 - endpoints ADMIN requieren ADMIN;
 - endpoints privados USER requieren autenticación.
+
+## 10b. Endurecimiento
+
+Cuatro medidas, todas en el servidor.
+
+**Cabeceras de seguridad.** Las declara `headers()` en el `next.config.ts` de
+cada aplicación. Van en las dos porque el navegador solo ve el frontend, pero
+el backend es alcanzable por su cuenta en un despliegue donde comparta red.
+
+| Cabecera | Por qué |
+|---|---|
+| `Content-Security-Policy` | Acota de dónde puede salir un script, un estilo o una imagen |
+| `X-Frame-Options: DENY` | Para los navegadores que no aplican `frame-ancestors` |
+| `X-Content-Type-Options: nosniff` | Impide que un archivo se ejecute como algo que no declara |
+| `Referrer-Policy` | Una URL privada no viaja al salir del sitio |
+| `Permissions-Policy` | Cámara, micrófono y geolocalización quedan denegadas |
+| `Strict-Transport-Security` | Solo en producción: en local no hay `https` |
+
+La política admite `'unsafe-inline'` en los estilos porque Next inyecta
+estilos en línea, y en desarrollo admite además `'unsafe-eval'`, que necesita
+la recarga en caliente. Cerrar esas dos puertas exige un *nonce* por petición
+y, con él, pasar cada respuesta por el middleware.
+
+**Caché de las respuestas privadas.** `jsonOk` y `jsonError` marcan
+`Cache-Control: no-store` en toda respuesta de la API. Es la opción segura por
+omisión: hoy ningún endpoint es cacheable —todos declaran `force-dynamic`—, y
+poner la instrucción en el constructor de la respuesta evita tener que
+acordarse en cada endpoint nuevo.
+
+**Límite de intentos de autenticación.** Dos contadores sobre
+`/api/auth/login`, porque protegen de cosas distintas.
+
+| Contador | Clave | Ventana | De qué protege |
+|---|---|---|---|
+| Fino | IP **+ cuenta** | 5 cada 5 min | De que adivinen la contraseña de esa cuenta |
+| Grueso | IP | 20 cada 5 min | De que agoten CPU y memoria del servidor |
+
+El fino es el que importa para quien usa el portal, y va por cuenta y no solo
+por IP por una razón concreta: una IP no es una máquina. Detrás de un NAT
+—una oficina, un edificio, un operador móvil— salen muchas personas por la
+misma dirección, y contar solo por IP hace que quien teclea mal su contraseña
+deje fuera a todos sus compañeros, administración incluida.
+
+El grueso existe porque el fino, solo, se esquiva: basta cambiar de correo en
+cada intento para estrenar contador. Y cada intento cuesta un scrypt de
+16 MiB aunque el correo no exista, porque se deriva un hash de descarte para
+no delatar qué cuentas hay. Sin un tope por IP, rotar correos agota el
+servidor.
+
+El grueso se comprueba **antes de leer el cuerpo**; el fino necesita el
+correo, así que va después, pero sigue estando antes del scrypt, que es lo
+caro.
+
+**Solo cuentan los intentos fallidos.** El limitador separa consultar de
+anotar: se consulta antes de trabajar y se anota solo si las credenciales no
+valían. Entrar bien además pone a cero los dos contadores de ese origen.
+
+`/api/auth/register` mantiene su contador por IP —cinco cada quince minutos—
+y ahí sí cuentan todos los intentos: lo que se frena es dar de alta cuentas en
+serie, y una que se crea sin problemas es justo el caso a frenar.
+
+El estado vive en memoria del proceso: con varias instancias cada una lleva su
+cuenta, lo que relaja el límite pero no lo anula. Un almacén compartido es la
+evolución natural cuando haya más de un proceso.
+
+**Tamaño del cuerpo.** La subida de imágenes rechaza por `Content-Length`
+antes de leer el archivo. `request.formData()` almacena el cuerpo entero en
+memoria, así que comprobar el tamaño después de leerlo llega tarde.
 
 ## 11. Cloudinary
 
@@ -533,16 +659,66 @@ Su clave de acceso es pública por diseño —Web3Forms la publica en el HTML de
 cada formulario que la usa— y por eso vive en `apps/web/.env`. No da acceso a
 ninguna cuenta: solo permite enviar al correo configurado.
 
+## 13b. SEO y metadata
+
+La ficha de cada propiedad genera su metadata con `generateMetadata`: título,
+descripción, canónica y Open Graph con la imagen de portada. La descripción
+empieza por precio y ubicación —lo que decide si alguien entra desde un
+resultado de búsqueda— y se recorta por palabra entera a 160 caracteres.
+
+`metadataBase` sale de `NEXT_PUBLIC_SITE_URL`. Open Graph exige direcciones
+absolutas: una imagen relativa no la resuelve el servidor que lee la etiqueta
+al compartir el enlace.
+
+La carga de la propiedad va envuelta en `cache` de React porque la piden dos
+veces por visita —la metadata y el contenido—; sin eso serían dos llamadas
+idénticas a la API.
+
+El área de cuenta y el panel de administración se declaran `noindex`. Están
+tras autenticación, así que un buscador no vería su contenido, pero sí podría
+listar sus direcciones.
+
+## 13c. Rendimiento
+
+Las consultas piden columnas concretas, nunca la fila entera. Con `include`,
+el catálogo arrastraba la descripción, la dirección y el texto de búsqueda
+—una copia de todo lo anterior— que ninguna tarjeta muestra: 19,9 kB por
+página de doce frente a 7,4 kB.
+
+Las imágenes de Cloudinary se piden ya redimensionadas y en el formato que
+admita el navegador, mediante un cargador propio de `next/image`. Sin él, el
+optimizador de Next descargaba el original —un megabyte— para reescalarlo en
+nuestro servidor. Medido sobre una fotografía real: 1 MB frente a 50 kB.
+
+El resto de las imágenes sigue pasando por el optimizador de Next. La
+distinción es necesaria: al fijar un cargador propio, Next deja de optimizar
+y sirve tal cual lo que se le devuelva.
+
+Las cargas que necesitan dos partes de la misma página van envueltas en
+`cache` de React: la sesión, los favoritos y la propiedad de la ficha. Una
+visita al catálogo hace cuatro llamadas a la API, todas distintas.
+
 ## 14. Errores
 
 Utilizar códigos HTTP apropiados:
 
-- 400
-- 401
-- 403
-- 404
-- 409
-- 500
+| Código | Cuándo |
+|---|---|
+| 200 · 201 | Correcto; `201` cuando se crea un recurso |
+| 400 | El cuerpo o un parámetro no valen, y se dice cuál |
+| 401 | No hay sesión: se resuelve entrando |
+| 403 | Hay sesión y no basta: entrar otra vez no arregla nada |
+| 404 | No existe —o no existe **para quien pregunta**: un borrador responde lo mismo que una propiedad inventada— |
+| 409 | Choca con algo que ya está: un email o un nombre repetido |
+| 413 | El archivo excede lo admitido |
+| 429 | Se agotaron los intentos de la ventana; lleva `Retry-After` |
+| 500 | Fallo inesperado; la causa queda en el log, no en la respuesta |
+| 502 | Un servicio externo falló y reintentar puede servir |
+| 503 | Una integración no está configurada en este entorno; reintentar no sirve |
+
+Los tres últimos son distintos a propósito. Un 500 es culpa nuestra, un 502
+es de Cloudinary o de Google, y un 503 dice que falta una credencial: cada
+uno se atiende de otra manera.
 
 Formato recomendado:
 
