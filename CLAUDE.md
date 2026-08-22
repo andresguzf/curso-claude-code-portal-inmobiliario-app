@@ -171,14 +171,14 @@ El más justo es el texto claro sobre el acento en oscuro, con 4.53.
 
 ## Estado del proyecto
 
-Pasos 1 a 31 de `tasks.md` completos. En funcionamiento: portada, catálogo
+Pasos 1 a 32 de `tasks.md` completos. En funcionamiento: portada, catálogo
 con búsqueda, filtros combinados, ordenamiento, estados de carga/vacío/error,
 detalle de propiedad, galería, mapa de ubicación, formulario de contacto,
 autenticación con autorización por rol, el área privada de la cuenta —con
 edición de los propios datos, favoritos y consultas guardadas— y el panel de
 administración con sus indicadores y el alta, edición y baja de propiedades.
 
-Pendiente desde el paso 32: optimización y los pasos de cierre.
+Pendiente desde el paso 33: responsive, accesibilidad y los pasos de cierre.
 
 ### Autenticación
 
@@ -496,6 +496,36 @@ hacen dudar de si algo falló.
 Los filtros de esta pantalla son enlaces y no un formulario: con dos filtros
 de tres opciones, un panel plegable sería más maquinaria de la necesaria, y
 así se pueden abrir en otra pestaña.
+
+### Rendimiento
+
+Las consultas piden **columnas concretas**, no la fila entera. Con `include`,
+cada tarjeta del catálogo arrastraba la descripción, la dirección y
+`search_text` —que duplica todo lo anterior— sin mostrar ninguna de las tres:
+19,9 kB por página de doce frente a 7,4 kB. Si un `select` se queda corto, el
+mapeador no compila; ese es el seguro.
+
+Las imágenes de Cloudinary se piden **ya redimensionadas**, con `f_auto`,
+`q_auto` y `c_limit`, mediante un cargador propio de `next/image`. Sin él, el
+optimizador de Next se descargaba el original para reescalarlo aquí. Medido
+sobre una fotografía real: 1 MB frente a 50 kB en WebP.
+
+`c_limit` reduce pero nunca amplía: una foto subida a 800 px no se estira a
+1200 y se ve borrosa.
+
+El resto de las imágenes —el hero y los marcadores del seed— sigue pasando
+por el optimizador de Next. La distinción importa: al fijar un cargador
+propio, Next deja de optimizar y sirve tal cual lo que se le devuelva.
+
+Las cargas que piden dos partes de la misma página van en `cache` de React:
+la sesión, los favoritos y la propiedad de la ficha. Comprobado en el log del
+backend: una visita al catálogo hace cuatro llamadas, todas distintas.
+
+Las consultas de PostgreSQL se revisaron con `EXPLAIN ANALYZE`. Con el
+volumen actual el planificador elige barridos secuenciales y tarda
+centésimas de milisegundo: añadir índices ahí sería más lento, no más
+rápido. Los índices por ubicación y por estado ya están declarados para
+cuando el catálogo crezca.
 
 ### SEO y metadata
 

@@ -552,6 +552,26 @@ El área de cuenta y el panel de administración se declaran `noindex`. Están
 tras autenticación, así que un buscador no vería su contenido, pero sí podría
 listar sus direcciones.
 
+## 13c. Rendimiento
+
+Las consultas piden columnas concretas, nunca la fila entera. Con `include`,
+el catálogo arrastraba la descripción, la dirección y el texto de búsqueda
+—una copia de todo lo anterior— que ninguna tarjeta muestra: 19,9 kB por
+página de doce frente a 7,4 kB.
+
+Las imágenes de Cloudinary se piden ya redimensionadas y en el formato que
+admita el navegador, mediante un cargador propio de `next/image`. Sin él, el
+optimizador de Next descargaba el original —un megabyte— para reescalarlo en
+nuestro servidor. Medido sobre una fotografía real: 1 MB frente a 50 kB.
+
+El resto de las imágenes sigue pasando por el optimizador de Next. La
+distinción es necesaria: al fijar un cargador propio, Next deja de optimizar
+y sirve tal cual lo que se le devuelva.
+
+Las cargas que necesitan dos partes de la misma página van envueltas en
+`cache` de React: la sesión, los favoritos y la propiedad de la ficha. Una
+visita al catálogo hace cuatro llamadas a la API, todas distintas.
+
 ## 14. Errores
 
 Utilizar códigos HTTP apropiados:

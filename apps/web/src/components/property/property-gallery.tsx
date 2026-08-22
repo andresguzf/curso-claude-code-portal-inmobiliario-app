@@ -1,10 +1,10 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 
 import type { PropertyImageDto } from "@portal/contracts";
 
+import { RemoteImage } from "@/components/ui/remote-image";
 import { cn } from "@/lib/utils";
 
 /**
@@ -89,7 +89,7 @@ export function PropertyGallery({
       </h2>
 
       <div className="relative aspect-[16/9] overflow-hidden rounded-xl bg-muted">
-        <Image
+        <RemoteImage
           key={activeImage?.id}
           src={activeImage?.url ?? ""}
           alt={describeImage(propertyTitle, activeIndex, images.length)}
@@ -138,7 +138,7 @@ export function PropertyGallery({
                     : "border-transparent opacity-70 hover:opacity-100",
                 )}
               >
-                <Image
+                <RemoteImage
                   src={image.url}
                   alt=""
                   fill

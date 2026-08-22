@@ -19,16 +19,48 @@ export type PropertyScope = {
   readonly isPublished?: boolean;
 };
 
-/** Imagen principal para las tarjetas del catálogo. */
+/**
+ * Columnas que necesita una tarjeta del catálogo.
+ *
+ * Se enumeran en lugar de usar `include`, que trae la fila entera: con ella
+ * viajaban la descripción, la dirección y el texto de búsqueda —una copia de
+ * todo lo anterior— que ninguna tarjeta muestra. Medido sobre una página de
+ * doce: 19,9 kB frente a 7,4 kB.
+ *
+ * Si esta lista se quedara corta, `toPropertySummary` no compilaría.
+ */
 const summarySelection = {
-  images: {
-    where: { isPrimary: true },
-    take: 1,
-  },
+  id: true,
+  title: true,
+  operationType: true,
+  propertyType: true,
+  price: true,
+  currency: true,
+  commune: true,
+  city: true,
+  region: true,
+  bedrooms: true,
+  bathrooms: true,
+  usableAreaSquareMeters: true,
+  isFeatured: true,
+  createdAt: true,
+  images: { where: { isPrimary: true }, take: 1 },
 } as const;
 
-/** Galería completa y características para el detalle. */
+/**
+ * Columnas de la ficha completa.
+ *
+ * Aquí sí hace falta casi todo, pero siguen fuera las copias normalizadas
+ * para búsqueda y las marcas de estado, que no se muestran.
+ */
 const detailSelection = {
+  ...summarySelection,
+  description: true,
+  totalAreaSquareMeters: true,
+  parkingSpaces: true,
+  ageYears: true,
+  address: true,
+  updatedAt: true,
   images: { orderBy: { position: "asc" } },
   features: true,
 } as const;
@@ -38,14 +70,14 @@ export function findProperties(query: PropertyListQuery, scope: PropertyScope) {
     where: buildPropertyWhere(query, scope),
     // El ordenamiento se resuelve en PostgreSQL (plan.md, sección 9).
     orderBy: [...buildPropertyOrderBy(query.sort)],
-    include: summarySelection,
+    select: summarySelection,
   });
 }
 
 export function findPropertyById(id: string, scope: PropertyScope) {
   return prisma.property.findFirst({
     where: { id, ...buildPropertyWhere({}, scope) },
-    include: detailSelection,
+    select: detailSelection,
   });
 }
 

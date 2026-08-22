@@ -34,28 +34,40 @@ export type PropertyFeatureRecord = {
   readonly slug: string;
 };
 
-export type PropertyRecord = {
+/**
+ * Lo que necesita una tarjeta del catálogo.
+ *
+ * Se declara aparte del detalle para que el repositorio pueda pedir solo
+ * estas columnas: traer la fila entera arrastraba la descripción y el texto
+ * de búsqueda, que ninguna tarjeta muestra. Si el `select` se quedara corto,
+ * esto no compilaría.
+ */
+export type PropertySummaryRecord = {
   readonly id: string;
   readonly title: string;
-  readonly description: string;
   readonly operationType: OperationTypeValue;
   readonly propertyType: PropertyTypeValue;
   readonly price: DecimalLike;
   readonly currency: CurrencyValue;
   readonly usableAreaSquareMeters: DecimalLike | null;
-  readonly totalAreaSquareMeters: DecimalLike | null;
   readonly bedrooms: number | null;
   readonly bathrooms: number | null;
-  readonly parkingSpaces: number | null;
-  readonly ageYears: number | null;
-  readonly address: string;
   readonly commune: string;
   readonly city: string;
   readonly region: string;
   readonly isFeatured: boolean;
   readonly createdAt: Date;
-  readonly updatedAt: Date;
   readonly images: readonly PropertyImageRecord[];
+};
+
+/** Lo que necesita la ficha completa: todo lo anterior y el resto. */
+export type PropertyRecord = PropertySummaryRecord & {
+  readonly description: string;
+  readonly totalAreaSquareMeters: DecimalLike | null;
+  readonly parkingSpaces: number | null;
+  readonly ageYears: number | null;
+  readonly address: string;
+  readonly updatedAt: Date;
   readonly features?: readonly PropertyFeatureRecord[];
 };
 
@@ -106,7 +118,7 @@ export function selectPrimaryImage(
 }
 
 export function toPropertySummary(
-  property: PropertyRecord,
+  property: PropertySummaryRecord,
 ): PropertySummaryDto {
   return {
     id: property.id,

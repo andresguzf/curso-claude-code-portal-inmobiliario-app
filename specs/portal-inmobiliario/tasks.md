@@ -221,7 +221,7 @@
   - Descripción.
   - Open Graph.
 
-- [ ] **Paso 32 — Optimización**
+- [x] **Paso 32 — Optimización**
   - Optimizar imágenes Next.js/Cloudinary.
   - Evitar imágenes sobredimensionadas.
   - Revisar solicitudes duplicadas.

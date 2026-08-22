@@ -1,8 +1,8 @@
-import Image from "next/image";
 import Link from "next/link";
 
 import type { PropertySummaryDto } from "@portal/contracts";
 
+import { RemoteImage } from "@/components/ui/remote-image";
 import { FavoriteButton } from "@/components/property/favorite-button";
 import {
   formatArea,
@@ -62,7 +62,7 @@ export function PropertyCard({
     >
       <div className="relative aspect-[4/3] bg-muted">
         {property.primaryImage ? (
-          <Image
+          <RemoteImage
             src={property.primaryImage.url}
             alt={`Fotografía de ${property.title}`}
             fill

@@ -1,11 +1,11 @@
 "use client";
 
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useId, useRef, useState, useTransition } from "react";
 
 import { IMAGE_LIMITS, type PropertyImageDto } from "@portal/contracts";
 
+import { RemoteImage } from "@/components/ui/remote-image";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   deletePropertyImage,
@@ -282,7 +282,7 @@ function ImageCard({
   return (
     <figure className="flex flex-col gap-2 rounded-xl border border-line bg-card p-2">
       <div className="relative aspect-4/3 overflow-hidden rounded-lg bg-muted">
-        <Image
+        <RemoteImage
           src={image.url}
           alt=""
           fill
