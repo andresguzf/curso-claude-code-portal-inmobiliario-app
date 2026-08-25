@@ -13,6 +13,11 @@ export type SeedFeature = {
   readonly name: string;
 };
 
+export type SeedImage = {
+  readonly url: string;
+  readonly publicId: string;
+};
+
 export type SeedProperty = {
   readonly id: string;
   readonly title: string;
@@ -35,6 +40,14 @@ export type SeedProperty = {
   readonly isFeatured: boolean;
   readonly featureSlugs: readonly string[];
   readonly imageCount: number;
+  /**
+   * Imágenes concretas, cuando la propiedad ya las tiene subidas.
+   *
+   * Sin esto, una propiedad creada desde el panel volvería del seed con
+   * marcadores de posición y perdería sus fotografías. Declararlas aquí no
+   * sube nada a Cloudinary: apunta a archivos que ya están allí.
+   */
+  readonly images?: readonly SeedImage[];
 };
 
 /** Características del inmueble (spec.md, sección 4). */
@@ -71,7 +84,7 @@ export const SEED_USERS: readonly SeedUser[] = [
     isActive: true,
   },
   {
-    name: "María González",
+    name: "Maria",
     email: "maria@example.com",
     password: "maria1234",
     role: "USER",
@@ -98,6 +111,38 @@ export const SEED_USERS: readonly SeedUser[] = [
     role: "USER",
     isActive: true,
   },
+  // Las cuatro siguientes se dieron de alta desde el portal y desde el panel,
+  // no estaban en el conjunto original. Sus contraseñas no se pueden
+  // recuperar —solo se guarda el hash—, así que se les asigna una siguiendo
+  // la misma convención: el nombre seguido de dígitos hasta ocho caracteres.
+  {
+    name: "Andres",
+    email: "andres@example.com",
+    password: "andres1234",
+    role: "USER",
+    isActive: true,
+  },
+  {
+    name: "Bruno Andrés Soto",
+    email: "bruno.soto@example.com",
+    password: "soto1234",
+    role: "USER",
+    isActive: true,
+  },
+  {
+    name: "Rosita Doe",
+    email: "rosita.doe@example.com",
+    password: "rosita1234",
+    role: "USER",
+    isActive: true,
+  },
+  {
+    name: "Alejandra Roe",
+    email: "ale.roe@example.com",
+    password: "alejandra1234",
+    role: "USER",
+    isActive: true,
+  },
 ];
 
 export const SEED_FEATURES: readonly SeedFeature[] = [
@@ -114,6 +159,10 @@ export const SEED_FEATURES: readonly SeedFeature[] = [
   { slug: "calefaccion", name: "Calefacción" },
   { slug: "aire-acondicionado", name: "Aire acondicionado" },
   { slug: "pet-friendly", name: "Pet friendly" },
+  // El identificador no es «tinaja» a propósito: se creó como «Hot tub» y se
+  // renombró después. El slug no cambia al renombrar, porque es con lo que
+  // las propiedades quedan enlazadas (spec.md, sección 4).
+  { slug: "hottub", name: "Tinaja" },
 ];
 
 export const SEED_PROPERTIES: readonly SeedProperty[] = [
@@ -421,10 +470,57 @@ export const SEED_PROPERTIES: readonly SeedProperty[] = [
     commune: "Concón",
     city: "Viña del Mar",
     region: "Región de Valparaíso",
-    isPublished: false,
+    isPublished: true,
     isFeatured: false,
     featureSlugs: ["terraza", "ascensor"],
     imageCount: 2,
+  },
+  {
+    // Creada desde el panel de administración, no escrita a mano como las
+    // doce anteriores. Conserva su identificador original para que las
+    // consultas y los favoritos que la referencian sigan encontrándola.
+    id: "cmt269lfo000crwzqdy9iu2zt",
+    title: "Casa de Montaña con Vistas Panorámicas a la Cordillera",
+    description:
+      "Espectacular propiedad de montaña de arquitectura contemporánea alpina, emplazada en un terreno privilegiado con imponentes vistas despejadas a las altas cumbres de la Cordillera de los Andes.\n\nDiseñada para fundirse con la naturaleza mediante el uso de materiales nobles locales como piedra volcánica, vigas a la vista y madera tratada termocontrolada (yakisugi / shou sugi ban).\n\nÁrea Social\nImpresionante living comedor con doble altura, amplios ventanales termopanel de piso a cielo y una chimenea central suspendida de acero negro con fogata abierta.\n\nCocina Integrada\nCocina de concepto abierto con isla de cuarzo negro, encimera de inducción y muebles de roble a medida.\n\nMaster Suite\nDormitorio principal con terraza privada panorámica, chimenea rústica, walk-in closet y baño con tina exenta con vista a los picos nevados.\n\nExteriores y Relax\nGran terraza voladiza de madera con zona de fire pit (fogón integrado), hot tub exterior climatizado y quincho protegido contra el viento.\n\nEficiencia y Confort\nSistema de calefacción central por losa radiante con aerotermia, cristales de control solar de alta eficiencia térmica y aislamiento perimetral premium para todas las estaciones del año.",
+    operationType: "SALE",
+    propertyType: "HOUSE",
+    price: "850000.00",
+    usableAreaSquareMeters: "340.00",
+    totalAreaSquareMeters: "3200.00",
+    bedrooms: 4,
+    bathrooms: 4,
+    parkingSpaces: 2,
+    // Cero años es «a estrenar», que es distinto de no declarar antigüedad.
+    ageYears: 0,
+    address: "Camino a Farellones",
+    commune: "Lo Barnechea",
+    city: "Santiago",
+    region: "Región Metropolitana",
+    isPublished: true,
+    isFeatured: false,
+    featureSlugs: [
+      "piscina",
+      "quincho",
+      "jardin",
+      "terraza",
+      "bodega",
+      "seguridad",
+      "calefaccion",
+      "pet-friendly",
+      "hottub",
+    ],
+    imageCount: 2,
+    images: [
+      {
+        url: "https://res.cloudinary.com/db1rqce7l/image/upload/v1787269779/propiedades-claude/gmum47rfmgsyrypeiutx.jpg",
+        publicId: "propiedades-claude/gmum47rfmgsyrypeiutx",
+      },
+      {
+        url: "https://res.cloudinary.com/db1rqce7l/image/upload/v1787269781/propiedades-claude/w6nn5ra7bbuxsyrqdmgb.png",
+        publicId: "propiedades-claude/w6nn5ra7bbuxsyrqdmgb",
+      },
+    ],
   },
 ];
 
@@ -436,6 +532,15 @@ export const SEED_PROPERTIES: readonly SeedProperty[] = [
  * aplicación no distinga entre datos de desarrollo y datos reales.
  */
 export function buildSeedImages(property: SeedProperty) {
+  if (property.images) {
+    return property.images.map((image, index) => ({
+      publicId: image.publicId,
+      url: image.url,
+      position: index,
+      isPrimary: index === 0,
+    }));
+  }
+
   return Array.from({ length: property.imageCount }, (_, index) => ({
     publicId: `seed/properties/${property.id}/${index + 1}`,
     url: `https://picsum.photos/seed/${property.id}-${index + 1}/1200/800`,

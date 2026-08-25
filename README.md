@@ -113,7 +113,9 @@ propiedades publicadas, y ningún filtro permite alcanzar un borrador.
 npm install
 ```
 
-Levantar PostgreSQL:
+Levantar PostgreSQL. En local, un contenedor; en un servidor, cualquier
+PostgreSQL gestionado —este proyecto usa Supabase, y la sección
+**Despliegue** explica qué cadena de conexión elegir y por qué:
 
 ```bash
 docker run -d --name postgres --restart always -p 5432:5432 -e POSTGRES_PASSWORD=postgres postgres:16
@@ -300,6 +302,55 @@ Solo cuentan los intentos fallidos. Acertar pone los dos contadores a cero.
 **CSRF.** No hacen falta testigos: la cookie es `SameSite=Lax` y el navegador
 ve un solo origen, así que una petición desde otro sitio no la lleva. No hay
 ningún `GET` que cambie estado.
+
+## Despliegue
+
+En producción son **dos proyectos de Vercel**, uno por aplicación, y una base
+de datos en Supabase.
+
+| Proyecto | Root Directory | Qué sirve |
+|---|---|---|
+| api | `apps/api` | Los Route Handlers. Habla con PostgreSQL |
+| web | `apps/web` | El portal. Reescribe `/api/*` hacia el api |
+
+Variables por proyecto:
+
+```text
+api   DATABASE_URL · AUTH_SECRET · GOOGLE_MAPS_API_KEY
+      CLOUDINARY_CLOUD_NAME · CLOUDINARY_API_KEY · CLOUDINARY_API_SECRET
+
+web   API_INTERNAL_URL · SITE_URL
+      NEXT_PUBLIC_GOOGLE_MAPS_API_KEY · NEXT_PUBLIC_WEB3FORMS_ACCESS_KEY
+```
+
+`DATABASE_URL` y `AUTH_SECRET` **lanzan al arrancar** si faltan; no degradan.
+Las tres de Cloudinary hacen que subir una imagen responda 503, y sin la de
+Geocoding el detalle no trae coordenadas.
+
+### Tres cosas que cuestan una tarde si no se saben
+
+**`API_INTERNAL_URL` se hornea en el build.** Se interpola dentro de
+`next.config.ts`, así que cambiarla en el panel no basta: hay que redesplegar
+el portal, y sin la caché de build.
+
+**Los despliegues de *preview* están protegidos.** Vercel exige autenticación
+en las URL generadas, y responde 401 antes de ejecutar una línea de código. El
+portal llama al api **desde su servidor**, sin cabeceras, así que
+`API_INTERNAL_URL` debe apuntar al **dominio de producción** del api, que en el
+plan gratuito sí es público. Para llamar a un *preview* a mano —Postman,
+pruebas— se genera un secreto en Deployment Protection y se envía como
+cabecera `x-vercel-protection-bypass`.
+
+**Las variables van por entorno.** Una marcada solo para *Preview* se ve en la
+lista y no llega al build de producción.
+
+### La sesión sigue funcionando entre dos dominios
+
+Es lo que suele romperse al separar frontend y backend, y aquí no se rompe: el
+navegador ve **un solo origen**. La reescritura de `/api/*` actúa de proxy, el
+api devuelve su `Set-Cookie` sin atributo `Domain`, y el navegador se la
+atribuye al dominio del portal. Ni CORS ni `SameSite=None`. En producción la
+cookie sale además con `Secure`.
 
 ## Limitaciones conocidas
 
