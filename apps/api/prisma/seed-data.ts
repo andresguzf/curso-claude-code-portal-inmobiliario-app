@@ -39,16 +39,26 @@ export type SeedProperty = {
   readonly isPublished: boolean;
   readonly isFeatured: boolean;
   readonly featureSlugs: readonly string[];
-  readonly imageCount: number;
+} & SeedGallery;
+
+/**
+ * De dónde salen las imágenes de una propiedad: o se declaran, o se generan.
+ *
+ * Es una unión y no dos campos opcionales para que no puedan contradecirse.
+ * Con `imageCount: 4` junto a una lista de seis, ¿cuántas hay? Ese desacuerdo
+ * llegó a existir, y lo cazó una prueba en vez del compilador.
+ */
+export type SeedGallery =
   /**
    * Imágenes concretas, cuando la propiedad ya las tiene subidas.
    *
-   * Sin esto, una propiedad creada desde el panel volvería del seed con
-   * marcadores de posición y perdería sus fotografías. Declararlas aquí no
-   * sube nada a Cloudinary: apunta a archivos que ya están allí.
+   * Sin esto, una propiedad con fotografías reales volvería del seed con
+   * marcadores de posición. Declararlas no sube nada a Cloudinary: apunta a
+   * archivos que ya están allí.
    */
-  readonly images?: readonly SeedImage[];
-};
+  | { readonly images: readonly SeedImage[]; readonly imageCount?: never }
+  /** Cuántos marcadores generar, para las que aún no tienen fotografías. */
+  | { readonly imageCount: number; readonly images?: never };
 
 /** Características del inmueble (spec.md, sección 4). */
 /**
@@ -188,7 +198,32 @@ export const SEED_PROPERTIES: readonly SeedProperty[] = [
     isPublished: true,
     isFeatured: true,
     featureSlugs: ["piscina", "quincho", "jardin", "seguridad", "calefaccion"],
-    imageCount: 4,
+    images: [
+      {
+        url: "https://res.cloudinary.com/db1rqce7l/image/upload/v1787587231/propiedades-claude/t94pyxmnkgsysovhgoic.jpg",
+        publicId: "propiedades-claude/t94pyxmnkgsysovhgoic",
+      },
+      {
+        url: "https://res.cloudinary.com/db1rqce7l/image/upload/v1787587234/propiedades-claude/elq9gtxr1avhb8br8s5a.jpg",
+        publicId: "propiedades-claude/elq9gtxr1avhb8br8s5a",
+      },
+      {
+        url: "https://res.cloudinary.com/db1rqce7l/image/upload/v1787587237/propiedades-claude/t2p4srb7m6fw3lwejlex.jpg",
+        publicId: "propiedades-claude/t2p4srb7m6fw3lwejlex",
+      },
+      {
+        url: "https://res.cloudinary.com/db1rqce7l/image/upload/v1787587241/propiedades-claude/kbaryz8t66ego7joyg8u.jpg",
+        publicId: "propiedades-claude/kbaryz8t66ego7joyg8u",
+      },
+      {
+        url: "https://res.cloudinary.com/db1rqce7l/image/upload/v1787587245/propiedades-claude/hlh7qihtfusoulihwhd4.jpg",
+        publicId: "propiedades-claude/hlh7qihtfusoulihwhd4",
+      },
+      {
+        url: "https://res.cloudinary.com/db1rqce7l/image/upload/v1787587249/propiedades-claude/p6y6jaa3ofnacr0eptag.jpg",
+        publicId: "propiedades-claude/p6y6jaa3ofnacr0eptag",
+      },
+    ],
   },
   {
     id: "seed-property-02",
@@ -264,7 +299,32 @@ export const SEED_PROPERTIES: readonly SeedProperty[] = [
     isPublished: true,
     isFeatured: false,
     featureSlugs: [],
-    imageCount: 2,
+    images: [
+      {
+        url: "https://res.cloudinary.com/db1rqce7l/image/upload/v1787587153/propiedades-claude/coy2dbwyxwst9f6t35fk.jpg",
+        publicId: "propiedades-claude/coy2dbwyxwst9f6t35fk",
+      },
+      {
+        url: "https://res.cloudinary.com/db1rqce7l/image/upload/v1787587155/propiedades-claude/tvydndg1sealjxwanihx.jpg",
+        publicId: "propiedades-claude/tvydndg1sealjxwanihx",
+      },
+      {
+        url: "https://res.cloudinary.com/db1rqce7l/image/upload/v1787587159/propiedades-claude/eigle8hfgmayoulzviyt.jpg",
+        publicId: "propiedades-claude/eigle8hfgmayoulzviyt",
+      },
+      {
+        url: "https://res.cloudinary.com/db1rqce7l/image/upload/v1787587162/propiedades-claude/xstipmihc7xrpekusf3m.jpg",
+        publicId: "propiedades-claude/xstipmihc7xrpekusf3m",
+      },
+      {
+        url: "https://res.cloudinary.com/db1rqce7l/image/upload/v1787587166/propiedades-claude/vkta9rdu4jl0k7euydif.jpg",
+        publicId: "propiedades-claude/vkta9rdu4jl0k7euydif",
+      },
+      {
+        url: "https://res.cloudinary.com/db1rqce7l/image/upload/v1787587169/propiedades-claude/flkpbivp9juk4jnlwpjq.jpg",
+        publicId: "propiedades-claude/flkpbivp9juk4jnlwpjq",
+      },
+    ],
   },
   {
     id: "seed-property-05",
@@ -450,7 +510,12 @@ export const SEED_PROPERTIES: readonly SeedProperty[] = [
       "seguridad",
       "conserjeria",
     ],
-    imageCount: 3,
+    images: [
+      {
+        url: "https://res.cloudinary.com/db1rqce7l/image/upload/v1787617569/propiedades-claude/q0ndnqoopqtsokzpd1cb.png",
+        publicId: "propiedades-claude/q0ndnqoopqtsokzpd1cb",
+      },
+    ],
   },
   {
     id: "seed-property-12",
@@ -473,7 +538,20 @@ export const SEED_PROPERTIES: readonly SeedProperty[] = [
     isPublished: true,
     isFeatured: false,
     featureSlugs: ["terraza", "ascensor"],
-    imageCount: 2,
+    images: [
+      {
+        url: "https://res.cloudinary.com/db1rqce7l/image/upload/v1787587046/propiedades-claude/tddcu0t2hx0umurh0ebg.png",
+        publicId: "propiedades-claude/tddcu0t2hx0umurh0ebg",
+      },
+      {
+        url: "https://res.cloudinary.com/db1rqce7l/image/upload/v1787587043/propiedades-claude/nxcyyzfqnkrg0xdyeqnh.png",
+        publicId: "propiedades-claude/nxcyyzfqnkrg0xdyeqnh",
+      },
+      {
+        url: "https://res.cloudinary.com/db1rqce7l/image/upload/v1787587040/propiedades-claude/ikdjftmz2g5h3xhieoyf.png",
+        publicId: "propiedades-claude/ikdjftmz2g5h3xhieoyf",
+      },
+    ],
   },
   {
     // Creada desde el panel de administración, no escrita a mano como las
@@ -510,7 +588,6 @@ export const SEED_PROPERTIES: readonly SeedProperty[] = [
       "pet-friendly",
       "hottub",
     ],
-    imageCount: 2,
     images: [
       {
         url: "https://res.cloudinary.com/db1rqce7l/image/upload/v1787269779/propiedades-claude/gmum47rfmgsyrypeiutx.jpg",
@@ -541,7 +618,7 @@ export function buildSeedImages(property: SeedProperty) {
     }));
   }
 
-  return Array.from({ length: property.imageCount }, (_, index) => ({
+  return Array.from({ length: property.imageCount ?? 0 }, (_, index) => ({
     publicId: `seed/properties/${property.id}/${index + 1}`,
     url: `https://picsum.photos/seed/${property.id}-${index + 1}/1200/800`,
     position: index,
