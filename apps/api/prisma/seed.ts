@@ -146,15 +146,28 @@ async function main(): Promise<void> {
         },
       });
 
-      // Las imágenes se regeneran completas: es más simple y seguro que
-      // reconciliar posiciones e imagen principal una a una.
-      await prisma.propertyImage.deleteMany({ where: { propertyId: id } });
-      await prisma.propertyImage.createMany({
-        data: buildSeedImages(property).map((image) => ({
-          ...image,
-          propertyId: id,
-        })),
+      // La galería solo se rellena si está vacía.
+      //
+      // Antes se borraba entera y se regeneraba, por ser «más simple». No era
+      // más seguro: quien hubiera subido fotografías desde el panel las perdía
+      // en la siguiente ejecución del seed, y los archivos quedaban huérfanos
+      // en Cloudinary sin que nada los referenciara. Ocurrió de verdad, con
+      // quince archivos.
+      //
+      // El seed siembra datos de partida; no es dueño de lo que se añada
+      // después.
+      const imagenesExistentes = await prisma.propertyImage.count({
+        where: { propertyId: id },
       });
+
+      if (imagenesExistentes === 0) {
+        await prisma.propertyImage.createMany({
+          data: buildSeedImages(property).map((image) => ({
+            ...image,
+            propertyId: id,
+          })),
+        });
+      }
     }
 
     console.log(`Propiedades cargadas: ${SEED_PROPERTIES.length}`);
