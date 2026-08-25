@@ -145,12 +145,42 @@ describe("propiedades del seed", () => {
 });
 
 describe("buildSeedImages", () => {
-  const property = SEED_PROPERTIES[0] as SeedProperty;
+  /** Una propiedad con marcadores y otra con fotografías ya declaradas. */
+  const conMarcadores = SEED_PROPERTIES.find(
+    (candidata) => candidata.imageCount !== undefined,
+  ) as SeedProperty;
+  const conFotografias = SEED_PROPERTIES.find(
+    (candidata) => candidata.images !== undefined,
+  ) as SeedProperty;
 
-  it("genera exactamente una imagen principal en la primera posición", () => {
-    const images = buildSeedImages(property);
+  it("el catálogo tiene propiedades de los dos tipos", () => {
+    // Si dejara de haberlas, las comprobaciones de abajo pasarían por no
+    // mirar nada, que es la peor forma de pasar.
+    expect(conMarcadores).toBeDefined();
+    expect(conFotografias).toBeDefined();
+  });
 
-    expect(images).toHaveLength(property.imageCount);
+  it("genera tantos marcadores como pide imageCount", () => {
+    const images = buildSeedImages(conMarcadores);
+
+    expect(images).toHaveLength(conMarcadores.imageCount as number);
+    expect(images.every((image) => image.url.includes("picsum"))).toBe(true);
+  });
+
+  it("respeta las fotografías declaradas, sin inventar marcadores", () => {
+    const images = buildSeedImages(conFotografias);
+
+    expect(images.map((image) => image.url)).toEqual(
+      (conFotografias.images ?? []).map((image) => image.url),
+    );
+  });
+
+  it.each([
+    ["con marcadores", () => conMarcadores],
+    ["con fotografías", () => conFotografias],
+  ])("%s: una sola principal, en la primera posición", (_titulo, obtener) => {
+    const images = buildSeedImages(obtener());
+
     expect(images.filter((image) => image.isPrimary)).toHaveLength(1);
     expect(images[0]?.isPrimary).toBe(true);
     expect(images.map((image) => image.position)).toEqual(
