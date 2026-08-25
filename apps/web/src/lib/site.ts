@@ -19,7 +19,7 @@ export const SITE_DESCRIPTION =
  * quien desplegó.
  */
 export function resolveSiteUrl(
-  rawUrl: string | undefined = process.env.NEXT_PUBLIC_SITE_URL,
+  rawUrl: string | undefined = process.env.SITE_URL,
 ): URL {
   const trimmed = rawUrl?.trim();
 
@@ -33,7 +33,7 @@ export function resolveSiteUrl(
     // Una URL mal escrita no debe tumbar el renderizado de todas las
     // páginas: se avisa y se sigue con la de desarrollo.
     console.error(
-      `[seo] NEXT_PUBLIC_SITE_URL no es una URL válida: ${trimmed}`,
+      `[seo] SITE_URL no es una URL válida: ${trimmed}`,
     );
 
     return new URL("http://localhost:3000");
