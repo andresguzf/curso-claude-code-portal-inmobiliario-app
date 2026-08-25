@@ -666,7 +666,9 @@ descripción, canónica y Open Graph con la imagen de portada. La descripción
 empieza por precio y ubicación —lo que decide si alguien entra desde un
 resultado de búsqueda— y se recorta por palabra entera a 160 caracteres.
 
-`metadataBase` sale de `NEXT_PUBLIC_SITE_URL`. Open Graph exige direcciones
+`metadataBase` sale de `SITE_URL`, **sin** prefijo público: solo la lee el
+servidor al generar las etiquetas, y lo que llega al navegador es el
+resultado, no la variable. Open Graph exige direcciones
 absolutas: una imagen relativa no la resuelve el servidor que lee la etiqueta
 al compartir el enlace.
 
@@ -745,7 +747,7 @@ desde el directorio de la aplicación.
 
 `apps/web/.env`:
 
-- `NEXT_PUBLIC_SITE_URL` (metadata y Open Graph);
+- `SITE_URL` (metadata y Open Graph; solo servidor);
 - `API_INTERNAL_URL` (destino del proxy hacia el backend);
 - `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` (mapa del detalle);
 - `NEXT_PUBLIC_WEB3FORMS_ACCESS_KEY` (formulario de contacto).

@@ -424,6 +424,13 @@ nadie sabría que sobra.
 La primera imagen de una propiedad queda como principal: sin portada no se
 pintaría en el catálogo.
 
+**El seed no toca una galería que ya tenga imágenes.** Antes la borraba entera
+y la regeneraba con marcadores de `picsum`, por ser «más simple». No era más
+seguro: quien subía fotografías desde el panel las perdía en la siguiente
+ejecución del seed, y los archivos quedaban huérfanos en Cloudinary sin que
+nada los referenciara. Ocurrió, con quince archivos. El seed siembra datos de
+partida; no es dueño de lo que se añada después.
+
 La galería se administra desde la ficha de edición, en su propia sección:
 
 | Verbo | Ruta | Qué hace |
@@ -578,7 +585,8 @@ La imagen compartida es la **portada** de la propiedad. Si no tiene ninguna,
 no se declara `images` en vez de poner un marcador: la tarjeta se ve mejor
 sin imagen que con una que no es de la propiedad.
 
-`metadataBase` sale de `NEXT_PUBLIC_SITE_URL`. Open Graph exige direcciones
+`metadataBase` sale de `SITE_URL`, sin prefijo público: solo la lee el
+servidor. Open Graph exige direcciones
 absolutas, y una URL mal escrita no tumba el renderizado: se avisa por el log
 y se cae en `localhost`.
 
@@ -859,6 +867,46 @@ El árbol de directorios del plan tampoco mencionaba `test-support/` ni
 **Lo que ya estaba bien.** Las 31 rutas que el plan declara existen todas.
 `.env.example` no se ha quedado atrás en ninguna de las dos aplicaciones y no
 lleva ningún valor real. No queda ni un `TODO` ni un `FIXME` en el código.
+
+### Despliegue
+
+Dos proyectos de Vercel —`apps/api` y `apps/web` como *Root Directory*— y
+PostgreSQL en Supabase.
+
+**La conexión a Supabase usa el *Session pooler*** (puerto 5432). Los otros dos
+caminos no sirven: la conexión directa es IPv6 salvo complemento de pago, y el
+*Transaction pooler* (6543) no admite *prepared statements*, que las
+migraciones de Prisma necesitan.
+
+**`sslmode=no-verify`, y no `require`.** El pooler presenta un certificado de
+la raíz propia de Supabase —`*.pooler.supabase.com` ← `Supabase Intermediate
+2021 CA` ← `Supabase Root 2021 CA`—, que el sistema no conoce. node-postgres
+trata `require` como `verify-full` y falla con «self-signed certificate in
+certificate chain». Cifra igual; lo que no hace es verificar el certificado.
+
+Ningún valor sirve a los tres clientes: `psql` no entiende `no-verify` y
+node-postgres no acepta `require`. Manda la aplicación, así que en el `.env` va
+`no-verify`; para conectarse a mano con `psql` hay que cambiarlo por `require`.
+
+**`API_INTERNAL_URL` se hornea en el build**, porque se interpola dentro de
+`next.config.ts`. Cambiarla en el panel no basta: hay que redesplegar el portal
+sin caché de build.
+
+**Los *previews* de Vercel están protegidos** y responden 401 antes de ejecutar
+código. El portal llama al api desde su servidor, sin cabeceras, así que
+`API_INTERNAL_URL` debe apuntar al **dominio de producción** del api. Para
+llamar a un *preview* a mano se usa la cabecera `x-vercel-protection-bypass`
+con un secreto de Deployment Protection.
+
+**`SITE_URL` no lleva prefijo público** y las otras dos sí. Solo la lee el
+servidor al generar la metadata; lo que llega al navegador es el resultado. Las
+de Maps y Web3Forms tienen que estar en el navegador porque esos servicios se
+ejecutan allí, y se protegen restringiéndolas por *referrer* y por dominio.
+
+Comprobado en producción de punta a punta: catálogo, búsqueda sin acentos,
+filtros, ficha, login, favoritos, consultas y las seis páginas del panel. La
+sesión funciona entre los dos dominios sin CORS, porque la reescritura deja al
+navegador viendo un solo origen y la cookie se atribuye al portal.
 
 ### Limitaciones conocidas
 
