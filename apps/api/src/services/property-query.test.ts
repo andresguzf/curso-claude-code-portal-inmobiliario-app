@@ -512,3 +512,39 @@ describe("parsePropertyListQuery — paginación", () => {
     });
   });
 });
+
+describe("parsePropertyListQuery — destacadas", () => {
+  it("acepta true y false", () => {
+    expect(expectQuery("featured=true")).toEqual({ featured: true });
+    expect(expectQuery("featured=false")).toEqual({ featured: false });
+  });
+
+  it("rechaza cualquier otro valor", () => {
+    expect(expectError("featured=quizas")).toMatch(/true o false/);
+    expect(expectError("featured=1")).toMatch(/true o false/);
+  });
+
+  it("vacío se ignora, como el resto", () => {
+    expect(expectQuery("featured=")).toEqual({});
+  });
+});
+
+describe("buildPropertyWhere — destacadas", () => {
+  it("no filtra si no se pide", () => {
+    expect(buildPropertyWhere({})).not.toHaveProperty("isFeatured");
+  });
+
+  it("filtra por destacada cuando se pide", () => {
+    expect(buildPropertyWhere({ featured: true })).toMatchObject({
+      isFeatured: true,
+    });
+  });
+
+  it("distingue pedir las no destacadas de no pedir nada", () => {
+    // `false` es un filtro, no la ausencia de filtro: sin esta distinción, la
+    // portada no podría preguntar por lo uno ni por lo otro.
+    expect(buildPropertyWhere({ featured: false })).toMatchObject({
+      isFeatured: false,
+    });
+  });
+});

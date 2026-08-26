@@ -402,8 +402,14 @@ commune
 city
 region
 sort
+featured
 page
 ```
+
+`featured` no es un filtro del catálogo —la interfaz no lo ofrece—: existe para
+que la portada pida su selección de destacadas sin traerse el catálogo entero y
+recortarlo en memoria. Admite `true` y `false`, y cualquier otro valor produce
+un 400.
 
 `page` es un entero mayor que cero; cualquier otra cosa produce un 400 con su
 motivo, como el resto de los parámetros. El tamaño de página lo fija el

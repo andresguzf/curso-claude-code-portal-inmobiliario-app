@@ -127,6 +127,7 @@ describe("buildPropertyQueryString", () => {
       city: "Santiago",
       region: "Región Metropolitana",
       sort: "price-desc",
+      featured: true,
       page: 3,
     });
     const params = new URLSearchParams(queryString);
