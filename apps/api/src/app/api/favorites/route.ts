@@ -1,4 +1,4 @@
-import type { PropertyListDto } from "@portal/contracts";
+import type { PropertyCollectionDto } from "@portal/contracts";
 
 import { jsonInternalError, jsonOk } from "@/lib/api-response";
 import { requireStandardUser } from "@/lib/auth-guard";
@@ -21,7 +21,7 @@ export async function GET() {
       return session.response;
     }
 
-    return jsonOk<PropertyListDto>(await listFavorites(session.user.id));
+    return jsonOk<PropertyCollectionDto>(await listFavorites(session.user.id));
   } catch (error) {
     return jsonInternalError("GET /api/favorites", error);
   }

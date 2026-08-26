@@ -598,6 +598,41 @@ visita. Comprobado en el log del backend: una sola.
 cuando la página llama a `notFound()`, Next descarta la metadata del segmento
 y ya lo marca por su cuenta.
 
+### Paginación del catálogo
+
+Nueve por página, que es lo que llena tres filas de la rejilla en escritorio.
+El tamaño lo fija el servidor y **no viaja en la petición**: dejar que el
+cliente lo eligiera convierte `?pageSize=100000` en una forma de pedir el
+catálogo entero.
+
+Se resuelve con `skip`/`take` en PostgreSQL, no trayendo todo y recortando
+después, que es la razón misma de paginar. El recuento va en la misma ida y
+vuelta que los datos, porque el portal lo necesita para saber cuántas páginas
+hay.
+
+La página vive en la URL, como la búsqueda y los filtros, y el control la
+propaga: los enlaces a las demás páginas conservan búsqueda, filtros y orden.
+Sin eso, la segunda página mostraría un listado distinto de la primera.
+
+**Al reordenar o filtrar se vuelve a la primera.** Aparecieron dos defectos al
+implementarlo: el formulario de filtros reenviaba `page` como campo oculto y el
+selector de orden la arrastraba en su `router.push`. En ambos casos, aplicar un
+filtro desde la página 2 dejaba en una página vacía si el nuevo resultado era
+más corto.
+
+El control muestra primera, anterior, una ventana de **tres páginas a cada
+lado** de la actual, siguiente y última, con «…» donde hay salto. Un salto de
+exactamente una página no lleva separador: «1 … 3» ocupa lo mismo que «1 2 3»
+y esconde una página por nada. La aritmética vive aparte del componente, en
+`page-range.ts`, para poder comprobar cada caso sin montar nada.
+
+La página actual y los extremos no son enlaces: uno que no lleva a ninguna
+parte confunde a quien navega con teclado. La actual se marca con
+`aria-current`, porque el color por sí solo no lo dice.
+
+`PropertyListDto` y `PropertyCollectionDto` son tipos distintos a propósito:
+favoritos devuelve la colección entera y no debe fingir que pagina.
+
 ### Búsqueda sin acentos
 
 `montana` encuentra «montaña» y `nunoa` encuentra «Ñuñoa», en el catálogo, en
@@ -765,10 +800,10 @@ ADMIN con un campo de más en `PATCH /api/auth/me`. Lo que ahora ocurre es que
 `password` se rechaza con un 400 que dice cuál es el nombre correcto. La
 interfaz nunca estuvo afectada: ya enviaba `newPassword`.
 
-**Observación, no defecto.** El catálogo público no pagina: `/api/properties`
-devuelve todas las publicadas y `page` no es un parámetro suyo. Con doce
-filas no se nota y la especificación no lo pide, pero crecerá con el
-catálogo.
+**Observación, no defecto.** El catálogo público no paginaba: `/api/properties`
+devolvía todas las publicadas. Con doce filas no se notaba y la especificación
+no lo pedía. Se añadió después, a petición del usuario (ver «Paginación del
+catálogo»).
 
 ### Mensajes de confirmación
 

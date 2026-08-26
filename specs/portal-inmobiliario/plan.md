@@ -402,7 +402,16 @@ commune
 city
 region
 sort
+page
 ```
+
+`page` es un entero mayor que cero; cualquier otra cosa produce un 400 con su
+motivo, como el resto de los parámetros. El tamaño de página lo fija el
+servidor —nueve— y no viaja en la petición: dejar que el cliente lo eligiera
+convierte `?pageSize=100000` en una forma de pedir el catálogo entero.
+
+La respuesta acompaña los datos con `total`, `page` y `pageSize`, que es lo que
+el portal necesita para saber cuántas páginas hay sin pedirlas.
 
 El filtrado y ordenamiento debe ejecutarse principalmente en PostgreSQL y no cargando todo el catálogo en el navegador.
 

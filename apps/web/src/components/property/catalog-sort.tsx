@@ -50,6 +50,9 @@ export function CatalogSort({ query }: CatalogSortProps) {
       `/properties${buildPropertyQueryString({
         ...query,
         sort: sort === "" ? undefined : sort,
+        // Se vuelve a la primera: reordenar cambia qué propiedades caen en
+        // cada página, así que seguir en la quinta no significa nada.
+        page: undefined,
       })}`,
     );
   }
@@ -98,7 +101,10 @@ function HiddenFilters({ query }: { readonly query: PropertyListQuery }) {
   const fields: { readonly name: string; readonly value: string }[] = [];
 
   for (const [key, paramName] of Object.entries(QUERY_PARAM_NAMES)) {
-    if (key === "sort") {
+    // `sort` lo decide este formulario. `page` se descarta a propósito: al
+    // reordenar, la página que se estaba viendo pasa a contener otras
+    // propiedades —o ninguna, si el resultado es más corto—.
+    if (key === "sort" || key === "page") {
       continue;
     }
 

@@ -224,6 +224,24 @@ export function parsePropertyListQuery(
     query.sort = sort;
   }
 
+  const page = searchParams.get(QUERY_PARAM_NAMES.page);
+
+  if (page !== null && page !== "") {
+    const value = Number(page);
+
+    // Un `page=0`, `page=-1` o `page=abc` se rechaza en vez de tratarse como
+    // la primera: devolver un listado que no corresponde a lo pedido es peor
+    // que decir que la petición está mal.
+    if (!Number.isInteger(value) || value < 1) {
+      return {
+        ok: false,
+        message: "El parámetro «page» debe ser un entero mayor que cero.",
+      };
+    }
+
+    query.page = value;
+  }
+
   if (
     query.minPrice !== undefined &&
     query.maxPrice !== undefined &&

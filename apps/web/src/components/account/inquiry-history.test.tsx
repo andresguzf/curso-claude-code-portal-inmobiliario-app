@@ -87,10 +87,10 @@ describe("InquiryHistory", () => {
     });
 
     expect(
-      within(navegacion).getByRole("link", { name: /Anteriores/ }),
+      within(navegacion).getByRole("link", { name: /Página anterior/ }),
     ).toHaveAttribute("href", "/account#propiedades-consultadas");
     expect(
-      within(navegacion).getByRole("link", { name: /Siguientes/ }),
+      within(navegacion).getByRole("link", { name: /Página siguiente/ }),
     ).toHaveAttribute("href", "/account?page=3#propiedades-consultadas");
   });
 
@@ -102,7 +102,7 @@ describe("InquiryHistory", () => {
       />,
     );
 
-    expect(screen.getByRole("link", { name: /Siguientes/ })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /Página siguiente/ })).toHaveAttribute(
       "href",
       "/account?search=piscina&page=2#propiedades-consultadas",
     );
@@ -113,8 +113,8 @@ describe("InquiryHistory", () => {
       <InquiryHistory page={buildPage({ total: 13, page: 1 })} search="" />,
     );
 
-    expect(screen.queryByRole("link", { name: /Anteriores/ })).toBeNull();
-    expect(screen.getByText(/Anteriores/)).toBeVisible();
+    expect(screen.queryByRole("link", { name: /Página anterior/ })).toBeNull();
+    expect(screen.getByText(/Página anterior/)).toBeVisible();
   });
 
   it("explica un historial vacío", () => {

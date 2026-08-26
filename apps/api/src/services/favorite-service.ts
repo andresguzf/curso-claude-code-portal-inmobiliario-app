@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { PropertyListDto } from "@portal/contracts";
+import type { PropertyCollectionDto } from "@portal/contracts";
 
 import {
   createFavorite,
@@ -26,7 +26,9 @@ import { toPropertySummary } from "@/services/property-mapper";
 export type FavoriteOutcome =
   { readonly status: "ok" } | { readonly status: "property-not-found" };
 
-export async function listFavorites(userId: string): Promise<PropertyListDto> {
+export async function listFavorites(
+  userId: string,
+): Promise<PropertyCollectionDto> {
   const properties = await findFavoriteProperties(userId);
   const data = properties.map(toPropertySummary);
 

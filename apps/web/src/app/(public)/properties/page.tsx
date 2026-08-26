@@ -20,7 +20,12 @@ import { CatalogStatus } from "@/components/property/catalog-status";
 import { PropertyGrid } from "@/components/property/property-grid";
 import { getFavoritePropertyIds } from "@/lib/favorites";
 import { PropertyGridSkeleton } from "@/components/property/property-grid-skeleton";
-import { fetchFilterOptions, fetchPublicProperties } from "@/lib/api-client";
+import { Pagination } from "@/components/ui/pagination";
+import {
+  buildPropertyQueryString,
+  fetchFilterOptions,
+  fetchPublicProperties,
+} from "@/lib/api-client";
 
 /** El catálogo refleja el estado de publicación vigente en cada visita. */
 export const dynamic = "force-dynamic";
@@ -167,7 +172,31 @@ export async function CatalogResults({
         favoritePropertyIds={favoritePropertyIds}
         className="mt-8 lg:grid-cols-2 xl:grid-cols-3"
       />
+
+      <Pagination
+        basePath="/properties"
+        currentPage={catalog.page}
+        lastPage={Math.max(1, Math.ceil(catalog.total / catalog.pageSize))}
+        preserved={toPreservedParams(query)}
+        label="Paginación del catálogo"
+      />
     </>
+  );
+}
+
+/**
+ * La consulta actual como parámetros de URL, para que el control de páginas
+ * la conserve.
+ *
+ * Se reconstruye desde la consulta ya interpretada y no desde la URL cruda:
+ * así lo que sobrevive al cambio de página es exactamente lo que el catálogo
+ * está aplicando, sin arrastrar parámetros que se descartaron por inválidos.
+ *
+ * `page` se deja: el propio control la reemplaza.
+ */
+function toPreservedParams(query: PropertyListQuery): URLSearchParams {
+  return new URLSearchParams(
+    buildPropertyQueryString(query).replace(/^\?/, ""),
   );
 }
 
@@ -251,6 +280,7 @@ export function readQuery(searchParams: RawSearchParams): PropertyListQuery {
     city: readText(searchParams[QUERY_PARAM_NAMES.city]),
     region: readText(searchParams[QUERY_PARAM_NAMES.region]),
     sort: isPropertySort(sort) ? (sort as PropertySortValue) : undefined,
+    page: readNumber(searchParams[QUERY_PARAM_NAMES.page]),
   };
 }
 
@@ -262,7 +292,9 @@ export function readQuery(searchParams: RawSearchParams): PropertyListQuery {
  */
 export function countActiveFilters(query: PropertyListQuery): number {
   return Object.entries(query).filter(([key, value]) => {
-    if (key === "sort") {
+    // Ni el orden ni la página reducen los resultados: aparecerían como
+    // filtros activos que no se pueden quitar desde el panel.
+    if (key === "sort" || key === "page") {
       return false;
     }
 
@@ -278,7 +310,10 @@ type Catalog =
   | {
       readonly status: "ready";
       readonly properties: readonly PropertySummaryDto[];
+      /** Cuántas hay en total, no cuántas trae esta página. */
       readonly total: number;
+      readonly page: number;
+      readonly pageSize: number;
     }
   | { readonly status: "error" };
 
@@ -290,9 +325,9 @@ type Catalog =
  */
 async function loadCatalog(query: PropertyListQuery): Promise<Catalog> {
   try {
-    const { data, total } = await fetchPublicProperties(query);
+    const { data, total, page, pageSize } = await fetchPublicProperties(query);
 
-    return { status: "ready", properties: data, total };
+    return { status: "ready", properties: data, total, page, pageSize };
   } catch (error) {
     console.error("[properties] No fue posible cargar el catálogo", error);
 
