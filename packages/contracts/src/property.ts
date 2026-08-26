@@ -137,6 +137,13 @@ export type PropertyListQuery = {
   readonly region?: string | undefined;
   /** Criterio de ordenamiento. */
   readonly sort?: PropertySortValue | undefined;
+  /**
+   * Solo las destacadas.
+   *
+   * No es un filtro del catálogo —la interfaz no lo ofrece—: lo usa la portada
+   * para pedir su selección sin traerse el catálogo entero y recortarlo.
+   */
+  readonly featured?: boolean | undefined;
   /** Página del catálogo, empezando en 1. */
   readonly page?: number | undefined;
 };
@@ -183,6 +190,7 @@ export const QUERY_PARAM_NAMES = {
   city: "city",
   region: "region",
   sort: "sort",
+  featured: "featured",
   page: "page",
 } as const satisfies Record<keyof PropertyListQuery, string>;
 

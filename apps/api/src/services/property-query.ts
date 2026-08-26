@@ -224,6 +224,19 @@ export function parsePropertyListQuery(
     query.sort = sort;
   }
 
+  const featured = searchParams.get(QUERY_PARAM_NAMES.featured);
+
+  if (featured !== null && featured !== "") {
+    if (featured !== "true" && featured !== "false") {
+      return {
+        ok: false,
+        message: "El parámetro «featured» debe ser true o false.",
+      };
+    }
+
+    query.featured = featured === "true";
+  }
+
   const page = searchParams.get(QUERY_PARAM_NAMES.page);
 
   if (page !== null && page !== "") {
@@ -363,6 +376,7 @@ export function buildPropertyWhere(
     communes,
     city,
     region,
+    featured,
   } = query;
 
   const conditions: WhereCondition[] = [];
@@ -401,6 +415,7 @@ export function buildPropertyWhere(
       : { usableAreaSquareMeters: { gte: minUsableArea } }),
     ...(city === undefined ? {} : { cityNormalized: { equals: city } }),
     ...(region === undefined ? {} : { regionNormalized: { equals: region } }),
+    ...(featured === undefined ? {} : { isFeatured: featured }),
     ...(conditions.length === 0 ? {} : { AND: conditions }),
   };
 }

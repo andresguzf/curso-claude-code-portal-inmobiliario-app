@@ -644,6 +644,24 @@ total y las páginas dejan de moverse.
 No es un problema de datos de prueba: basta con publicar dos propiedades en el
 mismo segundo.
 
+### La portada pide por secciones
+
+Las tres secciones —destacadas, en venta, en arriendo— hacen **una petición
+cada una**, en paralelo, y el filtro lo resuelve PostgreSQL.
+
+Antes se traía el catálogo y se filtraba en memoria con `.filter().slice(3)`.
+Funcionaba mientras el catálogo cabía en una respuesta y dejó de funcionar en
+cuanto se paginó: de las tres destacadas, solo la que caía en la primera página
+llegaba a la portada. El plan ya decía que filtrar en memoria estaba prohibido;
+la paginación se limitó a hacerlo visible.
+
+Por eso `featured` es un parámetro de `GET /api/properties`. No es un filtro
+del catálogo —la interfaz no lo ofrece—, sino lo que la portada necesita para
+preguntar por lo suyo.
+
+Un fallo de la API deja esa sección vacía sin arrastrar a las otras dos,
+porque cada una pide por su cuenta.
+
 ### Búsqueda sin acentos
 
 `montana` encuentra «montaña» y `nunoa` encuentra «Ñuñoa», en el catálogo, en
