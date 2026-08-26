@@ -934,27 +934,40 @@ lleva ningún valor real. No queda ni un `TODO` ni un `FIXME` en el código.
 
 ### Conexiones a la base
 
-El pool de `node-postgres` está acotado a **cinco por proceso**. Por omisión
-abre diez, y el *session pooler* de Supabase admite quince en total: dos
-procesos bastan para agotarlo. Cuando ocurre, la base responde
-«max clients reached», la API devuelve 500 y el portal se ve roto sin que nada
-esté mal en el código. Ocurrió, con 21 conexiones abiertas.
+Hay **dos cadenas de conexión**, y la distinción es funcional:
 
-Cinco deja sitio para varias instancias —en Vercel cada una lleva su propio
-pool— sin quedarse corto para las consultas simultáneas de una sola. Si el
-tráfico creciera, el siguiente paso es el *Transaction pooler* (6543) para la
-aplicación y el *Session* solo para migraciones, que es lo que Supabase
-recomienda para entornos sin servidor.
+| Variable | Puerto | Quién la usa |
+|---|---|---|
+| `DATABASE_URL` | 6543 · *Transaction pooler* | La aplicación |
+| `DIRECT_URL` | 5432 · *Session pooler* | Migraciones y seed |
+
+El *session pooler* da una conexión con estado propio, que es lo que necesitan
+las migraciones, pero admite **solo quince clientes** en el plan gratuito. Un
+servidor web los agota enseguida: una sola carga de la portada dispara cinco
+peticiones a la API. Cuando se agotan, la base responde «max clients reached»,
+la API devuelve 500 y el portal se ve roto sin que nada esté mal en el código.
+Ocurrió, y acotar el pool a cinco por proceso no bastó.
+
+El *transaction pooler* devuelve la conexión al terminar cada sentencia, así
+que admite muchos más clientes. Comprobado que soporta todo lo que hace la
+aplicación: filtros, relaciones, orden, paginación y transacciones
+interactivas. Con él, dieciséis peticiones simultáneas —unas sesenta consultas—
+salen sin un solo fallo.
+
+La conexión directa (`db.<ref>.supabase.co`) no sirve para ninguna de las dos:
+es IPv6 salvo complemento de pago.
+
+`prisma.config.ts` prefiere `DIRECT_URL` y cae en `DATABASE_URL` si no existe,
+de modo que contra un PostgreSQL sin pooler basta con declarar una.
 
 ### Despliegue
 
 Dos proyectos de Vercel —`apps/api` y `apps/web` como *Root Directory*— y
 PostgreSQL en Supabase.
 
-**La conexión a Supabase usa el *Session pooler*** (puerto 5432). Los otros dos
-caminos no sirven: la conexión directa es IPv6 salvo complemento de pago, y el
-*Transaction pooler* (6543) no admite *prepared statements*, que las
-migraciones de Prisma necesitan.
+**La conexión usa los dos poolers**: el *Transaction* (6543) para la
+aplicación y el *Session* (5432) para las migraciones. Ver «Conexiones a la
+base». La conexión directa no sirve: es IPv6 salvo complemento de pago.
 
 **`sslmode=no-verify`, y no `require`.** El pooler presenta un certificado de
 la raíz propia de Supabase —`*.pooler.supabase.com` ← `Supabase Intermediate
