@@ -317,7 +317,7 @@ de datos en Supabase.
 Variables por proyecto:
 
 ```text
-api   DATABASE_URL · AUTH_SECRET · GOOGLE_MAPS_API_KEY
+api   DATABASE_URL · DIRECT_URL · AUTH_SECRET · GOOGLE_MAPS_API_KEY
       CLOUDINARY_CLOUD_NAME · CLOUDINARY_API_KEY · CLOUDINARY_API_SECRET
 
 web   API_INTERNAL_URL · SITE_URL
@@ -327,6 +327,14 @@ web   API_INTERNAL_URL · SITE_URL
 `DATABASE_URL` y `AUTH_SECRET` **lanzan al arrancar** si faltan; no degradan.
 Las tres de Cloudinary hacen que subir una imagen responda 503, y sin la de
 Geocoding el detalle no trae coordenadas.
+
+**Dos cadenas de conexión, no una.** `DATABASE_URL` apunta al *Transaction
+pooler* (6543) y la usa la aplicación; `DIRECT_URL` al *Session pooler* (5432)
+y la usan las migraciones y el seed. El session pooler admite solo quince
+clientes en el plan gratuito, y un servidor web los agota —una carga de la
+portada dispara cinco peticiones—; el transaction pooler devuelve la conexión
+al terminar cada sentencia y admite muchos más. La conexión directa no sirve
+para ninguna: es IPv6 salvo complemento de pago.
 
 ### Tres cosas que cuestan una tarde si no se saben
 

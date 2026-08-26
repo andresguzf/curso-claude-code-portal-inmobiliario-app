@@ -9,7 +9,18 @@ export default defineConfig({
     path: "prisma/migrations",
     seed: "tsx prisma/seed.ts",
   },
+  /**
+   * Las migraciones y el seed van por `DIRECT_URL` cuando existe.
+   *
+   * La aplicación usa el *transaction pooler*, que admite muchos clientes pero
+   * no conserva estado entre sentencias. Las migraciones sí lo necesitan
+   * —*prepared statements*, bloqueos de aviso—, así que van por el *session
+   * pooler*, que da una conexión propia.
+   *
+   * Si no hay `DIRECT_URL` se usa la misma que la aplicación: en local contra
+   * un PostgreSQL sin pooler, las dos son la misma cosa.
+   */
   datasource: {
-    url: process.env["DATABASE_URL"],
+    url: process.env["DIRECT_URL"] ?? process.env["DATABASE_URL"],
   },
 });
