@@ -633,6 +633,17 @@ parte confunde a quien navega con teclado. La actual se marca con
 `PropertyListDto` y `PropertyCollectionDto` son tipos distintos a propósito:
 favoritos devuelve la colección entera y no debe fingir que pagina.
 
+**Todo ordenamiento termina desempatando por `id`.** `createdAt` no basta: dos
+propiedades creadas en el mismo milisegundo empatan, y ante un empate
+PostgreSQL puede devolverlas en cualquier orden en cada consulta. Con
+paginación eso significa que dos páginas seguidas se solapan y saltan filas.
+Se vio con sesenta propiedades creadas de una vez: 47 resultados repartidos en
+seis páginas, **43 distintos**. Con la clave primaria al final, el orden es
+total y las páginas dejan de moverse.
+
+No es un problema de datos de prueba: basta con publicar dos propiedades en el
+mismo segundo.
+
 ### Búsqueda sin acentos
 
 `montana` encuentra «montaña» y `nunoa` encuentra «Ñuñoa», en el catálogo, en
@@ -902,6 +913,20 @@ El árbol de directorios del plan tampoco mencionaba `test-support/` ni
 **Lo que ya estaba bien.** Las 31 rutas que el plan declara existen todas.
 `.env.example` no se ha quedado atrás en ninguna de las dos aplicaciones y no
 lleva ningún valor real. No queda ni un `TODO` ni un `FIXME` en el código.
+
+### Conexiones a la base
+
+El pool de `node-postgres` está acotado a **cinco por proceso**. Por omisión
+abre diez, y el *session pooler* de Supabase admite quince en total: dos
+procesos bastan para agotarlo. Cuando ocurre, la base responde
+«max clients reached», la API devuelve 500 y el portal se ve roto sin que nada
+esté mal en el código. Ocurrió, con 21 conexiones abiertas.
+
+Cinco deja sitio para varias instancias —en Vercel cada una lleva su propio
+pool— sin quedarse corto para las consultas simultáneas de una sola. Si el
+tráfico creciera, el siguiente paso es el *Transaction pooler* (6543) para la
+aplicación y el *Session* solo para migraciones, que es lo que Supabase
+recomienda para entornos sin servidor.
 
 ### Despliegue
 

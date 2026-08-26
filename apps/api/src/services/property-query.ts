@@ -261,6 +261,7 @@ type OrderDirection = "asc" | "desc";
 type PropertyOrderBy = ReadonlyArray<
   | { readonly createdAt: OrderDirection }
   | { readonly price: OrderDirection }
+  | { readonly id: OrderDirection }
   | {
       readonly usableAreaSquareMeters: {
         readonly sort: OrderDirection;
@@ -270,12 +271,25 @@ type PropertyOrderBy = ReadonlyArray<
 >;
 
 /**
+ * Último desempate de cualquier ordenamiento.
+ *
+ * `createdAt` no basta: dos propiedades creadas en el mismo milisegundo
+ * empatan, y ante un empate PostgreSQL puede devolverlas en cualquier orden en
+ * cada consulta. Con paginación eso significa que dos páginas seguidas se
+ * solapan y saltan filas —comprobado con sesenta propiedades creadas de una
+ * vez: 47 resultados en seis páginas, 43 distintas—.
+ *
+ * `id` es la clave primaria, así que el orden pasa a ser total y las páginas
+ * dejan de moverse entre consultas.
+ */
+const DESEMPATE = { id: "asc" } as const;
+
+/**
  * Traduce el criterio de ordenamiento a cláusulas de PostgreSQL
  * (spec.md, sección 11).
  *
- * Todos los criterios terminan desempatando por `createdAt`, para que dos
- * propiedades del mismo precio o superficie mantengan siempre el mismo orden;
- * sin ese desempate la posición podría variar entre consultas.
+ * Cada criterio desempata por `createdAt` y, en último término, por `id`: dos
+ * propiedades del mismo precio o superficie mantienen siempre el mismo orden.
  *
  * Las propiedades sin superficie declarada —un terreno, por ejemplo— van al
  * final en ambas direcciones: un valor ausente no es «el más pequeño».
@@ -285,21 +299,23 @@ export function buildPropertyOrderBy(
 ): PropertyOrderBy {
   switch (sort) {
     case PropertySort.PRICE_ASC:
-      return [{ price: "asc" }, { createdAt: "desc" }];
+      return [{ price: "asc" }, { createdAt: "desc" }, DESEMPATE];
     case PropertySort.PRICE_DESC:
-      return [{ price: "desc" }, { createdAt: "desc" }];
+      return [{ price: "desc" }, { createdAt: "desc" }, DESEMPATE];
     case PropertySort.AREA_ASC:
       return [
         { usableAreaSquareMeters: { sort: "asc", nulls: "last" } },
         { createdAt: "desc" },
+        DESEMPATE,
       ];
     case PropertySort.AREA_DESC:
       return [
         { usableAreaSquareMeters: { sort: "desc", nulls: "last" } },
         { createdAt: "desc" },
+        DESEMPATE,
       ];
     case PropertySort.NEWEST:
-      return [{ createdAt: "desc" }];
+      return [{ createdAt: "desc" }, DESEMPATE];
   }
 }
 
