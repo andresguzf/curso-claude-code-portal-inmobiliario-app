@@ -65,13 +65,36 @@ const detailSelection = {
   features: true,
 } as const;
 
-export function findProperties(query: PropertyListQuery, scope: PropertyScope) {
-  return prisma.property.findMany({
-    where: buildPropertyWhere(query, scope),
-    // El ordenamiento se resuelve en PostgreSQL (plan.md, sección 9).
-    orderBy: [...buildPropertyOrderBy(query.sort)],
-    select: summarySelection,
-  });
+/**
+ * Una página del catálogo, y cuántas propiedades hay en total.
+ *
+ * El recorte se hace en PostgreSQL con `skip`/`take`, no trayendo el catálogo
+ * entero para cortarlo después: la razón de paginar es no cargar lo que no se
+ * va a mostrar (plan.md, sección 9).
+ *
+ * El recuento va en la misma ida y vuelta que los datos, porque el portal lo
+ * necesita para saber cuántas páginas hay.
+ */
+export async function findProperties(
+  query: PropertyListQuery,
+  scope: PropertyScope,
+  page: { readonly skip: number; readonly take: number },
+) {
+  const where = buildPropertyWhere(query, scope);
+
+  const [properties, total] = await Promise.all([
+    prisma.property.findMany({
+      where,
+      // El ordenamiento se resuelve en PostgreSQL (plan.md, sección 9).
+      orderBy: [...buildPropertyOrderBy(query.sort)],
+      select: summarySelection,
+      skip: page.skip,
+      take: page.take,
+    }),
+    prisma.property.count({ where }),
+  ]);
+
+  return { properties, total };
 }
 
 export function findPropertyById(id: string, scope: PropertyScope) {

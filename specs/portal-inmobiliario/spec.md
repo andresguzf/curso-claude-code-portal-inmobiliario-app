@@ -263,6 +263,23 @@ Cada tarjeta mostrará, cuando corresponda:
 - baños;
 - superficie útil.
 
+### Paginación
+
+El catálogo se recorre por páginas de **nueve** propiedades, que es lo que
+llena tres filas de la rejilla en escritorio.
+
+La página vive en la URL, como la búsqueda, los filtros y el ordenamiento: el
+resultado debe poder compartirse y el botón de atrás hacer lo que se espera.
+
+Paginar y filtrar son compatibles. Al cambiar de página se conserva todo lo
+demás; si no, la segunda página mostraría un listado distinto de la primera.
+
+Se resuelve **en PostgreSQL**, no trayendo el catálogo entero y recortándolo
+después: la razón de paginar es no cargar lo que no se va a mostrar.
+
+Cuando solo hay una página no se pinta el control: unos botones inertes ocupan
+sitio y hacen dudar de si algo falló.
+
 ---
 
 ## 9. Búsqueda

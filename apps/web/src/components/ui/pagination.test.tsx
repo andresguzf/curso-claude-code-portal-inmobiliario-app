@@ -33,9 +33,11 @@ describe("Pagination", () => {
   it("deja de ser enlace en el extremo, en vez de llevar a ninguna parte", () => {
     renderPagination({ currentPage: 1 });
 
-    expect(screen.queryByRole("link", { name: /Anteriores/ })).toBeNull();
-    expect(screen.getByText(/Anteriores/)).toBeVisible();
-    expect(screen.getByRole("link", { name: /Siguientes/ })).toBeVisible();
+    expect(screen.queryByRole("link", { name: /Página anterior/ })).toBeNull();
+    expect(screen.getByText(/Página anterior/)).toBeVisible();
+    expect(
+      screen.getByRole("link", { name: /Página siguiente/ }),
+    ).toBeVisible();
   });
 
   it("omite el parámetro de la primera página", () => {
@@ -43,10 +45,9 @@ describe("Pagination", () => {
     // comparte.
     renderPagination({ currentPage: 2 });
 
-    expect(screen.getByRole("link", { name: /Anteriores/ })).toHaveAttribute(
-      "href",
-      "/admin/properties",
-    );
+    expect(
+      screen.getByRole("link", { name: /Página anterior/ }),
+    ).toHaveAttribute("href", "/admin/properties");
   });
 
   it("conserva la búsqueda y los filtros al cambiar de página", () => {
@@ -57,7 +58,7 @@ describe("Pagination", () => {
     });
 
     const href = screen
-      .getByRole("link", { name: /Siguientes/ })
+      .getByRole("link", { name: /Página siguiente/ })
       .getAttribute("href");
     const query = new URLSearchParams(href?.split("?")[1]);
 
@@ -73,10 +74,9 @@ describe("Pagination", () => {
       preserved: new URLSearchParams("status=draft&page=2"),
     });
 
-    expect(screen.getByRole("link", { name: /Anteriores/ })).toHaveAttribute(
-      "href",
-      "/admin/properties?status=draft",
-    );
+    expect(
+      screen.getByRole("link", { name: /Página anterior/ }),
+    ).toHaveAttribute("href", "/admin/properties?status=draft");
   });
 
   it("salta al ancla del listado cuando se le da una", () => {
@@ -86,9 +86,91 @@ describe("Pagination", () => {
       preserved: new URLSearchParams(),
     });
 
-    expect(screen.getByRole("link", { name: /Siguientes/ })).toHaveAttribute(
-      "href",
-      "/account?page=3#mis-consultas",
+    expect(
+      screen.getByRole("link", { name: /Página siguiente/ }),
+    ).toHaveAttribute("href", "/account?page=3#mis-consultas");
+  });
+});
+
+describe("Pagination: primera, última y rangos", () => {
+  function pintar(currentPage: number, lastPage: number) {
+    render(
+      <Pagination
+        basePath="/properties"
+        currentPage={currentPage}
+        lastPage={lastPage}
+        preserved={new URLSearchParams()}
+        label="Paginación del catálogo"
+      />,
     );
+  }
+
+  it("ofrece siempre primera y última", () => {
+    pintar(20, 40);
+
+    expect(
+      screen.getByRole("link", { name: /Primera página/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /Última página/ }),
+    ).toBeInTheDocument();
+  });
+
+  it("enumera tres páginas a cada lado de la actual", () => {
+    pintar(20, 40);
+
+    for (const pagina of [17, 18, 19, 21, 22, 23]) {
+      expect(
+        screen.getByRole("link", { name: new RegExp(`Página ${pagina}$`) }),
+      ).toBeInTheDocument();
+    }
+    // La 16 y la 24 quedan fuera de la ventana.
+    expect(screen.queryByRole("link", { name: /Página 16$/ })).toBeNull();
+    expect(screen.queryByRole("link", { name: /Página 24$/ })).toBeNull();
+  });
+
+  it("separa los tramos con puntos suspensivos", () => {
+    pintar(20, 40);
+
+    expect(screen.getAllByText("…")).toHaveLength(2);
+  });
+
+  it("la página actual no es un enlace y se anuncia como tal", () => {
+    pintar(20, 40);
+
+    expect(screen.queryByRole("link", { name: /Página 20$/ })).toBeNull();
+
+    // El color por sí solo no dice cuál es la actual: se anuncia con
+    // `aria-current`, que es lo que lee un lector de pantalla.
+    const actual = document.querySelector('[aria-current="page"]');
+
+    expect(actual).not.toBeNull();
+    expect(actual?.textContent).toContain("20");
+  });
+
+  it("en la primera página, primera y anterior dejan de ser enlaces", () => {
+    pintar(1, 40);
+
+    expect(screen.queryByRole("link", { name: /Primera página/ })).toBeNull();
+    expect(screen.queryByRole("link", { name: /Página anterior/ })).toBeNull();
+    expect(
+      screen.getByRole("link", { name: /Última página/ }),
+    ).toBeInTheDocument();
+  });
+
+  it("en la última, siguiente y última dejan de ser enlaces", () => {
+    pintar(40, 40);
+
+    expect(screen.queryByRole("link", { name: /Página siguiente/ })).toBeNull();
+    expect(screen.queryByRole("link", { name: /Última página/ })).toBeNull();
+    expect(
+      screen.getByRole("link", { name: /Primera página/ }),
+    ).toBeInTheDocument();
+  });
+
+  it("con pocas páginas no hay separadores", () => {
+    pintar(2, 4);
+
+    expect(screen.queryByText("…")).toBeNull();
   });
 });

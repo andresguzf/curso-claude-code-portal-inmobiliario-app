@@ -19,6 +19,7 @@ código dicen lo mismo.
 |---|---|
 | Portada con buscador y propiedades destacadas | ✅ |
 | Catálogo con búsqueda textual, que ignora acentos y eñes | ✅ |
+| Paginación de nueve por página, compatible con filtros y orden | ✅ |
 | Diez filtros combinables reflejados en la URL | ✅ |
 | Ordenamiento por fecha, precio y superficie | ✅ |
 | Estados de carga, vacío y error | ✅ |
@@ -354,9 +355,6 @@ cookie sale además con `Secure`.
 
 ## Limitaciones conocidas
 
-- **El catálogo público no pagina.** `/api/properties` devuelve todas las
-  propiedades publicadas. Con doce filas no se nota y la especificación no lo
-  pide, pero crecerá con el catálogo.
 - **Las imágenes del seed vienen de `picsum.photos`.** El seed no sube nada a
   Cloudinary, para no gastar la cuota de la cuenta en datos de desarrollo que
   se recrean a menudo. Las que se suben desde el panel sí van a Cloudinary.

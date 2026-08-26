@@ -1,9 +1,10 @@
 import { render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type {
-  PropertyFilterOptionsDto,
-  PropertyListDto,
+import {
+  PROPERTIES_PER_PAGE,
+  type PropertyFilterOptionsDto,
+  type PropertyListDto,
 } from "@portal/contracts";
 
 import { buildPropertySummary } from "@/test-support/property-fixtures";
@@ -56,7 +57,12 @@ async function renderPage(
   searchParams: Record<string, string | string[]> = {},
 ) {
   fetchFilterOptions.mockResolvedValue(OPTIONS);
-  fetchPublicProperties.mockResolvedValue({ data: [], total: 0 });
+  fetchPublicProperties.mockResolvedValue({
+    data: [],
+    total: 0,
+    page: 1,
+    pageSize: PROPERTIES_PER_PAGE,
+  });
 
   return render(
     await PropertiesPage({
@@ -66,11 +72,19 @@ async function renderPage(
   );
 }
 
+/**
+ * La paginación se rellena por omisión: cada prueba declara solo lo que le
+ * importa, y así añadir un campo a la respuesta no obliga a tocarlas todas.
+ */
 async function renderResults(
-  list: PropertyListDto,
+  list: Pick<PropertyListDto, "data" | "total"> & Partial<PropertyListDto>,
   query: Parameters<typeof CatalogResults>[0]["query"] = {},
 ) {
-  fetchPublicProperties.mockResolvedValue(list);
+  fetchPublicProperties.mockResolvedValue({
+    page: 1,
+    pageSize: PROPERTIES_PER_PAGE,
+    ...list,
+  });
 
   return render(await CatalogResults({ query }));
 }
@@ -115,7 +129,12 @@ describe("PropertiesPage — estructura", () => {
   it("mantiene los filtros aunque fallen sus opciones de ubicación", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     fetchFilterOptions.mockRejectedValue(new Error("sin filtros"));
-    fetchPublicProperties.mockResolvedValue({ data: [], total: 0 });
+    fetchPublicProperties.mockResolvedValue({
+      data: [],
+      total: 0,
+      page: 1,
+      pageSize: PROPERTIES_PER_PAGE,
+    });
 
     render(
       await PropertiesPage({
@@ -395,5 +414,69 @@ describe("hasActiveFilters", () => {
     expect(hasActiveFilters({ operations: ["SALE"] })).toBe(true);
     expect(hasActiveFilters({ bedrooms: 3 })).toBe(true);
     expect(hasActiveFilters({ communes: ["Ñuñoa"] })).toBe(true);
+  });
+});
+
+describe("CatalogResults — paginación", () => {
+  it("no pinta el control cuando todo cabe en una página", async () => {
+    await renderResults({ data: [buildPropertySummary()], total: 5 });
+
+    expect(
+      screen.queryByRole("navigation", { name: "Paginación del catálogo" }),
+    ).toBeNull();
+  });
+
+  it("pinta el control cuando hay más de una página", async () => {
+    await renderResults({ data: [buildPropertySummary()], total: 20 });
+
+    expect(
+      screen.getByRole("navigation", { name: "Paginación del catálogo" }),
+    ).toBeInTheDocument();
+  });
+
+  it("propaga la búsqueda y los filtros a las demás páginas", async () => {
+    await renderResults(
+      { data: [buildPropertySummary()], total: 30 },
+      { search: "parque", operations: ["SALE"], sort: "price-asc" },
+    );
+
+    const siguiente = screen.getByRole("link", { name: /Página siguiente/ });
+    const destino = new URL(
+      siguiente.getAttribute("href") ?? "",
+      "http://localhost",
+    );
+
+    // Si al cambiar de página se perdieran, la segunda mostraría un listado
+    // distinto de la primera.
+    expect(destino.searchParams.get("search")).toBe("parque");
+    expect(destino.searchParams.get("operation")).toBe("SALE");
+    expect(destino.searchParams.get("sort")).toBe("price-asc");
+    expect(destino.searchParams.get("page")).toBe("2");
+  });
+
+  it("conserva varias comunas al cambiar de página", async () => {
+    await renderResults(
+      { data: [buildPropertySummary()], total: 30 },
+      { communes: ["Ñuñoa", "Las Condes"] },
+    );
+
+    const destino = new URL(
+      screen
+        .getByRole("link", { name: /Última página/ })
+        .getAttribute("href") ?? "",
+      "http://localhost",
+    );
+
+    expect(destino.searchParams.getAll("commune")).toEqual([
+      "Ñuñoa",
+      "Las Condes",
+    ]);
+  });
+
+  it("calcula la última página a partir del total", async () => {
+    await renderResults({ data: [buildPropertySummary()], total: 28, page: 1 });
+
+    // 28 entre 9 son cuatro páginas: tres llenas y una de una.
+    expect(screen.getByText("Página 1 de 4")).toBeInTheDocument();
   });
 });

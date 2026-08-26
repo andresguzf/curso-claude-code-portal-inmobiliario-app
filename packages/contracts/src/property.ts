@@ -72,10 +72,35 @@ export type PropertyDetailDto = PropertySummaryDto & {
   readonly updatedAt: string;
 };
 
-/** Respuesta de la colección de propiedades. */
-export type PropertyListDto = {
+/**
+ * Cuántas propiedades trae cada página del catálogo (spec.md, sección 8).
+ *
+ * Nueve llena tres filas de la rejilla en escritorio. Lo fija el servidor y no
+ * viaja en la petición: dejar que el cliente eligiera el tamaño convierte
+ * `?pageSize=100000` en una forma de pedir el catálogo entero.
+ */
+export const PROPERTIES_PER_PAGE = 9;
+
+/**
+ * Una colección de propiedades que se devuelve entera.
+ *
+ * Es lo que responden los favoritos: son los de una persona, no crecen sin
+ * límite y se muestran de una vez.
+ */
+export type PropertyCollectionDto = {
   readonly data: readonly PropertySummaryDto[];
   readonly total: number;
+};
+
+/**
+ * Una página del catálogo.
+ *
+ * Se distingue de la colección a propósito: quien recibe esto puede calcular
+ * cuántas páginas hay, y quien recibe aquello sabe que ya lo tiene todo.
+ */
+export type PropertyListDto = PropertyCollectionDto & {
+  readonly page: number;
+  readonly pageSize: number;
 };
 
 /**
@@ -112,6 +137,8 @@ export type PropertyListQuery = {
   readonly region?: string | undefined;
   /** Criterio de ordenamiento. */
   readonly sort?: PropertySortValue | undefined;
+  /** Página del catálogo, empezando en 1. */
+  readonly page?: number | undefined;
 };
 
 /** Criterios de ordenamiento (spec.md, sección 11). */
@@ -156,6 +183,7 @@ export const QUERY_PARAM_NAMES = {
   city: "city",
   region: "region",
   sort: "sort",
+  page: "page",
 } as const satisfies Record<keyof PropertyListQuery, string>;
 
 /** Valores admitidos para los filtros de ubicación (spec.md, sección 10). */

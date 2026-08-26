@@ -461,3 +461,33 @@ describe("buildPropertyWhere", () => {
     });
   });
 });
+
+describe("parsePropertyListQuery — paginación", () => {
+  it("lee la página", () => {
+    expect(expectQuery("page=3")).toEqual({ page: 3 });
+  });
+
+  it("sin parámetro no fija página", () => {
+    expect(expectQuery("")).toEqual({});
+  });
+
+  it("un parámetro vacío se ignora, como el resto", () => {
+    expect(expectQuery("page=")).toEqual({});
+  });
+
+  it.each(["page=0", "page=-1", "page=abc", "page=1.5"])(
+    "rechaza «%s» en vez de tratarlo como la primera",
+    (queryString) => {
+      // Devolver un listado que no corresponde a lo pedido es peor que decir
+      // que la petición está mal.
+      expect(expectError(queryString)).toMatch(/entero mayor que cero/);
+    },
+  );
+
+  it("convive con los filtros", () => {
+    expect(expectQuery("operation=SALE&page=2")).toEqual({
+      operations: ["SALE"],
+      page: 2,
+    });
+  });
+});

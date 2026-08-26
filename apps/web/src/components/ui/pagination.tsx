@@ -1,8 +1,10 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { buildPageRange, PAGE_GAP } from "@/components/ui/page-range";
+
 /**
- * Recorrido de un listado paginado.
+ * Recorrido de un listado paginado (spec.md, sección 8).
  *
  * La página vive en la URL, no en el estado del componente: así se puede
  * compartir y el botón de atrás del navegador hace lo que se espera.
@@ -37,43 +39,95 @@ export function Pagination({
     return null;
   }
 
+  const destino = { basePath, hash, preserved };
+
   return (
-    <nav
-      aria-label={label}
-      className="mt-6 flex items-center justify-between gap-4"
-    >
-      <PageLink
-        basePath={basePath}
-        hash={hash}
-        page={currentPage - 1}
-        preserved={preserved}
-        isDisabled={currentPage <= 1}
-      >
-        ← Anteriores
-      </PageLink>
+    <nav aria-label={label} className="mt-8 flex flex-col items-center gap-3">
+      <ol className="flex flex-wrap items-center justify-center gap-1.5">
+        <li>
+          <PageLink
+            {...destino}
+            page={1}
+            isDisabled={currentPage <= 1}
+            title="Primera página"
+          >
+            <span aria-hidden="true">«</span>
+          </PageLink>
+        </li>
+        <li>
+          <PageLink
+            {...destino}
+            page={currentPage - 1}
+            isDisabled={currentPage <= 1}
+            title="Página anterior"
+          >
+            <span aria-hidden="true">‹</span>
+          </PageLink>
+        </li>
+
+        {buildPageRange(currentPage, lastPage).map((item, indice) =>
+          item === PAGE_GAP ? (
+            // Sin `aria-hidden`: el hueco es información —hay páginas que no
+            // se enumeran—, no decoración.
+            <li
+              key={`hueco-${indice}`}
+              className="px-1.5 text-sm text-ink-muted select-none"
+            >
+              …
+            </li>
+          ) : (
+            <li key={item}>
+              <PageLink
+                {...destino}
+                page={item}
+                isDisabled={false}
+                isCurrent={item === currentPage}
+                title={`Página ${item}`}
+              >
+                {item}
+              </PageLink>
+            </li>
+          ),
+        )}
+
+        <li>
+          <PageLink
+            {...destino}
+            page={currentPage + 1}
+            isDisabled={currentPage >= lastPage}
+            title="Página siguiente"
+          >
+            <span aria-hidden="true">›</span>
+          </PageLink>
+        </li>
+        <li>
+          <PageLink
+            {...destino}
+            page={lastPage}
+            isDisabled={currentPage >= lastPage}
+            title="Última página"
+          >
+            <span aria-hidden="true">»</span>
+          </PageLink>
+        </li>
+      </ol>
 
       <p className="text-sm text-ink-muted">
         Página {currentPage} de {lastPage}
       </p>
-
-      <PageLink
-        basePath={basePath}
-        hash={hash}
-        page={currentPage + 1}
-        preserved={preserved}
-        isDisabled={currentPage >= lastPage}
-      >
-        Siguientes →
-      </PageLink>
     </nav>
   );
 }
 
 /**
- * Un extremo del recorrido.
+ * Un destino del recorrido.
  *
  * En el límite se pinta como texto y no como enlace inerte: un enlace que no
  * lleva a ninguna parte confunde a quien navega con teclado.
+ *
+ * La página actual también deja de ser enlace, por lo mismo: llevaría a donde
+ * ya se está. Se marca con `aria-current` para que un lector de pantalla lo
+ * anuncie, porque el color por sí solo no lo dice.
  */
 function PageLink({
   basePath,
@@ -81,6 +135,8 @@ function PageLink({
   page,
   preserved,
   isDisabled,
+  isCurrent = false,
+  title,
   children,
 }: {
   readonly basePath: string;
@@ -88,15 +144,30 @@ function PageLink({
   readonly page: number;
   readonly preserved: URLSearchParams;
   readonly isDisabled: boolean;
+  readonly isCurrent?: boolean;
+  readonly title: string;
   readonly children: ReactNode;
 }) {
-  const className =
-    "inline-flex min-h-11 items-center rounded-lg border border-line px-4 text-sm font-medium";
+  const base =
+    "inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border px-3 text-sm font-medium tabular-nums";
+
+  if (isCurrent) {
+    return (
+      <span
+        aria-current="page"
+        className={`${base} border-accent bg-accent text-on-dark`}
+      >
+        {children}
+        <span className="sr-only"> (página actual)</span>
+      </span>
+    );
+  }
 
   if (isDisabled) {
     return (
-      <span className={`${className} text-ink-muted opacity-50`}>
+      <span className={`${base} border-line text-ink-muted opacity-40`}>
         {children}
+        <span className="sr-only">{title}</span>
       </span>
     );
   }
@@ -116,9 +187,10 @@ function PageLink({
   return (
     <Link
       href={`${basePath}${query ? `?${query}` : ""}${hash}`}
-      className={`${className} text-ink transition-colors hover:bg-muted`}
+      className={`${base} border-line text-ink transition-colors hover:bg-muted`}
     >
       {children}
+      <span className="sr-only">{title}</span>
     </Link>
   );
 }

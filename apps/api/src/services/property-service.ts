@@ -1,10 +1,11 @@
 import "server-only";
 
-import type {
-  PropertyDetailDto,
-  PropertyFilterOptionsDto,
-  PropertyListDto,
-  PropertyListQuery,
+import {
+  PROPERTIES_PER_PAGE,
+  type PropertyDetailDto,
+  type PropertyFilterOptionsDto,
+  type PropertyListDto,
+  type PropertyListQuery,
 } from "@portal/contracts";
 
 import {
@@ -31,10 +32,32 @@ const PUBLIC_SCOPE = { isPublished: true } as const;
 export async function listPublicProperties(
   query: PropertyListQuery = {},
 ): Promise<PropertyListDto> {
-  const properties = await findProperties(query, PUBLIC_SCOPE);
-  const data = properties.map(toPropertySummary);
+  const page = normalizePage(query.page);
+  const { properties, total } = await findProperties(query, PUBLIC_SCOPE, {
+    skip: (page - 1) * PROPERTIES_PER_PAGE,
+    take: PROPERTIES_PER_PAGE,
+  });
 
-  return { data, total: data.length };
+  return {
+    data: properties.map(toPropertySummary),
+    // `total` es cuántas hay, no cuántas trae esta página: es lo que permite
+    // al portal saber cuántas páginas existen.
+    total,
+    page,
+    pageSize: PROPERTIES_PER_PAGE,
+  };
+}
+
+/**
+ * Página efectiva.
+ *
+ * Un valor inválido no llega hasta aquí —lo rechaza la validación con un
+ * 400—, así que esto solo cubre la ausencia. Pedir una página más allá del
+ * final devuelve una lista vacía, que es lo correcto: la página existe, no
+ * tiene contenido.
+ */
+function normalizePage(page: number | undefined): number {
+  return Number.isInteger(page) && (page as number) > 0 ? (page as number) : 1;
 }
 
 export async function getPublicPropertyById(
