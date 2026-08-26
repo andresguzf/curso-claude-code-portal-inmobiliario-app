@@ -289,7 +289,10 @@ describe("parsePropertyListQuery — ordenamiento", () => {
 
 describe("buildPropertyOrderBy", () => {
   it("ordena por más recientes cuando no se indica criterio", () => {
-    expect(buildPropertyOrderBy()).toEqual([{ createdAt: "desc" }]);
+    expect(buildPropertyOrderBy()).toEqual([
+      { createdAt: "desc" },
+      { id: "asc" },
+    ]);
   });
 
   it("ordena por precio en ambas direcciones", () => {
@@ -317,7 +320,7 @@ describe("buildPropertyOrderBy", () => {
     }
   });
 
-  it("desempata siempre por fecha, para que el orden sea estable", () => {
+  it("desempata por fecha y, en último término, por identificador", () => {
     for (const sort of [
       "price-asc",
       "price-desc",
@@ -326,8 +329,26 @@ describe("buildPropertyOrderBy", () => {
     ] as const) {
       const clauses = buildPropertyOrderBy(sort);
 
-      expect(clauses).toHaveLength(2);
+      expect(clauses).toHaveLength(3);
       expect(clauses[1]).toEqual({ createdAt: "desc" });
+      expect(clauses[2]).toEqual({ id: "asc" });
+    }
+  });
+
+  it("todo criterio termina en un desempate único", () => {
+    for (const sort of [
+      "newest",
+      "price-asc",
+      "price-desc",
+      "area-asc",
+      "area-desc",
+    ] as const) {
+      // Sin un desempate por clave primaria, dos filas empatadas pueden salir
+      // en cualquier orden en cada consulta, y con paginación eso hace que dos
+      // páginas seguidas se solapen y salten filas. Comprobado con sesenta
+      // propiedades creadas a la vez: 47 resultados en seis páginas, 43
+      // distintas.
+      expect(buildPropertyOrderBy(sort).at(-1)).toEqual({ id: "asc" });
     }
   });
 });
